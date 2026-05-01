@@ -9,6 +9,17 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    private function formatCpf(string $digits): string
+    {
+        $digits = preg_replace('/\D/', '', $digits) ?? '';
+        $digits = substr($digits, 0, 11);
+
+        return substr($digits, 0, 3)
+            . '.' . substr($digits, 3, 3)
+            . '.' . substr($digits, 6, 3)
+            . '-' . substr($digits, 9, 2);
+    }
+
     public function showLogin()
     {
         return view('auth.login');
@@ -35,18 +46,31 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
+        $rawCpf = (string) $request->input('cpf', '');
+        $cpfDigits = preg_replace('/\D/', '', $rawCpf) ?? '';
+        if (strlen($cpfDigits) === 11) {
+            $request->merge(['cpf' => $this->formatCpf($cpfDigits)]);
+        }
+
         $data = $request->validate([
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users',
+            'role'     => 'required|string|max:255',
+            'cpf'      => ['required', 'string', 'regex:/^\d{3}\.\d{3}\.\d{3}-\d{2}$/', 'unique:users,cpf'],
             'password' => 'required|min:8|confirmed',
         ]);
+
+        $cpfDigits = preg_replace('/\D/', '', (string) $data['cpf']) ?? '';
+        if (strlen($cpfDigits) !== 11) {
+            return back()->withErrors(['cpf' => 'CPF inválido.'])->withInput();
+        }
 
         $user = User::create([
             'name'     => $data['name'],
             'email'    => $data['email'],
             'password' => Hash::make($data['password']),
-            'role' => $request->input('role'),
-            'cpf' => $request->input('cpf')
+            'role'     => $data['role'],
+            'cpf'      => $this->formatCpf($cpfDigits),
         ]);
 
         Auth::login($user);

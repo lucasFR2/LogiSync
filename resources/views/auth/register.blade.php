@@ -64,7 +64,8 @@
                 <!-- Campo CPF -->
                  <div class="mb-4">
                     <label class="block text-sm font-semibold text-gray-700 mb-1">CPF</label>
-                    <input type="text" name="cpf" placeholder="000.000.000-00" value="{{ old('cpf') }}" required
+                    <input id="cpf" type="text" name="cpf" placeholder="000.000.000-00" value="{{ old('cpf') }}" required
+                        inputmode="numeric" autocomplete="off" maxlength="14"
                         class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
                 </div>
 
@@ -101,6 +102,51 @@
         <!-- Footer da Página -->
         <p class="mt-6 text-xs text-gray-400">© {{ date('Y') }} LogiSync WMS. Todos os direitos reservados.</p>
     </div>
+
+<script>
+    (function () {
+        function formatCpf(value) {
+            const digits = String(value || '').replace(/\D/g, '').slice(0, 11);
+
+            const p1 = digits.slice(0, 3);
+            const p2 = digits.slice(3, 6);
+            const p3 = digits.slice(6, 9);
+            const p4 = digits.slice(9, 11);
+
+            let out = p1;
+            if (p2) out += '.' + p2;
+            if (p3) out += '.' + p3;
+            if (p4) out += '-' + p4;
+            return out;
+        }
+
+        function applyCpfMask(input) {
+            if (!input) return;
+
+            input.addEventListener('input', function () {
+                const caretAtEnd = input.selectionStart === input.value.length;
+                input.value = formatCpf(input.value);
+                if (caretAtEnd) {
+                    input.setSelectionRange(input.value.length, input.value.length);
+                }
+            });
+
+            input.addEventListener('blur', function () {
+                input.value = formatCpf(input.value);
+            });
+
+            input.value = formatCpf(input.value);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function () {
+                applyCpfMask(document.getElementById('cpf'));
+            });
+        } else {
+            applyCpfMask(document.getElementById('cpf'));
+        }
+    })();
+</script>
 
 </body>
 </html>
