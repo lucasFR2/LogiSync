@@ -20,13 +20,13 @@
             </div>
             
             <nav class="flex-1 px-4 mt-4 space-y-2">
-                <a href="#" class="flex items-center p-3 bg-blue-600 rounded-lg text-white">
+                <a href="{{ route('dashboard') }}" class="flex items-center p-3 bg-blue-600 rounded-lg text-white">
                     <i class="fa-solid fa-chart-line mr-3"></i> Dashboard
                 </a>
-                <a href="#" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition">
-                    <i class="fa-solid fa-boxes-stacked mr-3"></i> Estoque
+                <a href="{{ route('products.index') }}" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition">
+                    <i class="fa-solid fa-boxes-stacked mr-3"></i> Produtos
                 </a>
-                <a href="#" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition">
+                <a href="{{ route('inventory.index') }}" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition">
                     <i class="fa-solid fa-truck-ramp-box mr-3"></i> Entradas
                 </a>
                 <a href="#" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition">

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -14,6 +15,12 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout',    [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard',  [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Product routes
+    Route::resource('products', ProductController::class);
+    Route::get('/inventory', [ProductController::class, 'inventories'])->name('inventory.index');
+    Route::post('/products/{product}/add-inventory', [ProductController::class, 'addInventory'])->name('products.add-inventory');
+    
     Route::get('/admin',      fn() => 'Área Admin')->middleware('role:admin')->name('admin');
 });
 
