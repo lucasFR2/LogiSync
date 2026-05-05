@@ -100,68 +100,140 @@
 
                             <!-- Detalhes -->
                             <div class="p-6">
-                                <!-- SKU e Status -->
-                                <div class="grid grid-cols-2 gap-6 mb-6 pb-6 border-b border-gray-200">
-                                    <div>
-                                        <label class="text-sm text-gray-600 font-semibold">SKU</label>
-                                        <p class="text-lg text-gray-900 font-semibold">{{ $product->sku }}</p>
-                                    </div>
-                                    <div>
-                                        <label class="text-sm text-gray-600 font-semibold">Status</label>
-                                        <p class="text-lg">
-                                            <span class="
-                                                px-3 py-1 rounded-lg text-sm font-semibold
-                                                @if ($product->quantity <= $product->reorder_level)
-                                                    bg-red-100 text-red-800
-                                                @elseif ($product->quantity <= ($product->reorder_level * 1.5))
-                                                    bg-yellow-100 text-yellow-800
+                                <!-- SEÇÃO 1: Informações Básicas -->
+                                <div class="mb-8 pb-8 border-b border-gray-200">
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <i class="fa-solid fa-info-circle text-blue-600"></i>Informações Básicas
+                                    </h3>
+                                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label class="text-xs text-gray-500 font-semibold">SKU</label>
+                                            <p class="text-lg text-gray-900 font-bold">{{ $product->sku }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-gray-500 font-semibold">Código de Barras</label>
+                                            <p class="text-sm text-gray-700">{{ $product->barcode ?? '—' }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-gray-500 font-semibold">Categoria</label>
+                                            <p class="text-sm text-gray-700">{{ ucfirst($product->category ?? 'Não informada') }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-gray-500 font-semibold">Unidade de Medida</label>
+                                            <p class="text-sm text-gray-700">{{ strtoupper($product->unit ?? 'un') }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-gray-500 font-semibold">Fornecedor</label>
+                                            <p class="text-sm text-gray-700">{{ $product->supplier ?? '—' }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-gray-500 font-semibold">Status</label>
+                                            <p class="text-sm">
+                                                @if ($product->status == 'ativo')
+                                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold"><i class="fa-solid fa-check mr-1"></i>Ativo</span>
+                                                @elseif ($product->status == 'inativo')
+                                                    <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold"><i class="fa-solid fa-ban mr-1"></i>Inativo</span>
                                                 @else
-                                                    bg-green-100 text-green-800
+                                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-semibold"><i class="fa-solid fa-pause mr-1"></i>Descontinuado</span>
                                                 @endif
-                                            ">
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 pt-4">
+                                        <label class="text-xs text-gray-500 font-semibold">Descrição</label>
+                                        <p class="text-gray-700 mt-1">{{ $product->description ?? '—' }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- SEÇÃO 2: Preços e Estoque -->
+                                <div class="mb-8 pb-8 border-b border-gray-200">
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <i class="fa-solid fa-tag text-green-600"></i>Preços e Estoque
+                                    </h3>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <div class="bg-blue-50 p-3 rounded-lg">
+                                            <label class="text-xs text-gray-500 font-semibold">Preço de Venda</label>
+                                            <p class="text-2xl text-blue-600 font-bold">R$ {{ number_format($product->unit_price, 2, ',', '.') }}</p>
+                                        </div>
+                                        <div class="bg-purple-50 p-3 rounded-lg">
+                                            <label class="text-xs text-gray-500 font-semibold">Custo Unitário</label>
+                                            <p class="text-xl text-purple-600 font-bold">R$ {{ number_format($product->cost_price ?? 0, 2, ',', '.') }}</p>
+                                        </div>
+                                        <div class="bg-green-50 p-3 rounded-lg">
+                                            <label class="text-xs text-gray-500 font-semibold">Quantidade em Estoque</label>
+                                            <p class="text-2xl text-green-600 font-bold">{{ $product->quantity }}</p>
+                                        </div>
+                                        <div class="bg-orange-50 p-3 rounded-lg">
+                                            <label class="text-xs text-gray-500 font-semibold">Valor Total</label>
+                                            <p class="text-lg text-orange-600 font-bold">R$ {{ number_format($product->quantity * $product->unit_price, 2, ',', '.') }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                                        <div class="bg-yellow-50 p-3 rounded-lg">
+                                            <label class="text-xs text-gray-500 font-semibold">Nível de Ressuprimento</label>
+                                            <p class="text-xl text-yellow-700 font-bold">{{ $product->reorder_level }}</p>
+                                        </div>
+                                        <div class="bg-indigo-50 p-3 rounded-lg">
+                                            <label class="text-xs text-gray-500 font-semibold">Estoque Máximo</label>
+                                            <p class="text-xl text-indigo-700 font-bold">{{ $product->max_stock ?? '—' }}</p>
+                                        </div>
+                                        <div class="bg-cyan-50 p-3 rounded-lg">
+                                            <label class="text-xs text-gray-500 font-semibold">Qtd. por Embalagem</label>
+                                            <p class="text-xl text-cyan-700 font-bold">{{ $product->package_quantity ?? 1 }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-gray-500 font-semibold">Status de Estoque</label>
+                                            <p class="text-sm mt-1">
                                                 @if ($product->quantity <= $product->reorder_level)
-                                                    Abaixo do limite
+                                                    <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Abaixo do limite</span>
                                                 @elseif ($product->quantity <= ($product->reorder_level * 1.5))
-                                                    Atenção
+                                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-semibold"><i class="fa-solid fa-exclamation mr-1"></i>Atenção</span>
                                                 @else
-                                                    Em estoque
+                                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold"><i class="fa-solid fa-check mr-1"></i>Em estoque</span>
                                                 @endif
-                                            </span>
-                                        </p>
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <!-- Preço e Quantidade -->
-                                <div class="grid grid-cols-2 gap-6 mb-6 pb-6 border-b border-gray-200">
-                                    <div>
-                                        <label class="text-sm text-gray-600 font-semibold">Preço Unitário</label>
-                                        <p class="text-2xl text-gray-900 font-bold">R$ {{ number_format($product->unit_price, 2, '.', '') }}</p>
+                                <!-- SEÇÃO 3: Dimensões e Peso -->
+                                @if ($product->weight || $product->height || $product->width || $product->depth)
+                                    <div class="mb-8 pb-8 border-b border-gray-200">
+                                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                            <i class="fa-solid fa-ruler-combined text-purple-600"></i>Dimensões e Peso
+                                        </h3>
+                                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            <div>
+                                                <label class="text-xs text-gray-500 font-semibold">Peso</label>
+                                                <p class="text-lg text-gray-900 font-semibold">{{ $product->weight ?? '—' }} kg</p>
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-gray-500 font-semibold">Altura</label>
+                                                <p class="text-lg text-gray-900 font-semibold">{{ $product->height ?? '—' }} cm</p>
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-gray-500 font-semibold">Largura</label>
+                                                <p class="text-lg text-gray-900 font-semibold">{{ $product->width ?? '—' }} cm</p>
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-gray-500 font-semibold">Profundidade</label>
+                                                <p class="text-lg text-gray-900 font-semibold">{{ $product->depth ?? '—' }} cm</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label class="text-sm text-gray-600 font-semibold">Quantidade em Estoque</label>
-                                        <p class="text-2xl text-blue-600 font-bold">{{ $product->quantity }}</p>
-                                    </div>
-                                </div>
+                                @endif
 
-                                <!-- Níveis -->
-                                <div class="grid grid-cols-2 gap-6 mb-6 pb-6 border-b border-gray-200">
+                                <!-- SEÇÃO 4: Localização no Armazém -->
+                                @if ($product->warehouse_location)
                                     <div>
-                                        <label class="text-sm text-gray-600 font-semibold">Nível de Ressuprimento</label>
-                                        <p class="text-lg text-gray-900">{{ $product->reorder_level }} unidades</p>
+                                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                            <i class="fa-solid fa-warehouse text-orange-600"></i>Localização no Armazém
+                                        </h3>
+                                        <div class="bg-orange-50 p-4 rounded-lg">
+                                            <p class="text-lg text-orange-900 font-bold">{{ $product->warehouse_location }}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label class="text-sm text-gray-600 font-semibold">Valor Total em Estoque</label>
-                                        <p class="text-lg text-gray-900 font-semibold">R$ {{ number_format($product->quantity * $product->unit_price, 2, '.', '') }}</p>
-                                    </div>
-                                </div>
-
-                                <!-- Descrição -->
-                                <div>
-                                    <label class="text-sm text-gray-600 font-semibold">Descrição</label>
-                                    <p class="text-gray-700 mt-2">
-                                        {{ $product->description ?? 'Sem descrição informada' }}
-                                    </p>
-                                </div>
+                                @endif
                             </div>
                         </div>
                     </div>
