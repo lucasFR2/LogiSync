@@ -59,10 +59,10 @@
             </header>
 
             <!-- Conteúdo da Página -->
-            <section class="p-8">
-                <div class="max-w-3xl">
+            <section class="p-0 h-full overflow-y-auto">
+                <div class="w-full h-full flex flex-col">
                     <!-- Barra de Navegação -->
-                    <div class="mb-6 flex items-center gap-2 text-sm">
+                    <div class="px-8 py-4 flex items-center gap-2 text-sm border-b border-gray-200 bg-white">
                         <a href="{{ route('products.index') }}" class="text-blue-600 hover:text-blue-800">
                             <i class="fa-solid fa-boxes-stacked mr-2"></i>Produtos
                         </a>
@@ -75,41 +75,48 @@
                     </div>
 
                     <!-- Card do Formulário -->
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="flex-1 bg-gray-50 overflow-y-auto">
+                        <div class="w-full h-full bg-white rounded-none shadow-none overflow-hidden border-0 flex flex-col">
                         <!-- Header do Card -->
-                        <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
-                            <h2 class="text-lg font-bold text-white">Editar Informações do Produto</h2>
-                            <p class="text-blue-100 text-sm mt-1">Atualize os dados do produto {{ $product->name }}</p>
+                        <div class="bg-gradient-to-r from-blue-600 via-blue-650 to-blue-700 px-8 py-6 border-b-4 border-blue-800 flex-shrink-0">
+                            <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                                <i class="fa-solid fa-pencil text-blue-100"></i>
+                                Editar Produto
+                            </h2>
+                            <p class="text-blue-50 text-sm mt-2">Atualize as informações do produto: <strong>{{ $product->name }}</strong></p>
                         </div>
 
                         <!-- Formulário -->
-                        <form method="POST" action="{{ route('products.update', $product) }}" class="p-6">
+                        <form method="POST" action="{{ route('products.update', $product) }}" class="flex-1 overflow-y-auto p-8">
                             @csrf
                             @method('PUT')
 
                             @if ($errors->any())
-                                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                                    <p class="text-red-700 font-semibold mb-2">
-                                        <i class="fa-solid fa-exclamation-circle mr-2"></i>Erro ao validar o formulário:
+                                <div class="mb-8 p-5 bg-red-50 border-l-4 border-red-500 rounded-lg backdrop-blur">
+                                    <p class="text-red-700 font-bold mb-3 flex items-center gap-2">
+                                        <i class="fa-solid fa-circle-exclamation text-lg"></i>Erro ao validar o formulário:
                                     </p>
-                                    <ul class="text-red-600 text-sm space-y-1">
+                                    <ul class="text-red-600 text-sm space-y-1 ml-6">
                                         @foreach ($errors->all() as $error)
-                                            <li>• {{ $error }}</li>
+                                            <li class="flex items-center gap-2"><i class="fa-solid fa-times-circle text-xs"></i>{{ $error }}</li>
                                         @endforeach
                                     </ul>
                                 </div>
                             @endif
 
                             <!-- SEÇÃO 1: Informações Básicas -->
-                            <div class="mb-8 pb-8 border-b border-gray-200">
-                                <h3 class="text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2">
-                                    <i class="fa-solid fa-info-circle text-blue-600"></i>Informações Básicas
+                            <div class="mb-10 pb-10 border-b-2 border-gray-200">
+                                <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center gap-3 pb-4 border-b-2 border-blue-400">
+                                    <span class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <i class="fa-solid fa-info-circle text-blue-600 text-lg"></i>
+                                    </span>
+                                    Informações Básicas
                                 </h3>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <!-- Nome do Produto -->
                                     <div class="md:col-span-2">
-                                        <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">
-                                            Nome do Produto <span class="text-red-500">*</span>
+                                        <label for="name" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-box text-blue-500"></i>Nome do Produto <span class="text-red-500 text-lg">*</span>
                                         </label>
                                         <input 
                                             type="text" 
@@ -117,13 +124,390 @@
                                             id="name"
                                             value="{{ old('name', $product->name) }}"
                                             placeholder="Ex: Notebook Dell Inspiron 15"
-                                            class="w-full px-4 py-3 border @error('name') border-red-500 @else border-gray-300 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            class="w-full px-4 py-3 border-2 @error('name') border-red-400 bg-red-50 @else border-gray-300 hover:border-blue-400 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
                                             required
                                         >
                                         @error('name')
-                                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                            <p class="text-red-500 text-xs mt-2 flex items-center gap-1"><i class="fa-solid fa-exclamation-triangle"></i>{{ $message }}</p>
                                         @enderror
                                     </div>
+
+                                    <!-- SKU -->
+                                    <div>
+                                        <label for="sku" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-barcode text-green-500"></i>SKU <span class="text-red-500 text-lg">*</span>
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            name="sku" 
+                                            id="sku"
+                                            value="{{ old('sku', $product->sku) }}"
+                                            placeholder="Ex: NOTEB-DELL-001"
+                                            class="w-full px-4 py-3 border-2 @error('sku') border-red-400 bg-red-50 @else border-gray-300 hover:border-green-400 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
+                                            required
+                                        >
+                                        @error('sku')
+                                            <p class="text-red-500 text-xs mt-2 flex items-center gap-1"><i class="fa-solid fa-exclamation-triangle"></i>{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Código de Barras -->
+                                    <div>
+                                        <label for="barcode" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-qrcode text-purple-500"></i>Código de Barras
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            name="barcode" 
+                                            id="barcode"
+                                            value="{{ old('barcode', $product->barcode ?? '') }}"
+                                            placeholder="Ex: 1234567890123"
+                                            class="w-full px-4 py-3 border-2 border-gray-300 hover:border-purple-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
+                                        >
+                                    </div>
+
+                                    <!-- Descrição -->
+                                    <div class="md:col-span-2">
+                                        <label for="description" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-align-left text-orange-500"></i>Descrição Detalhada
+                                        </label>
+                                        <textarea 
+                                            name="description" 
+                                            id="description"
+                                            placeholder="Descreva as características, especificações técnicas do produto..."
+                                            rows="3"
+                                            class="w-full px-4 py-3 border-2 border-gray-300 hover:border-orange-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white resize-none"
+                                        >{{ old('description', $product->description) }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SEÇÃO 2: Preços e Estoque -->
+                            <div class="mb-10 pb-10 border-b-2 border-gray-200">
+                                <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center gap-3 pb-4 border-b-2 border-green-400">
+                                    <span class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <i class="fa-solid fa-tag text-green-600 text-lg"></i>
+                                    </span>
+                                    Preços e Estoque
+                                </h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Custo Unitário -->
+                                    <div>
+                                        <label for="cost_price" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-calculator text-indigo-500"></i>Custo Unitário (R$)
+                                        </label>
+                                        <input 
+                                            type="number" 
+                                            name="cost_price" 
+                                            id="cost_price"
+                                            value="{{ old('cost_price', $product->cost_price ?? '') }}"
+                                            placeholder="0.00"
+                                            step="0.01"
+                                            min="0"
+                                            class="w-full px-4 py-3 border-2 border-gray-300 hover:border-indigo-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
+                                        >
+                                    </div>
+
+                                    <!-- Preço Unitário -->
+                                    <div>
+                                        <label for="unit_price" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-dollar-sign text-green-600"></i>Preço de Venda (R$) <span class="text-red-500 text-lg">*</span>
+                                        </label>
+                                        <input 
+                                            type="number" 
+                                            name="unit_price" 
+                                            id="unit_price"
+                                            value="{{ old('unit_price', $product->unit_price) }}"
+                                            placeholder="0.00"
+                                            step="0.01"
+                                            min="0"
+                                            class="w-full px-4 py-3 border-2 @error('unit_price') border-red-400 bg-red-50 @else border-gray-300 hover:border-green-400 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
+                                            required
+                                        >
+                                        @error('unit_price')
+                                            <p class="text-red-500 text-xs mt-2 flex items-center gap-1"><i class="fa-solid fa-exclamation-triangle"></i>{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Quantidade Atual -->
+                                    <div>
+                                        <label for="quantity" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-boxes text-cyan-500"></i>Quantidade em Estoque <span class="text-red-500 text-lg">*</span>
+                                        </label>
+                                        <input 
+                                            type="number" 
+                                            name="quantity" 
+                                            id="quantity"
+                                            value="{{ old('quantity', $product->quantity) }}"
+                                            placeholder="0"
+                                            min="0"
+                                            class="w-full px-4 py-3 border-2 @error('quantity') border-red-400 bg-red-50 @else border-gray-300 hover:border-cyan-400 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
+                                            required
+                                        >
+                                        @error('quantity')
+                                            <p class="text-red-500 text-xs mt-2 flex items-center gap-1"><i class="fa-solid fa-exclamation-triangle"></i>{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Estoque Máximo -->
+                                    <div>
+                                        <label for="max_stock" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-arrow-up text-blue-500"></i>Estoque Máximo
+                                        </label>
+                                        <input 
+                                            type="number" 
+                                            name="max_stock" 
+                                            id="max_stock"
+                                            value="{{ old('max_stock', $product->max_stock ?? 0) }}"
+                                            placeholder="0"
+                                            min="0"
+                                            class="w-full px-4 py-3 border-2 border-gray-300 hover:border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
+                                        >
+                                    </div>
+
+                                    <!-- Nível de Ressuprimento -->
+                                    <div>
+                                        <label for="reorder_level" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>Nível de Ressuprimento <span class="text-red-500 text-lg">*</span>
+                                        </label>
+                                        <input 
+                                            type="number" 
+                                            name="reorder_level" 
+                                            id="reorder_level"
+                                            value="{{ old('reorder_level', $product->reorder_level) }}"
+                                            placeholder="0"
+                                            min="0"
+                                            class="w-full px-4 py-3 border-2 @error('reorder_level') border-red-400 bg-red-50 @else border-gray-300 hover:border-yellow-400 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
+                                            required
+                                        >
+                                        @error('reorder_level')
+                                            <p class="text-red-500 text-xs mt-2 flex items-center gap-1"><i class="fa-solid fa-exclamation-triangle"></i>{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Quantidade por Embalagem -->
+                                    <div>
+                                        <label for="package_quantity" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-cube text-red-500"></i>Quantidade por Embalagem
+                                        </label>
+                                        <input 
+                                            type="number" 
+                                            name="package_quantity" 
+                                            id="package_quantity"
+                                            value="{{ old('package_quantity', $product->package_quantity ?? 1) }}"
+                                            placeholder="1"
+                                            min="1"
+                                            class="w-full px-4 py-3 border-2 border-gray-300 hover:border-red-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SEÇÃO 3: Dimensões e Peso -->
+                            <div class="mb-10 pb-10 border-b-2 border-gray-200">
+                                <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center gap-3 pb-4 border-b-2 border-purple-400">
+                                    <span class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                        <i class="fa-solid fa-ruler-combined text-purple-600 text-lg"></i>
+                                    </span>
+                                    Dimensões e Peso
+                                </h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Peso (kg) -->
+                                    <div>
+                                        <label for="weight" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-weight text-orange-500"></i>Peso (kg)
+                                        </label>
+                                        <input 
+                                            type="number" 
+                                            name="weight" 
+                                            id="weight"
+                                            value="{{ old('weight', $product->weight ?? '') }}"
+                                            placeholder="0.00"
+                                            step="0.01"
+                                            min="0"
+                                            class="w-full px-4 py-3 border-2 border-gray-300 hover:border-orange-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
+                                        >
+                                    </div>
+
+                                    <!-- Altura (cm) -->
+                                    <div>
+                                        <label for="height" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-arrow-up text-pink-500"></i>Altura (cm)
+                                        </label>
+                                        <input 
+                                            type="number" 
+                                            name="height" 
+                                            id="height"
+                                            value="{{ old('height', $product->height ?? '') }}"
+                                            placeholder="0.00"
+                                            step="0.01"
+                                            min="0"
+                                            class="w-full px-4 py-3 border-2 border-gray-300 hover:border-pink-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
+                                        >
+                                    </div>
+
+                                    <!-- Largura (cm) -->
+                                    <div>
+                                        <label for="width" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-arrow-right text-teal-500"></i>Largura (cm)
+                                        </label>
+                                        <input 
+                                            type="number" 
+                                            name="width" 
+                                            id="width"
+                                            value="{{ old('width', $product->width ?? '') }}"
+                                            placeholder="0.00"
+                                            step="0.01"
+                                            min="0"
+                                            class="w-full px-4 py-3 border-2 border-gray-300 hover:border-teal-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
+                                        >
+                                    </div>
+
+                                    <!-- Profundidade (cm) -->
+                                    <div>
+                                        <label for="depth" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-arrow-left text-sky-500"></i>Profundidade (cm)
+                                        </label>
+                                        <input 
+                                            type="number" 
+                                            name="depth" 
+                                            id="depth"
+                                            value="{{ old('depth', $product->depth ?? '') }}"
+                                            placeholder="0.00"
+                                            step="0.01"
+                                            min="0"
+                                            class="w-full px-4 py-3 border-2 border-gray-300 hover:border-sky-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SEÇÃO 4: Categorização e Localização -->
+                            <div class="mb-10">
+                                <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center gap-3 pb-4 border-b-2 border-orange-400">
+                                    <span class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                                        <i class="fa-solid fa-folder-open text-orange-600 text-lg"></i>
+                                    </span>
+                                    Categorização e Localização
+                                </h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Categoria -->
+                                    <div>
+                                        <label for="category" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-list text-indigo-500"></i>Categoria
+                                        </label>
+                                        <select 
+                                            name="category" 
+                                            id="category"
+                                            class="w-full px-4 py-3 border-2 border-gray-300 hover:border-indigo-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white cursor-pointer"
+                                        >
+                                            <option value="">-- Selecione uma categoria --</option>
+                                            <option value="eletrônicos" {{ old('category', $product->category ?? '') == 'eletrônicos' ? 'selected' : '' }}>Eletrônicos</option>
+                                            <option value="informática" {{ old('category', $product->category ?? '') == 'informática' ? 'selected' : '' }}>Informática</option>
+                                            <option value="periféricos" {{ old('category', $product->category ?? '') == 'periféricos' ? 'selected' : '' }}>Periféricos</option>
+                                            <option value="acessórios" {{ old('category', $product->category ?? '') == 'acessórios' ? 'selected' : '' }}>Acessórios</option>
+                                            <option value="software" {{ old('category', $product->category ?? '') == 'software' ? 'selected' : '' }}>Software</option>
+                                            <option value="outros" {{ old('category', $product->category ?? '') == 'outros' ? 'selected' : '' }}>Outros</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Unidade de Medida -->
+                                    <div>
+                                        <label for="unit" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-measure text-violet-500"></i>Unidade de Medida
+                                        </label>
+                                        <select 
+                                            name="unit" 
+                                            id="unit"
+                                            class="w-full px-4 py-3 border-2 border-gray-300 hover:border-violet-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white cursor-pointer"
+                                        >
+                                            <option value="un" {{ old('unit', $product->unit ?? '') == 'un' ? 'selected' : '' }}>Unidade (un)</option>
+                                            <option value="caixa" {{ old('unit', $product->unit ?? '') == 'caixa' ? 'selected' : '' }}>Caixa</option>
+                                            <option value="dúzia" {{ old('unit', $product->unit ?? '') == 'dúzia' ? 'selected' : '' }}>Dúzia</option>
+                                            <option value="kg" {{ old('unit', $product->unit ?? '') == 'kg' ? 'selected' : '' }}>Quilograma (kg)</option>
+                                            <option value="l" {{ old('unit', $product->unit ?? '') == 'l' ? 'selected' : '' }}>Litro (l)</option>
+                                            <option value="m" {{ old('unit', $product->unit ?? '') == 'm' ? 'selected' : '' }}>Metro (m)</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Localização no Armazém -->
+                                    <div>
+                                        <label for="warehouse_location" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-location-dot text-lime-500"></i>Localização no Armazém
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            name="warehouse_location" 
+                                            id="warehouse_location"
+                                            value="{{ old('warehouse_location', $product->warehouse_location ?? '') }}"
+                                            placeholder="Ex: Prateleira A-10"
+                                            class="w-full px-4 py-3 border-2 border-gray-300 hover:border-lime-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
+                                        >
+                                    </div>
+
+                                    <!-- Fornecedor -->
+                                    <div>
+                                        <label for="supplier" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-handshake text-rose-500"></i>Fornecedor Principal
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            name="supplier" 
+                                            id="supplier"
+                                            value="{{ old('supplier', $product->supplier ?? '') }}"
+                                            placeholder="Ex: Fornecedor XYZ"
+                                            class="w-full px-4 py-3 border-2 border-gray-300 hover:border-rose-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
+                                        >
+                                    </div>
+
+                                    <!-- Status -->
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                                            <i class="fa-solid fa-toggle-on text-fuchsia-500"></i>Status do Produto
+                                        </label>
+                                        <div class="flex gap-6">
+                                            <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg border-2 border-transparent hover:border-green-300 hover:bg-green-50 transition">
+                                                <input type="radio" name="status" value="ativo" {{ old('status', $product->status ?? 'ativo') == 'ativo' ? 'checked' : '' }} class="w-5 h-5 text-green-600 cursor-pointer">
+                                                <span class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                                    <i class="fa-solid fa-circle-check text-green-600"></i>Ativo
+                                                </span>
+                                            </label>
+                                            <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg border-2 border-transparent hover:border-red-300 hover:bg-red-50 transition">
+                                                <input type="radio" name="status" value="inativo" {{ old('status', $product->status ?? '') == 'inativo' ? 'checked' : '' }} class="w-5 h-5 text-red-600 cursor-pointer">
+                                                <span class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                                    <i class="fa-solid fa-circle-xmark text-red-600"></i>Inativo
+                                                </span>
+                                            </label>
+                                            <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg border-2 border-transparent hover:border-yellow-300 hover:bg-yellow-50 transition">
+                                                <input type="radio" name="status" value="descontinuado" {{ old('status', $product->status ?? '') == 'descontinuado' ? 'checked' : '' }} class="w-5 h-5 text-yellow-600 cursor-pointer">
+                                                <span class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                                    <i class="fa-solid fa-circle-pause text-yellow-600"></i>Descontinuado
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botões de Ação -->
+                            <div class="mt-10 flex gap-4">
+                                <button type="submit" class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 rounded-lg font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-3 transform hover:scale-105">
+                                    <i class="fa-solid fa-floppy-disk text-lg"></i> Atualizar Produto
+                                </button>
+                                <a href="{{ route('products.show', $product) }}" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 px-8 py-4 rounded-lg font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-3">
+                                    <i class="fa-solid fa-xmark text-lg"></i> Cancelar
+                                </a>
+                            </div>
+                        </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+</body>
+</html>
 
                                     <!-- SKU -->
                                     <div>

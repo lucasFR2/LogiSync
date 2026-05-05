@@ -2,112 +2,108 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Inventory;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index(Request $request)
+    // Listar todos os produtos
+    public function index()
     {
-        $search = $request->input('search');
-        
-        $products = Product::query()
-            ->when($search, function ($query, $search) {
-                return $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%");
-            })
-            ->paginate(10);
-
-        return view('products.index', compact('products', 'search'));
+        $products = Product::paginate(15);
+        return view('products.index', compact('products'));
     }
 
+    // Mostrar formulário de criação
     public function create()
     {
         return view('products.create');
     }
 
+    // Gravar novo produto no banco
     public function store(Request $request)
     {
+        // Validar os dados
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'sku' => 'required|string|unique:products,sku',
+            'barcode' => 'nullable|string|unique:products,barcode',
             'description' => 'nullable|string',
-            'sku' => 'required|string|unique:products',
-            'quantity' => 'required|integer|min:0',
+            'cost_price' => 'nullable|numeric|min:0',
             'unit_price' => 'required|numeric|min:0',
+            'quantity' => 'required|integer|min:0',
+            'max_stock' => 'nullable|integer|min:0',
             'reorder_level' => 'required|integer|min:0',
+            'package_quantity' => 'nullable|numeric|min:1',
+            'weight' => 'nullable|numeric|min:0',
+            'height' => 'nullable|numeric|min:0',
+            'width' => 'nullable|numeric|min:0',
+            'depth' => 'nullable|numeric|min:0',
+            'category' => 'nullable|string',
+            'unit' => 'nullable|string',
+            'warehouse_location' => 'nullable|string',
+            'supplier' => 'nullable|string',
+            'status' => 'required|in:ativo,inativo,descontinuado',
         ]);
 
+        // Criar o produto
         Product::create($validated);
 
         return redirect()->route('products.index')
-            ->with('success', 'Produto criado com sucesso!');
+                        ->with('success', 'Produto cadastrado com sucesso!');
     }
 
+    // Mostrar um produto
     public function show(Product $product)
     {
-        $inventories = $product->inventories()->latest()->paginate(10);
-        
-        return view('products.show', compact('product', 'inventories'));
+        return view('products.show', compact('product'));
     }
 
+    // Mostrar formulário de edição
     public function edit(Product $product)
     {
         return view('products.edit', compact('product'));
     }
 
+    // Atualizar produto no banco
     public function update(Request $request, Product $product)
     {
+        // Validar os dados
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
             'sku' => 'required|string|unique:products,sku,' . $product->id,
-            'quantity' => 'required|integer|min:0',
+            'barcode' => 'nullable|string|unique:products,barcode,' . $product->id,
+            'description' => 'nullable|string',
+            'cost_price' => 'nullable|numeric|min:0',
             'unit_price' => 'required|numeric|min:0',
+            'quantity' => 'required|integer|min:0',
+            'max_stock' => 'nullable|integer|min:0',
             'reorder_level' => 'required|integer|min:0',
+            'package_quantity' => 'nullable|numeric|min:1',
+            'weight' => 'nullable|numeric|min:0',
+            'height' => 'nullable|numeric|min:0',
+            'width' => 'nullable|numeric|min:0',
+            'depth' => 'nullable|numeric|min:0',
+            'category' => 'nullable|string',
+            'unit' => 'nullable|string',
+            'warehouse_location' => 'nullable|string',
+            'supplier' => 'nullable|string',
+            'status' => 'required|in:ativo,inativo,descontinuado',
         ]);
 
+        // Atualizar o produto
         $product->update($validated);
 
-        return redirect()->route('products.index')
-            ->with('success', 'Produto atualizado com sucesso!');
+        return redirect()->route('products.show', $product)
+                        ->with('success', 'Produto atualizado com sucesso!');
     }
 
+    // Deletar produto
     public function destroy(Product $product)
     {
         $product->delete();
 
         return redirect()->route('products.index')
-            ->with('success', 'Produto deletado com sucesso!');
-    }
-
-    // Inventory methods
-    public function inventories()
-    {
-        $inventories = Inventory::with('product')
-            ->latest()
-            ->paginate(15);
-
-        return view('inventory.index', compact('inventories'));
-    }
-
-    public function addInventory(Request $request, Product $product)
-    {
-        $validated = $request->validate([
-            'quantity' => 'required|integer|min:1',
-            'notes' => 'nullable|string',
-        ]);
-
-        $inventory = new Inventory([
-            'quantity' => $validated['quantity'],
-            'type' => 'entrada',
-            'notes' => $validated['notes'] ?? null,
-        ]);
-
-        $product->inventories()->save($inventory);
-        $product->increment('quantity', $validated['quantity']);
-
-        return redirect()->back()
-            ->with('success', 'Entrada registrada com sucesso!');
+                        ->with('success', 'Produto deletado com sucesso!');
     }
 }
