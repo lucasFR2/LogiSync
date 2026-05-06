@@ -138,26 +138,6 @@
                                     <th class="px-6 py-4 font-semibold">Status</th>
                                 </tr>
                             </thead>
-                            <tbody class="text-gray-600 text-sm divide-y divide-gray-100">
-                                <tr>
-                                    <td class="px-6 py-4 font-medium text-gray-900">Palete de Plástico XP-200</td>
-                                    <td class="px-6 py-4 italic">Entrada</td>
-                                    <td class="px-6 py-4 text-blue-600 font-bold">+50</td>
-                                    <td class="px-6 py-4">30/04/2026</td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Concluído</span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4 font-medium text-gray-900">Caixa de Papelão Reforçada</td>
-                                    <td class="px-6 py-4 italic">Saída</td>
-                                    <td class="px-6 py-4 text-red-600 font-bold">-120</td>
-                                    <td class="px-6 py-4">29/04/2026</td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">Pendente</span>
-                                    </td>
-                                </tr>
-                            </tbody>
                         </table>
                     </div>
                 </div>

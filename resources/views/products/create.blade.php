@@ -127,25 +127,6 @@
                                         @enderror
                                     </div>
 
-                                    <!-- SKU -->
-                                    <div>
-                                        <label for="sku" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                                            <i class="fa-solid fa-barcode text-green-500"></i>SKU <span class="text-red-500 text-lg">*</span>
-                                        </label>
-                                        <input 
-                                            type="text" 
-                                            name="sku" 
-                                            id="sku"
-                                            value="{{ old('sku') }}"
-                                            placeholder="Ex: NOTEB-DELL-001"
-                                            class="w-full px-4 py-3 border-2 @error('sku') border-red-400 bg-red-50 @else border-gray-300 hover:border-green-400 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
-                                            required
-                                        >
-                                        @error('sku')
-                                            <p class="text-red-500 text-xs mt-2 flex items-center gap-1"><i class="fa-solid fa-exclamation-triangle"></i>{{ $message }}</p>
-                                        @enderror
-                                    </div>
-
                                     <!-- Código de Barras -->
                                     <div>
                                         <label for="barcode" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
@@ -157,6 +138,9 @@
                                             id="barcode"
                                             value="{{ old('barcode') }}"
                                             placeholder="Ex: 1234567890123"
+                                            pattern="[0-9]{1,20}"
+                                            title="Código de barras deve conter apenas números"
+                                            inputmode="numeric"
                                             class="w-full px-4 py-3 border-2 border-gray-300 hover:border-purple-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
                                         >
                                     </div>
@@ -198,7 +182,8 @@
                                             value="{{ old('cost_price') }}"
                                             placeholder="0.00"
                                             step="0.01"
-                                            min="0"
+                                            min="0.01"
+                                            max="999999.99"
                                             class="w-full px-4 py-3 border-2 border-gray-300 hover:border-indigo-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
                                         >
                                     </div>
@@ -215,13 +200,33 @@
                                             value="{{ old('unit_price') }}"
                                             placeholder="0.00"
                                             step="0.01"
-                                            min="0"
+                                            min="0.01"
+                                            max="999999.99"
                                             class="w-full px-4 py-3 border-2 @error('unit_price') border-red-400 bg-red-50 @else border-gray-300 hover:border-green-400 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
                                             required
                                         >
                                         @error('unit_price')
                                             <p class="text-red-500 text-xs mt-2 flex items-center gap-1"><i class="fa-solid fa-exclamation-triangle"></i>{{ $message }}</p>
                                         @enderror
+                                    </div>
+
+                                    <!-- Preço de Venda Especial -->
+                                    <div>
+                                        <label for="selling_price" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <i class="fa-solid fa-tag text-emerald-600"></i>Preço Especial (R$)
+                                        </label>
+                                        <input 
+                                            type="number" 
+                                            name="selling_price" 
+                                            id="selling_price"
+                                            value="{{ old('selling_price') }}"
+                                            placeholder="0.00"
+                                            step="0.01"
+                                            min="0.01"
+                                            max="999999.99"
+                                            class="w-full px-4 py-3 border-2 border-gray-300 hover:border-emerald-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
+                                        >
+                                        <p class="text-xs text-gray-500 mt-1"><i class="fa-solid fa-info-circle"></i> Preço opcional para promoções ou vendas especiais</p>
                                     </div>
 
                                     <!-- Quantidade Atual -->
@@ -236,6 +241,8 @@
                                             value="{{ old('quantity', 0) }}"
                                             placeholder="0"
                                             min="0"
+                                            step="1"
+                                            max="9999999"
                                             class="w-full px-4 py-3 border-2 @error('quantity') border-red-400 bg-red-50 @else border-gray-300 hover:border-cyan-400 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
                                             required
                                         >
@@ -253,9 +260,11 @@
                                             type="number" 
                                             name="max_stock" 
                                             id="max_stock"
-                                            value="{{ old('max_stock', 0) }}"
-                                            placeholder="0"
-                                            min="0"
+                                            value="{{ old('max_stock', 1) }}"
+                                            placeholder="1"
+                                            min="1"
+                                            step="1"
+                                            max="9999999"
                                             class="w-full px-4 py-3 border-2 border-gray-300 hover:border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
                                         >
                                     </div>
@@ -272,6 +281,8 @@
                                             value="{{ old('reorder_level', 0) }}"
                                             placeholder="0"
                                             min="0"
+                                            step="1"
+                                            max="9999999"
                                             class="w-full px-4 py-3 border-2 @error('reorder_level') border-red-400 bg-red-50 @else border-gray-300 hover:border-yellow-400 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
                                             required
                                         >
@@ -292,6 +303,8 @@
                                             value="{{ old('package_quantity', 1) }}"
                                             placeholder="1"
                                             min="1"
+                                            step="0.01"
+                                            max="999999.99"
                                             class="w-full px-4 py-3 border-2 border-gray-300 hover:border-red-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
                                         >
                                     </div>
@@ -320,6 +333,7 @@
                                             placeholder="0.00"
                                             step="0.01"
                                             min="0"
+                                            max="999999.99"
                                             class="w-full px-4 py-3 border-2 border-gray-300 hover:border-orange-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
                                         >
                                     </div>
@@ -337,6 +351,7 @@
                                             placeholder="0.00"
                                             step="0.01"
                                             min="0"
+                                            max="999999.99"
                                             class="w-full px-4 py-3 border-2 border-gray-300 hover:border-pink-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
                                         >
                                     </div>
@@ -354,6 +369,7 @@
                                             placeholder="0.00"
                                             step="0.01"
                                             min="0"
+                                            max="999999.99"
                                             class="w-full px-4 py-3 border-2 border-gray-300 hover:border-teal-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
                                         >
                                     </div>
@@ -371,6 +387,7 @@
                                             placeholder="0.00"
                                             step="0.01"
                                             min="0"
+                                            max="999999.99"
                                             class="w-full px-4 py-3 border-2 border-gray-300 hover:border-sky-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
                                         >
                                     </div>

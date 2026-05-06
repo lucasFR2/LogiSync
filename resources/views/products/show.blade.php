@@ -107,10 +107,6 @@
                                     </h3>
                                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                                         <div>
-                                            <label class="text-xs text-gray-500 font-semibold">SKU</label>
-                                            <p class="text-lg text-gray-900 font-bold">{{ $product->sku }}</p>
-                                        </div>
-                                        <div>
                                             <label class="text-xs text-gray-500 font-semibold">Código de Barras</label>
                                             <p class="text-sm text-gray-700">{{ $product->barcode ?? '—' }}</p>
                                         </div>
