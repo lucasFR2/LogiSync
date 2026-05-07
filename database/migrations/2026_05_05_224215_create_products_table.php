@@ -16,7 +16,6 @@ return new class extends Migration
             
             // Basic Information
             $table->string('name');
-            $table->string('sku')->unique();
             $table->string('barcode')->unique()->nullable();
             $table->text('description')->nullable();
             
@@ -39,7 +38,7 @@ return new class extends Migration
             $table->string('category')->nullable();
             $table->string('unit')->default('un');
             $table->string('warehouse_location')->nullable();
-            $table->string('supplier')->nullable();
+            $table->foreignId('supplier_id')->nullable()->constrained('suppliers')->onDelete('set null');
             $table->enum('status', ['ativo', 'inativo', 'descontinuado'])->default('ativo');
             
             $table->timestamps();

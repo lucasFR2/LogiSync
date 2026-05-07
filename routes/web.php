@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SupplierController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -20,6 +21,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('products', ProductController::class);
     Route::get('/inventory', [ProductController::class, 'inventories'])->name('inventory.index');
     Route::post('/products/{product}/add-inventory', [ProductController::class, 'addInventory'])->name('products.add-inventory');
+    
+    // Supplier routes
+    Route::resource('suppliers', SupplierController::class);
+    Route::get('/suppliers/list', [SupplierController::class, 'list'])->name('suppliers.list');
     
     Route::get('/admin',      fn() => 'Área Admin')->middleware('role:admin')->name('admin');
 });

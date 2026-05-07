@@ -4,15 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalhes do Produto - LogiSync WMS</title>
+    <script>
+        tailwindConfig = {
+            darkMode: 'class',
+        };
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="{{ asset('js/theme-toggle.js') }}"></script>
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="bg-gray-50 dark:bg-slate-950 font-sans transition-colors">
 
     <div class="min-h-screen flex">
         <!-- Sidebar -->
-        <aside class="w-64 bg-slate-900 text-white hidden md:flex flex-col">
-            <div class="p-6 border-b border-slate-800 flex justify-center">
+        <aside class="w-64 bg-slate-900 dark:bg-slate-950 text-white hidden md:flex flex-col">
+            <div class="p-6 border-b border-slate-800 dark:border-slate-700 flex justify-center">
                 <a href="/">
                     <img src="{{ asset('images/logisync-logo.png') }}" alt="LogiSync Logo" class="w-40 h-auto brightness-0 invert">
                 </a>
@@ -27,6 +33,9 @@
                 </a>
                 <a href="{{ route('inventory.index') }}" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition">
                     <i class="fa-solid fa-truck-ramp-box mr-3"></i> Entradas
+                </a>
+                <a href="{{ route('suppliers.index') }}" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition">
+                    <i class="fa-solid fa-handshake mr-3"></i> Fornecedores
                 </a>
                 <a href="#" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition">
                     <i class="fa-solid fa-clipboard-list mr-3"></i> Relatórios
@@ -46,12 +55,15 @@
         <!-- Conteúdo Principal -->
         <main class="flex-1">
             <!-- Header Superior -->
-            <header class="bg-white shadow-sm px-8 py-4 flex justify-between items-center">
-                <h1 class="text-2xl font-bold text-slate-900">
+            <header class="bg-white dark:bg-slate-900 shadow-sm px-8 py-4 flex justify-between items-center border-b dark:border-slate-800">
+                <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
                     <i class="fa-solid fa-box text-blue-600 mr-2"></i>Detalhes do Produto
                 </h1>
                 <div class="flex items-center gap-4">
-                    <span class="text-gray-600">{{ auth()->user()->name }}</span>
+                    <button onclick="toggleTheme()" data-theme-toggle class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition text-gray-600 dark:text-gray-400" title="Alternar tema">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <span class="text-gray-600 dark:text-gray-400">{{ auth()->user()->name }}</span>
                     <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
                         {{ substr(auth()->user()->name, 0, 1) }}
                     </div>
@@ -120,7 +132,7 @@
                                         </div>
                                         <div>
                                             <label class="text-xs text-gray-500 font-semibold">Fornecedor</label>
-                                            <p class="text-sm text-gray-700">{{ $product->supplier ?? '—' }}</p>
+                                            <p class="text-sm text-gray-700">{{ $product->supplier?->name ?? '—' }}</p>
                                         </div>
                                         <div>
                                             <label class="text-xs text-gray-500 font-semibold">Status</label>

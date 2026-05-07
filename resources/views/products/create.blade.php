@@ -4,15 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro de Produtos - LogiSync WMS</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="{{ asset('js/theme-toggle.js') }}"></script>
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="bg-gray-50 dark:bg-slate-950 font-sans transition-colors">
 
     <div class="min-h-screen flex">
         <!-- Sidebar -->
-        <aside class="w-64 bg-slate-900 text-white hidden md:flex flex-col">
-            <div class="p-6 border-b border-slate-800 flex justify-center">
+        <aside class="w-64 bg-slate-900 dark:bg-slate-950 text-white hidden md:flex flex-col">
+            <div class="p-6 border-b border-slate-800 dark:border-slate-700 flex justify-center">
                 <a href="/">
                     <img src="{{ asset('images/logisync-logo.png') }}" alt="LogiSync Logo" class="w-40 h-auto brightness-0 invert">
                 </a>
@@ -27,6 +29,9 @@
                 </a>
                 <a href="{{ route('inventory.index') }}" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition">
                     <i class="fa-solid fa-truck-ramp-box mr-3"></i> Entradas
+                </a>
+                <a href="{{ route('suppliers.index') }}" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition">
+                    <i class="fa-solid fa-handshake mr-3"></i> Fornecedores
                 </a>
                 <a href="#" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition">
                     <i class="fa-solid fa-clipboard-list mr-3"></i> Relatórios
@@ -46,12 +51,15 @@
         <!-- Conteúdo Principal -->
         <main class="flex-1">
             <!-- Header Superior -->
-            <header class="bg-white shadow-sm px-8 py-4 flex justify-between items-center">
-                <h1 class="text-2xl font-bold text-slate-900">
+            <header class="bg-white dark:bg-slate-900 shadow-sm px-8 py-4 flex justify-between items-center border-b dark:border-slate-800">
+                <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
                     <i class="fa-solid fa-plus-circle text-blue-600 mr-2"></i>Cadastro de Produtos
                 </h1>
                 <div class="flex items-center gap-4">
-                    <span class="text-gray-600">{{ auth()->user()->name }}</span>
+                    <button onclick="toggleTheme()" data-theme-toggle class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition text-gray-600 dark:text-gray-400" title="Alternar tema">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <span class="text-gray-600 dark:text-gray-400">{{ auth()->user()->name }}</span>
                     <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
                         {{ substr(auth()->user()->name, 0, 1) }}
                     </div>
@@ -59,10 +67,10 @@
             </header>
 
             <!-- Conteúdo da Página -->
-            <section class="p-0 h-full overflow-y-auto">
+            <section class="p-0 h-full overflow-y-auto bg-gray-50 dark:bg-slate-950">
                 <div class="w-full h-full flex flex-col">
                     <!-- Barra de Navegação -->
-                    <div class="px-8 py-4 flex items-center gap-2 text-sm border-b border-gray-200 bg-white">
+                    <div class="px-8 py-4 flex items-center gap-2 text-sm border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                         <a href="{{ route('products.index') }}" class="text-blue-600 hover:text-blue-800">
                             <i class="fa-solid fa-boxes-stacked mr-2"></i>Produtos
                         </a>
@@ -71,8 +79,8 @@
                     </div>
 
                     <!-- Card do Formulário -->
-                    <div class="flex-1 bg-gray-50 overflow-y-auto">
-                        <div class="w-full h-full bg-white rounded-none shadow-none overflow-hidden border-0 flex flex-col">
+                    <div class="flex-1 bg-gray-50 dark:bg-slate-950 overflow-y-auto">
+                        <div class="w-full h-full bg-white dark:bg-slate-900 rounded-none shadow-none overflow-hidden border-0 flex flex-col">
                         <!-- Header do Card -->
                         <div class="bg-gradient-to-r from-blue-600 via-blue-650 to-blue-700 px-8 py-6 border-b-4 border-blue-800 flex-shrink-0">
                             <h2 class="text-2xl font-bold text-white flex items-center gap-3">
@@ -83,15 +91,15 @@
                         </div>
 
                         <!-- Formulário -->
-                        <form method="POST" action="{{ route('products.store') }}" class="flex-1 overflow-y-auto p-8">
+                        <form method="POST" action="{{ route('products.store') }}" class="flex-1 overflow-y-auto p-8 bg-white dark:bg-slate-900">
                             @csrf
 
                             @if ($errors->any())
-                                <div class="mb-8 p-5 bg-red-50 border-l-4 border-red-500 rounded-lg backdrop-blur">
-                                    <p class="text-red-700 font-bold mb-3 flex items-center gap-2">
+                                <div class="mb-8 p-5 bg-red-50 dark:bg-red-950 border-l-4 border-red-500 rounded-lg backdrop-blur">
+                                    <p class="text-red-700 dark:text-red-300 font-bold mb-3 flex items-center gap-2">
                                         <i class="fa-solid fa-circle-exclamation text-lg"></i>Erro ao validar o formulário:
                                     </p>
-                                    <ul class="text-red-600 text-sm space-y-1 ml-6">
+                                    <ul class="text-red-600 dark:text-red-400 text-sm space-y-1 ml-6">
                                         @foreach ($errors->all() as $error)
                                             <li class="flex items-center gap-2"><i class="fa-solid fa-times-circle text-xs"></i>{{ $error }}</li>
                                         @endforeach
@@ -458,18 +466,29 @@
                                     </div>
 
                                     <!-- Fornecedor -->
-                                    <div>
-                                        <label for="supplier" class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                                            <i class="fa-solid fa-handshake text-rose-500"></i>Fornecedor Principal
-                                        </label>
-                                        <input 
-                                            type="text" 
-                                            name="supplier" 
-                                            id="supplier"
-                                            value="{{ old('supplier') }}"
-                                            placeholder="Ex: Fornecedor XYZ"
-                                            class="w-full px-4 py-3 border-2 border-gray-300 hover:border-rose-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
+                                    <div class="md:col-span-2 bg-gradient-to-br from-rose-50 to-orange-50 p-6 rounded-lg border-2 border-rose-200 shadow-sm">
+                                        <div class="flex items-center justify-between mb-4">
+                                            <label for="supplier_id" class="block text-base font-bold text-gray-900 flex items-center gap-3">
+                                                <span class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center">
+                                                    <i class="fa-solid fa-handshake text-rose-600 text-lg"></i>
+                                                </span>Fornecedor Principal
+                                            </label>
+                                            <button type="button" onclick="openSupplierModal()" class="bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white px-5 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center gap-2 text-sm">
+                                                <i class="fa-solid fa-plus-circle"></i> Novo Fornecedor
+                                            </button>
+                                        </div>
+                                        <select 
+                                            name="supplier_id" 
+                                            id="supplier_id"
+                                            class="w-full px-4 py-3 border-2 border-rose-300 hover:border-rose-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all bg-white cursor-pointer font-medium text-gray-700"
                                         >
+                                            <option value="" class="text-gray-600">-- Selecione um fornecedor --</option>
+                                            @foreach($suppliers as $supplier)
+                                                <option value="{{ $supplier->id }}" {{ old('supplier_id') == $supplier->id ? 'selected' : '' }}>
+                                                    {{ $supplier->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
                                     </div>
 
                                     <!-- Status -->
@@ -517,6 +536,255 @@
             </section>
         </main>
     </div>
+
+    <!-- Modal para Novo Fornecedor -->
+    <div id="supplierModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <!-- Header do Modal -->
+            <div class="bg-gradient-to-r from-rose-600 to-rose-700 px-6 py-4 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle"></i>Novo Fornecedor
+                </h3>
+                <button type="button" onclick="closeSupplierModal()" class="text-white hover:text-rose-100 transition">
+                    <i class="fa-solid fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <!-- Formulário -->
+            <form id="supplierForm" class="p-6 space-y-4">
+                @csrf
+                
+                <!-- Nome -->
+                <div>
+                    <label for="supplier_name" class="block text-sm font-bold text-gray-700 mb-2">
+                        <i class="fa-solid fa-store text-rose-500"></i> Nome do Fornecedor *
+                    </label>
+                    <input 
+                        type="text" 
+                        name="name" 
+                        id="supplier_name"
+                        placeholder="Ex: Distribuidora XYZ"
+                        required
+                        class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all"
+                    >
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label for="supplier_email" class="block text-sm font-bold text-gray-700 mb-2">
+                        <i class="fa-solid fa-envelope text-blue-500"></i> Email
+                    </label>
+                    <input 
+                        type="email" 
+                        name="email" 
+                        id="supplier_email"
+                        placeholder="contato@fornecedor.com"
+                        class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                    >
+                </div>
+
+                <!-- Telefone -->
+                <div>
+                    <label for="supplier_phone" class="block text-sm font-bold text-gray-700 mb-2">
+                        <i class="fa-solid fa-phone text-green-500"></i> Telefone
+                    </label>
+                    <input 
+                        type="tel" 
+                        name="phone" 
+                        id="supplier_phone"
+                        placeholder="(00) 00000-0000"
+                        class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all"
+                    >
+                </div>
+
+                <!-- CNPJ -->
+                <div>
+                    <label for="supplier_cnpj" class="block text-sm font-bold text-gray-700 mb-2">
+                        <i class="fa-solid fa-id-card text-purple-500"></i> CNPJ
+                    </label>
+                    <input 
+                        type="text" 
+                        name="cnpj" 
+                        id="supplier_cnpj"
+                        placeholder="00.000.000/0000-00"
+                        class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all"
+                    >
+                </div>
+
+                <!-- Endereço -->
+                <div>
+                    <label for="supplier_address" class="block text-sm font-bold text-gray-700 mb-2">
+                        <i class="fa-solid fa-map-location-dot text-orange-500"></i> Endereço
+                    </label>
+                    <input 
+                        type="text" 
+                        name="address" 
+                        id="supplier_address"
+                        placeholder="Rua, número, complemento..."
+                        class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all"
+                    >
+                </div>
+
+                <!-- Cidade -->
+                <div>
+                    <label for="supplier_city" class="block text-sm font-bold text-gray-700 mb-2">
+                        <i class="fa-solid fa-city text-green-500"></i> Cidade
+                    </label>
+                    <input 
+                        type="text" 
+                        name="city" 
+                        id="supplier_city"
+                        placeholder="São Paulo"
+                        class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all"
+                    >
+                </div>
+
+                <!-- Estado -->
+                <div>
+                    <label for="supplier_state" class="block text-sm font-bold text-gray-700 mb-2">
+                        <i class="fa-solid fa-map text-red-500"></i> Estado (UF)
+                    </label>
+                    <input 
+                        type="text" 
+                        name="state" 
+                        id="supplier_state"
+                        placeholder="SP"
+                        maxlength="2"
+                        class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent transition-all"
+                    >
+                </div>
+
+                <!-- Mensagem de erro -->
+                <div id="supplierError" class="hidden bg-red-50 border-l-4 border-red-500 p-3 rounded text-sm text-red-700"></div>
+
+                <!-- Mensagem de sucesso -->
+                <div id="supplierSuccess" class="hidden bg-green-50 border-l-4 border-green-500 p-3 rounded text-sm text-green-700"></div>
+
+                <!-- Botões -->
+                <div class="flex gap-3 pt-4 border-t border-gray-200">
+                    <button type="button" onclick="closeSupplierModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 py-2 rounded-lg font-semibold transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white py-2 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-check"></i> Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Abrir modal
+        function openSupplierModal() {
+            document.getElementById('supplierModal').classList.remove('hidden');
+            document.getElementById('supplierForm').reset();
+            document.getElementById('supplierError').classList.add('hidden');
+            document.getElementById('supplierSuccess').classList.add('hidden');
+        }
+
+        // Fechar modal
+        function closeSupplierModal() {
+            document.getElementById('supplierModal').classList.add('hidden');
+            document.getElementById('supplierForm').reset();
+        }
+
+        // Enviar formulário via AJAX
+        document.getElementById('supplierForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const errorDiv = document.getElementById('supplierError');
+            const successDiv = document.getElementById('supplierSuccess');
+            const submitBtn = this.querySelector('button[type="submit"]');
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+
+                const csrfToken = 
+                    document.querySelector('input[name="_token"]')?.value ||
+                    document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                    formData.get('_token');
+                
+                console.log('CSRF Token encontrado:', !!csrfToken);
+
+                const response = await fetch('{{ route("suppliers.store") }}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': csrfToken || '',
+                    }
+                });
+
+                let data;
+                const contentType = response.headers.get('content-type');
+                
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    const text = await response.text();
+                    console.error('Resposta não é JSON:', text.substring(0, 500));
+                    console.error('Content-Type:', contentType);
+                    console.error('Status:', response.status, response.statusText);
+                    
+                    // Tenta parsear como JSON mesmo assim
+                    try {
+                        data = JSON.parse(text);
+                    } catch (e) {
+                        throw new Error(`Erro ${response.status}: ${response.statusText}. Resposta inválida.`);
+                    }
+                }
+
+                if (!response.ok) {
+                    throw data;
+                }
+
+                // Sucesso
+                successDiv.textContent = data.message;
+                successDiv.classList.remove('hidden');
+
+                // Atualizar select
+                const select = document.getElementById('supplier_id');
+                const newOption = document.createElement('option');
+                newOption.value = data.supplier.id;
+                newOption.textContent = data.supplier.name;
+                newOption.selected = true;
+                select.appendChild(newOption);
+
+                setTimeout(() => {
+                    closeSupplierModal();
+                }, 1500);
+
+            } catch (error) {
+                console.error('Erro ao enviar:', error);
+                let messages = [];
+                if (error.errors) {
+                    Object.values(error.errors).forEach(msgs => {
+                        messages = messages.concat(msgs);
+                    });
+                } else if (error.message) {
+                    messages.push(error.message);
+                } else {
+                    messages.push('Erro desconhecido ao processar a requisição');
+                }
+                
+                errorDiv.innerHTML = '<i class="fa-solid fa-exclamation-circle mr-2"></i>' + messages.join('<br>');
+                errorDiv.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> Salvar';
+            }
+        });
+
+        // Fechar modal ao clicar fora
+        document.getElementById('supplierModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeSupplierModal();
+            }
+        });
+    </script>
 
 </body>
 </html>

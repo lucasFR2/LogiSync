@@ -4,16 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - LogiSync WMS</title>
+    <script>
+        tailwindConfig = {
+            darkMode: 'class',
+        };
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="{{ asset('js/theme-toggle.js') }}"></script>
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="bg-gray-50 dark:bg-slate-950 font-sans transition-colors">
 
     <div class="min-h-screen flex">
         <!-- Sidebar (Barra Lateral) -->
-        <aside class="w-64 bg-slate-900 text-white hidden md:flex flex-col">
+        <aside class="w-64 bg-slate-900 dark:bg-slate-950 text-white hidden md:flex flex-col">
             <!-- LOGO ADICIONADA AQUI -->
-            <div class="p-6 border-b border-slate-800 flex justify-center">
+            <div class="p-6 border-b border-slate-800 dark:border-slate-700 flex justify-center">
                 <a href="/">
                     <img src="{{ asset('images/logisync-logo.png') }}" alt="LogiSync Logo" class="w-40 h-auto brightness-0 invert">
                 </a>
@@ -47,7 +53,20 @@
         <!-- Conteúdo Principal -->
         <main class="flex-1">
             <!-- Header Superior -->
-            <header class="bg-white shadow-sm px-8 py-4 flex justify-between items-center">
+            <header class="bg-white dark:bg-slate-900 shadow-sm px-8 py-4 flex justify-between items-center border-b dark:border-slate-800">
+                <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
+                    <i class="fa-solid fa-chart-line text-blue-600 mr-2"></i>Dashboard
+                </h1>
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleTheme()" data-theme-toggle class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition text-gray-600 dark:text-gray-400" title="Alternar tema">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <span class="text-gray-600 dark:text-gray-400">{{ auth()->user()->name }}</span>
+                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                        {{ substr(auth()->user()->name, 0, 1) }}
+                    </div>
+                </div>
+            </header>
                 <h2 class="text-xl font-semibold text-gray-700">Visão Geral</h2>
                 
                 <div class="flex items-center space-x-4">
