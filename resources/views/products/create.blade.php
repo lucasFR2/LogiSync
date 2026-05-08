@@ -130,25 +130,8 @@
                     </div>
 
                     <!-- Formulário -->
-                    <form method="POST" action="{{ route('products.store') }}" class="p-8">
+                    <form method="POST" action="{{ route('products.store') }}" class="flex-1 overflow-y-auto p-8 bg-white dark:bg-slate-900">
                         @csrf
-
-                        @if ($errors->any())
-                            <div class="mb-8 p-5 bg-red-600/10 border border-red-600/50 rounded-lg">
-                                <p class="text-red-400 font-bold mb-3 flex items-center gap-2">
-                                    <i class="fa-solid fa-circle-exclamation text-lg"></i>Erro ao validar o formulário:
-                                </p>
-                                <ul class="text-red-400 text-sm space-y-1 ml-6">
-                                    @foreach ($errors->all() as $error)
-                                        <li class="flex items-center gap-2"><i class="fa-solid fa-times-circle text-xs"></i>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @endif
-
-                        <!-- Formulário -->
-                        <form method="POST" action="{{ route('products.store') }}" class="flex-1 overflow-y-auto p-8 bg-white dark:bg-slate-900">
-                            @csrf
 
                             @if ($errors->any())
                                 <div class="mb-8 p-5 bg-red-50 dark:bg-red-950 border-l-4 border-red-500 rounded-lg backdrop-blur">

@@ -130,18 +130,6 @@ class ProductController extends Controller
         // Atualizar o produto
         $product->update($validated);
 
-        function store(Request $request)
-        {
-            $request->validate([
-                'max_stock' => 'required|integer|min:1',
-            ], [
-                'max_stock.min' => 'Mensagem',
-            ]);
-        }
-
-        // Atualizar o produto
-        $product->update($validated);
-
         return redirect()->route('products.show', $product)
             ->with('success', 'Produto atualizado com sucesso!');
     }

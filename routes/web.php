@@ -21,6 +21,8 @@ Route::middleware('auth')->group(function () {
 
     // ADICIONE ESTAS TRÊS LINHAS ABAIXO:
     Route::resource('products', ProductController::class);
+    // Rota para registrar entrada via modal/JS
+    Route::post('products/{product}/add-inventory', [ProductController::class, 'addInventory'])->name('products.addInventory');
     Route::resource('inventory', InventoryController::class);
     Route::resource('suppliers', SupplierController::class);
 });
