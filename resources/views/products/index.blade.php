@@ -79,25 +79,186 @@
                 @endif
 
                 <!-- Controles Superiores -->
-                <div class="mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <!-- Barra de Pesquisa -->
-                    <form method="GET" action="{{ route('products.index') }}" class="flex-1 w-full md:w-auto">
-                        <div class="relative">
-                            <input 
-                                type="text" 
-                                name="search" 
-                                placeholder="Pesquisar por nome ou código de barras..." 
-                                value="{{ $search ?? '' }}"
-                                class="w-full px-4 py-3 pl-10 border border-[#1E293B] bg-[#0F172A] text-[#FFFFFF] placeholder-[#94A3B8] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-colors"
-                            >
-                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-[#1E293B]"></i>
-                        </div>
-                    </form>
+                <div class="mb-6 space-y-4">
+                    <!-- Linha 1: Pesquisa + Filtro Rápido + Botões de Ação -->
+                    <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                        <!-- Campo de Pesquisa -->
+                        <form method="GET" action="{{ route('products.index') }}" class="flex-1 flex gap-2">
+                            <div class="flex-1 relative">
+                                <input 
+                                    type="text" 
+                                    name="search" 
+                                    placeholder="Pesquisar por nome, código ou categoria..." 
+                                    value="{{ $search ?? '' }}"
+                                    class="w-full px-4 py-2.5 pl-10 border-2 border-[#1E293B] bg-[#0F172A] text-[#FFFFFF] placeholder-[#94A3B8] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                                >
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-[#94A3B8]"></i>
+                            </div>
 
-                    <!-- Botão Novo Produto -->
-                    <a href="{{ route('products.create') }}" class="bg-[#2563EB] hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition w-full md:w-auto justify-center">
-                        <i class="fa-solid fa-plus"></i> Novo Produto
-                    </a>
+                            <!-- Selector de Filtro Rápido -->
+                            <select 
+                                name="filter" 
+                                class="px-3 py-2.5 border-2 border-[#1E293B] bg-[#0F172A] text-[#FFFFFF] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer text-sm"
+                            >
+                                <option value="all" {{ ($filterBy ?? 'all') == 'all' ? 'selected' : '' }}>Todos</option>
+                                <option value="name" {{ ($filterBy ?? 'all') == 'name' ? 'selected' : '' }}>Nome</option>
+                                <option value="barcode" {{ ($filterBy ?? 'all') == 'barcode' ? 'selected' : '' }}>Código</option>
+                                <option value="category" {{ ($filterBy ?? 'all') == 'category' ? 'selected' : '' }}>Categoria</option>
+                                <option value="status" {{ ($filterBy ?? 'all') == 'status' ? 'selected' : '' }}>Status</option>
+                            </select>
+
+                            <!-- Botão Pesquisar (apenas ícone) -->
+                            <button 
+                                type="submit" 
+                                class="px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold flex items-center justify-center transition whitespace-nowrap"
+                                title="Pesquisar"
+                            >
+                                <i class="fa-solid fa-search"></i>
+                            </button>
+
+                            <!-- Botão Limpar (apenas ícone) -->
+                            @if (!empty($search))
+                                <a 
+                                    href="{{ route('products.index') }}" 
+                                    class="px-3 py-2.5 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold flex items-center justify-center transition whitespace-nowrap"
+                                    title="Limpar filtro"
+                                >
+                                    <i class="fa-solid fa-times"></i>
+                                </a>
+                            @endif
+                        </form>
+
+                        <!-- Botão Filtro Avançado -->
+                        <button 
+                            onclick="toggleAdvancedFilter()" 
+                            class="bg-[#2563EB] hover:bg-blue-800 text-white px-4 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2 transition whitespace-nowrap"
+                            title="Abrir filtro avançado"
+                        >
+                            <i class="fa-solid fa-sliders"></i> <span class="hidden sm:inline text-sm">Avançado</span>
+                        </button>
+
+                        <!-- Botão Novo Produto -->
+                        <a href="{{ route('products.create') }}" class="bg-[#2563EB] hover:bg-blue-800 text-white px-4 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2 transition whitespace-nowrap">
+                            <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline text-sm">Novo</span>
+                        </a>
+                    </div>
+
+                    <!-- Info de Filtro Ativo -->
+                    @if (!empty($search))
+                        <div class="flex items-center justify-between gap-3 p-3 bg-blue-900/20 border border-blue-600 rounded-lg text-xs sm:text-sm">
+                            <span class="text-blue-300">
+                                <i class="fa-solid fa-filter text-blue-400 mr-2"></i>
+                                Buscando: <strong>"{{ $search }}"</strong>
+                            </span>
+                        </div>
+                    @endif
+
+                    <!-- Painel de Filtro Avançado (Oculto por padrão) -->
+                    <div id="advancedFilterPanel" class="hidden bg-[#0F172A] border-2 border-[#1E293B] rounded-lg p-4 space-y-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-sliders"></i> Filtros Avançados
+                            </h3>
+                            <button onclick="toggleAdvancedFilter()" class="text-gray-400 hover:text-white transition">
+                                <i class="fa-solid fa-times text-lg"></i>
+                            </button>
+                        </div>
+
+                        <form method="GET" action="{{ route('products.index') }}" class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <!-- Status -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-2">Status</label>
+                                    <select 
+                                        name="status_filter" 
+                                        class="w-full px-3 py-2 border border-[#1E293B] bg-[#1A2438] text-[#FFFFFF] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                                    >
+                                        <option value="">Todos os Status</option>
+                                        <option value="ativo">Ativo</option>
+                                        <option value="inativo">Inativo</option>
+                                        <option value="descontinuado">Descontinuado</option>
+                                    </select>
+                                </div>
+
+                                <!-- Faixa de Preço -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-2">Preço Mínimo (R$)</label>
+                                    <input 
+                                        type="number" 
+                                        name="price_min"
+                                        placeholder="0.00"
+                                        step="0.01"
+                                        min="0"
+                                        class="w-full px-3 py-2 border border-[#1E293B] bg-[#1A2438] text-[#FFFFFF] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                                    >
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-2">Preço Máximo (R$)</label>
+                                    <input 
+                                        type="number" 
+                                        name="price_max"
+                                        placeholder="99999.99"
+                                        step="0.01"
+                                        min="0"
+                                        class="w-full px-3 py-2 border border-[#1E293B] bg-[#1A2438] text-[#FFFFFF] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                                    >
+                                </div>
+
+                                <!-- Estoque -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-2">Estoque</label>
+                                    <select 
+                                        name="stock_filter" 
+                                        class="w-full px-3 py-2 border border-[#1E293B] bg-[#1A2438] text-[#FFFFFF] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                                    >
+                                        <option value="">Qualquer estoque</option>
+                                        <option value="low">Estoque baixo</option>
+                                        <option value="medium">Estoque médio</option>
+                                        <option value="high">Estoque alto</option>
+                                    </select>
+                                </div>
+
+                                <!-- Categoria -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-2">Categoria</label>
+                                    <input 
+                                        type="text" 
+                                        name="category_filter"
+                                        placeholder="Ex: Informática"
+                                        class="w-full px-3 py-2 border border-[#1E293B] bg-[#1A2438] text-[#FFFFFF] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                                    >
+                                </div>
+
+                                <!-- Fornecedor -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-2">Fornecedor</label>
+                                    <input 
+                                        type="text" 
+                                        name="supplier_filter"
+                                        placeholder="Ex: Distribuidora 1"
+                                        class="w-full px-3 py-2 border border-[#1E293B] bg-[#1A2438] text-[#FFFFFF] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                                    >
+                                </div>
+                            </div>
+
+                            <!-- Botões do Filtro Avançado -->
+                            <div class="flex gap-3 pt-2 border-t border-[#1E293B]">
+                                <button 
+                                    type="submit" 
+                                    class="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition text-sm"
+                                >
+                                    <i class="fa-solid fa-filter"></i> Aplicar Filtros
+                                </button>
+                                <a 
+                                    href="{{ route('products.index') }}" 
+                                    class="flex-1 px-4 py-2.5 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition text-sm"
+                                >
+                                    <i class="fa-solid fa-rotate-left"></i> Resetar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
                 <!-- Tabela de Produtos -->
@@ -179,6 +340,26 @@
             </section>
         </main>
     </div>
+
+    <script>
+        // Toggle para mostrar/ocultar filtro avançado
+        function toggleAdvancedFilter() {
+            const panel = document.getElementById('advancedFilterPanel');
+            if (panel) {
+                panel.classList.toggle('hidden');
+            }
+        }
+
+        // Fechar filtro avançado ao pressionar ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const panel = document.getElementById('advancedFilterPanel');
+                if (panel && !panel.classList.contains('hidden')) {
+                    panel.classList.add('hidden');
+                }
+            }
+        });
+    </script>
 
 </body>
 </html>

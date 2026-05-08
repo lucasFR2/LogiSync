@@ -39,6 +39,14 @@ class Product extends Model
     }
 
     /**
+     * Relação: produto possui muitos logs de auditoria
+     */
+    public function auditLogs(): HasMany
+    {
+        return $this->hasMany(ProductAuditLog::class);
+    }
+
+    /**
      * Relação: produto pertence a um fornecedor
      */
     public function supplier(): BelongsTo

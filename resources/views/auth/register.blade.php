@@ -13,12 +13,11 @@
     <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
         
         <!-- Logo Centralizada -->
-        <div class="mb-8">
-            <a href="/">
-                <!-- Espaço para sua Logo -->
-                <img src="{{ asset('images/logisync-logo.png') }}" alt="LogiSync" class="w-56 h-auto">
-            </a>
-        </div>
+            <div class="p-6 border-b border-[#1E293B] flex justify-center">
+                <a href="/" class="hover:opacity-80 transition-opacity">
+                    <img src="{{ asset('images/logisync-logo.png') }}" alt="LogiSync Logo" class="w-40 h-auto brightness-0 invert">
+                </a>
+            </div>
 
         <!-- Card de Registro -->
         <div class="w-full sm:max-w-md px-8 py-10 bg-[#0F172A] shadow-xl rounded-lg border border-[#1E293B]">

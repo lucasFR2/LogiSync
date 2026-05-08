@@ -13,12 +13,11 @@
     <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
         
         <!-- Logo Centralizada -->
-        <div class="mb-8">
-            <a href="/">
-                <!-- Espaço para sua Logo -->
-                <img src="{{ asset('images/logisync-logo.png') }}" alt="LogiSync" class="w-56 h-auto">
-            </a>
-        </div>
+        <div class="p-6 border-b border-[#1E293B] flex justify-center">
+                <a href="/" class="hover:opacity-80 transition-opacity">
+                    <img src="{{ asset('images/logisync-logo.png') }}" alt="LogiSync Logo" class="w-40 h-auto brightness-0 invert">
+                </a>
+            </div>
 
         <!-- Card de Login -->
         <div class="w-full sm:max-w-md px-8 py-10 bg-[#0F172A] shadow-xl rounded-lg border border-[#1E293B]">
@@ -74,8 +73,7 @@
             <!-- Rodapé do Card -->
             <div class="mt-8 pt-6 border-t border-[#1E293B] text-center">
                 <p class="text-sm text-[#94A3B8]">
-                    Não tem uma conta? 
-                    <a href="{{ route('register') }}" class="font-bold text-[#2563EB] hover:text-blue-400 transition-colors">Criar conta agora</a>
+                    Não tem uma conta? Solicite seu cadastro com o gerente do seu setor. 
                 </p>
             </div>
         </div>

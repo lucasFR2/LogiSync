@@ -19,10 +19,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard',  [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/admin',      fn() => 'Área Admin')->middleware('role:admin')->name('admin');
 
-    // ADICIONE ESTAS TRÊS LINHAS ABAIXO:
+    // ADICIONE ESTAS LINHAS ABAIXO:
     Route::resource('products', ProductController::class);
     // Rota para registrar entrada via modal/JS
     Route::post('products/{product}/add-inventory', [ProductController::class, 'addInventory'])->name('products.addInventory');
+    // Rota para adicionar nova categoria via AJAX
+    Route::post('products/store-category', [ProductController::class, 'storeCategory'])->name('products.store-category');
     Route::resource('inventory', InventoryController::class);
     Route::resource('suppliers', SupplierController::class);
 });

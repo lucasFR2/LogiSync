@@ -16,7 +16,7 @@
 </head>
 <body class="bg-[#020617] font-sans transition-colors">
 
-    <div class="min-h-screen flex">
+    <div class="min-h-screen flex flex-col md:flex-row">
         <!-- Sidebar -->
         <aside class="w-64 bg-[#0F172A] text-white hidden md:flex flex-col border-r border-[#1E293B] shadow-xl">
             <div class="p-6 border-b border-[#1E293B] flex justify-center">
@@ -51,53 +51,52 @@
         </aside>
 
         <!-- Conteúdo Principal -->
-        <main class="flex-1">
+        <main class="flex-1 flex flex-col">
             <!-- Header Superior -->
-            <header class="bg-[#0F172A] shadow-sm px-8 py-4 flex justify-between items-center border-b dark:border-slate-800 text-[#FFFFFF]">
-                <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
-                    <i class="fa-solid fa-pencil text-blue-600 mr-2"></i>Editar Produto
+            <header class="bg-[#0F172A] shadow-sm px-4 sm:px-8 py-3 sm:py-4 flex justify-between items-center border-b dark:border-slate-800 text-[#FFFFFF] flex-shrink-0">
+                <h1 class="text-base sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-pencil text-blue-600"></i><span class="hidden sm:inline">Editar Produto</span><span class="sm:hidden">Editar</span>
                 </h1>
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 sm:gap-4">
                     <button onclick="toggleTheme()" data-theme-toggle class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition text-gray-600 dark:text-gray-400" title="Alternar tema">
                         <i class="fa-solid fa-moon"></i>
                     </button>
-                    <span class="text-gray-600 dark:text-gray-400">{{ auth()->user()->name }}</span>
-                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                    <span class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 hidden sm:inline">{{ auth()->user()->name }}</span>
+                    <div class="w-8 sm:w-10 h-8 sm:h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-base">
                         {{ substr(auth()->user()->name, 0, 1) }}
                     </div>
                 </div>
             </header>
 
             <!-- Conteúdo da Página -->
-            <section class="p-0 h-full overflow-y-auto bg-gray-50 dark:bg-slate-950">
-                <div class="w-full h-full flex flex-col">
+            <section class="p-0 flex-1 overflow-y-auto bg-[#020617]">
+                <div class="w-full flex flex-col">
                     <!-- Barra de Navegação -->
-                    <div class="px-8 py-4 flex items-center gap-2 text-sm border-b border-gray-200 dark:border-slate-800 bg-[#0F172A]">
-                        <a href="{{ route('products.index') }}" class="text-blue-600 dark:text-blue-400 hover:text-blue-800">
+                    <div class="px-4 sm:px-8 py-3 sm:py-4 flex items-center gap-2 text-xs sm:text-sm border-b border-gray-200 dark:border-slate-800 bg-[#0F172A]">
+                        <a href="{{ route('products.index') }}" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 whitespace-nowrap">
                             <i class="fa-solid fa-boxes-stacked mr-2"></i>Produtos
                         </a>
-                        <i class="fa-solid fa-chevron-right text-gray-400 dark:text-gray-600"></i>
-                        <a href="{{ route('products.show', $product) }}" class="text-blue-600 dark:text-blue-400 hover:text-blue-800">
+                        <i class="fa-solid fa-chevron-right text-gray-400 dark:text-gray-600 flex-shrink-0"></i>
+                        <a href="{{ route('products.show', $product) }}" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 whitespace-nowrap">
                             {{ $product->name }}
                         </a>
-                        <i class="fa-solid fa-chevron-right text-gray-400 dark:text-gray-600"></i>
-                        <span class="text-gray-600 dark:text-gray-400">Editar</span>
+                        <i class="fa-solid fa-chevron-right text-gray-400 dark:text-gray-600 flex-shrink-0"></i>
+                        <span class="text-gray-600 dark:text-gray-400 whitespace-nowrap">Editar</span>
                     </div>
 
                     <!-- Card do Formulário -->
-                    <div class="flex-1 bg-gray-50 dark:bg-slate-950 overflow-y-auto">
-                        <div class="w-full h-full bg-[#0F172A] rounded-none shadow-none overflow-hidden border-0 flex flex-col text-[#FFFFFF]">
+                    <div class="bg-[#0F172A] rounded-none shadow-none overflow-hidden border-0 text-[#FFFFFF] m-4 sm:m-6 rounded-lg">
                         <!-- Header do Card -->
-                        <div class="bg-gradient-to-r from-blue-600 via-blue-650 to-blue-700 px-8 py-6 border-b-4 border-blue-800 flex-shrink-0">
-                            <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <div class="bg-gradient-to-r from-blue-600 via-blue-650 to-blue-700 px-4 sm:px-8 py-4 sm:py-6 border-b-4 border-blue-800">
+                            <h2 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-3">
                                 <i class="fa-solid fa-pencil text-blue-100"></i>
-                                Editar Produto
+                                <span class="hidden sm:inline">Editar Produto</span><span class="sm:hidden">Editar</span>
                             </h2>
-                            <p class="text-blue-50 text-sm mt-2">Atualize as informações do produto: <strong>{{ $product->name }}</strong></p>
+                            <p class="text-blue-50 text-xs sm:text-sm mt-2">Atualize as informações do produto: <strong>{{ $product->name }}</strong></p>
                         </div>
 
                         <!-- Formulário -->
-                        <form method="POST" action="{{ route('products.update', $product) }}" class="flex-1 overflow-y-auto p-8">
+                        <form method="POST" action="{{ route('products.update', $product) }}" class="p-4 sm:p-8">
                             @csrf
                             @method('PUT')
 
@@ -434,12 +433,20 @@
                                             class="w-full px-4 py-3 border-2 border-gray-300 hover:border-indigo-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all bg-gray-50 hover:bg-white cursor-pointer"
                                         >
                                             <option value="">-- Selecione uma categoria --</option>
-                                            <option value="eletrônicos" {{ old('category', $product->category ?? '') == 'eletrônicos' ? 'selected' : '' }}>Eletrônicos</option>
-                                            <option value="informática" {{ old('category', $product->category ?? '') == 'informática' ? 'selected' : '' }}>Informática</option>
-                                            <option value="periféricos" {{ old('category', $product->category ?? '') == 'periféricos' ? 'selected' : '' }}>Periféricos</option>
-                                            <option value="acessórios" {{ old('category', $product->category ?? '') == 'acessórios' ? 'selected' : '' }}>Acessórios</option>
-                                            <option value="software" {{ old('category', $product->category ?? '') == 'software' ? 'selected' : '' }}>Software</option>
-                                            <option value="outros" {{ old('category', $product->category ?? '') == 'outros' ? 'selected' : '' }}>Outros</option>
+                                            @if(isset($categories) && $categories->count())
+                                                @foreach($categories as $category)
+                                                    <option value="{{ $category->name }}" {{ old('category', $product->category ?? '') == $category->name ? 'selected' : '' }}>
+                                                        {{ $category->name }}
+                                                    </option>
+                                                @endforeach
+                                            @else
+                                                <option value="Eletrônicos" {{ old('category', $product->category ?? '') == 'Eletrônicos' ? 'selected' : '' }}>Eletrônicos</option>
+                                                <option value="Informática" {{ old('category', $product->category ?? '') == 'Informática' ? 'selected' : '' }}>Informática</option>
+                                                <option value="Periféricos" {{ old('category', $product->category ?? '') == 'Periféricos' ? 'selected' : '' }}>Periféricos</option>
+                                                <option value="Acessórios" {{ old('category', $product->category ?? '') == 'Acessórios' ? 'selected' : '' }}>Acessórios</option>
+                                                <option value="Software" {{ old('category', $product->category ?? '') == 'Software' ? 'selected' : '' }}>Software</option>
+                                                <option value="Outros" {{ old('category', $product->category ?? '') == 'Outros' ? 'selected' : '' }}>Outros</option>
+                                            @endif
                                         </select>
                                     </div>
 
@@ -533,17 +540,16 @@
                             </div>
 
                             <!-- Botões de Ação -->
-                            <div class="mt-10 flex gap-4">
-                                <button type="submit" class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 rounded-lg font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-3 transform hover:scale-105">
-                                    <i class="fa-solid fa-floppy-disk text-lg"></i> Atualizar Produto
+                            <div class="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4">
+                                <button type="submit" class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 sm:gap-3 transform hover:scale-105 text-sm sm:text-base">
+                                    <i class="fa-solid fa-floppy-disk"></i> <span class="hidden sm:inline">Atualizar Produto</span><span class="sm:hidden">Atualizar</span>
                                 </button>
-                                <a href="{{ route('products.show', $product) }}" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 px-8 py-4 rounded-lg font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-3">
-                                    <i class="fa-solid fa-xmark text-lg"></i> Cancelar
+                                <a href="{{ route('products.show', $product) }}" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base">
+                                    <i class="fa-solid fa-xmark"></i> <span class="hidden sm:inline">Cancelar</span><span class="sm:hidden">Voltar</span>
                                 </a>
                             </div>
                         </form>
                     </div>
-                </div>
             </section>
         </main>
     </div>

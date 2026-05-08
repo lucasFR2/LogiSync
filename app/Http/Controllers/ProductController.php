@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Supplier;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Models\Inventory;
 use Carbon\Carbon;
@@ -10,10 +11,85 @@ use Carbon\Carbon;
 class ProductController extends Controller
 {
     // Listar todos os produtos
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::paginate(15);
-        return view('products.index', compact('products'));
+        $search = $request->query('search', '');
+        $filterBy = $request->query('filter', 'all'); // all, name, barcode, category, status
+        
+        // Filtros avançados
+        $statusFilter = $request->query('status_filter', '');
+        $priceMin = $request->query('price_min', '');
+        $priceMax = $request->query('price_max', '');
+        $stockFilter = $request->query('stock_filter', '');
+        $categoryFilter = $request->query('category_filter', '');
+        $supplierFilter = $request->query('supplier_filter', '');
+
+        $query = Product::query();
+
+        // Aplicar filtro de busca rápida
+        if (!empty($search)) {
+            switch ($filterBy) {
+                case 'name':
+                    $query->where('name', 'like', "%{$search}%");
+                    break;
+                case 'barcode':
+                    $query->where('barcode', 'like', "%{$search}%");
+                    break;
+                case 'category':
+                    $query->where('category', 'like', "%{$search}%");
+                    break;
+                case 'status':
+                    $query->where('status', $search);
+                    break;
+                case 'all':
+                default:
+                    // Busca em múltiplos campos
+                    $query->where(function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                          ->orWhere('barcode', 'like', "%{$search}%")
+                          ->orWhere('description', 'like', "%{$search}%")
+                          ->orWhere('category', 'like', "%{$search}%");
+                    });
+                    break;
+            }
+        }
+
+        // Aplicar filtros avançados
+        if (!empty($statusFilter)) {
+            $query->where('status', $statusFilter);
+        }
+
+        if (!empty($priceMin)) {
+            $query->where('unit_price', '>=', (float)$priceMin);
+        }
+
+        if (!empty($priceMax)) {
+            $query->where('unit_price', '<=', (float)$priceMax);
+        }
+
+        if (!empty($stockFilter)) {
+            if ($stockFilter === 'low') {
+                $query->whereRaw('quantity <= reorder_level');
+            } elseif ($stockFilter === 'medium') {
+                $query->whereRaw('quantity > reorder_level AND quantity <= (reorder_level * 1.5)');
+            } elseif ($stockFilter === 'high') {
+                $query->whereRaw('quantity > (reorder_level * 1.5)');
+            }
+        }
+
+        if (!empty($categoryFilter)) {
+            $query->where('category', 'like', "%{$categoryFilter}%");
+        }
+
+        if (!empty($supplierFilter)) {
+            $query->whereHas('supplier', function ($q) use ($supplierFilter) {
+                $q->where('name', 'like', "%{$supplierFilter}%");
+            });
+        }
+
+        $products = $query->paginate(15);
+        
+        return view('products.index', compact('products', 'search', 'filterBy'));
     }
     
 
@@ -30,7 +106,8 @@ class ProductController extends Controller
     public function create()
     {
         $suppliers = Supplier::all();
-        return view('products.create', compact('suppliers'));
+        $categories = Category::all();
+        return view('products.create', compact('suppliers', 'categories'));
     }
 
     // Gravar novo produto no banco
@@ -92,7 +169,8 @@ class ProductController extends Controller
     public function edit(Product $product)
     {
         $suppliers = Supplier::all();
-        return view('products.edit', compact('product', 'suppliers'));
+        $categories = Category::all();
+        return view('products.edit', compact('product', 'suppliers', 'categories'));
     }
 
     // Atualizar produto no banco
@@ -151,11 +229,13 @@ class ProductController extends Controller
             'quantity'   => 'required|integer|min:1|max:9999999',
             'notes'      => 'nullable|string|max:500',
             'entry_date' => 'nullable|date',
+            'lot_number' => 'nullable|string|max:100',
         ], [
             'quantity.required' => 'A quantidade é obrigatória',
             'quantity.min'      => 'A quantidade deve ser pelo menos 1 unidade',
             'quantity.max'      => 'A quantidade não pode exceder 9.999.999 unidades',
             'entry_date.date'   => 'Data de entrada inválida',
+            'lot_number.max'    => 'O número do lote não pode exceder 100 caracteres',
         ]);
 
         // Criar registro de entrada
@@ -163,6 +243,8 @@ class ProductController extends Controller
             'product_id' => $product->id,
             'quantity'   => $validated['quantity'],
             'notes'      => $validated['notes'] ?? null,
+            'lot_number' => $validated['lot_number'] ?? null,
+            'user_id'    => auth()->id(), // Adicionar usuário autenticado
         ];
 
         // If an entry_date was provided, use it as created_at and set entry_date
@@ -194,5 +276,30 @@ class ProductController extends Controller
 
         return redirect()->route('products.show', $product)
             ->with('success', 'Entrada registrada com sucesso! Quantidade atualizada.');
+    }
+
+    // Adicionar nova categoria (via AJAX)
+    public function storeCategory(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100|unique:categories,name',
+            'description' => 'nullable|string|max:500',
+        ], [
+            'name.required' => 'O nome da categoria é obrigatório',
+            'name.unique' => 'Já existe uma categoria com esse nome',
+            'name.max' => 'O nome da categoria não pode exceder 100 caracteres',
+            'description.max' => 'A descrição não pode exceder 500 caracteres',
+        ]);
+
+        // Salvar categoria no banco de dados
+        $category = Category::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'id' => $category->id,
+            'name' => $category->name,
+            'description' => $category->description ?? '',
+            'message' => 'Categoria adicionada com sucesso!'
+        ]);
     }
 }
