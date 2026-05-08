@@ -320,6 +320,8 @@
                     </div>
                 </div>
 
+                <br>
+
                 <!-- Histórico de Entradas - Full Width -->
                 <div class="bg-[#0F172A] rounded-lg shadow-lg border border-[#1E293B] overflow-hidden">
                     <!-- Header -->
