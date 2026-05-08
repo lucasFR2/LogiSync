@@ -11,14 +11,15 @@
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    {{-- O script é carregado aqui para aplicar o tema ANTES do paint (evita flash) --}}
     <script src="{{ asset('js/theme-toggle.js') }}"></script>
 </head>
-<body class="bg-gray-50 dark:bg-slate-950 font-sans transition-colors">
+<body class="bg-gray-50 dark:bg-slate-950 font-sans transition-colors duration-300">
 
     <div class="min-h-screen flex">
         <!-- Sidebar (Barra Lateral) -->
         <aside class="w-64 bg-slate-900 dark:bg-slate-950 text-white hidden md:flex flex-col">
-            <!-- LOGO ADICIONADA AQUI -->
+            <!-- LOGO -->
             <div class="p-6 border-b border-slate-800 dark:border-slate-700 flex justify-center">
                 <a href="/">
                     <img src="{{ asset('images/logisync-logo.png') }}" alt="LogiSync Logo" class="w-40 h-auto brightness-0 invert">
@@ -58,8 +59,16 @@
                     <i class="fa-solid fa-chart-line text-blue-600 mr-2"></i>Dashboard
                 </h1>
                 <div class="flex items-center gap-4">
-                    <button onclick="toggleTheme()" data-theme-toggle class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition text-gray-600 dark:text-gray-400" title="Alternar tema">
-                        <i class="fa-solid fa-moon"></i>
+                    {{-- Botão de alternar tema --}}
+                    <button
+                        id="theme-toggle-btn"
+                        onclick="toggleTheme()"
+                        data-theme-toggle
+                        class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors duration-200 text-gray-600 dark:text-gray-400"
+                        title="Alternar tema"
+                        aria-label="Alternar entre tema claro e escuro"
+                    >
+                        <i class="fa-solid fa-moon text-lg"></i>
                     </button>
                     <span class="text-gray-600 dark:text-gray-400">{{ auth()->user()->name }}</span>
                     <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
@@ -67,30 +76,20 @@
                     </div>
                 </div>
             </header>
-                <h2 class="text-xl font-semibold text-gray-700">Visão Geral</h2>
-                
-                <div class="flex items-center space-x-4">
-                    <div class="text-right">
-                        <p class="text-sm font-medium text-gray-900">{{ Auth::user()->name }}</p>
-                        <p class="text-xs text-gray-500 uppercase">{{ Auth::user()->role }}</p>
-                    </div>
-                    <div class="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
-                        {{ substr(Auth::user()->name, 0, 1) }}
-                    </div>
-                </div>
-            </header>
 
             <!-- Grid de Cards de Estatísticas -->
             <div class="p-8">
+                <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-6">Visão Geral</h2>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <!-- Card 1 -->
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800">
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="text-sm text-gray-500 mb-1">Total em Estoque</p>
-                                <h3 class="text-2xl font-bold text-gray-800">0</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Total em Estoque</p>
+                                <h3 class="text-2xl font-bold text-gray-800 dark:text-white">0</h3>
                             </div>
-                            <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                            <div class="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
                                 <i class="fa-solid fa-box"></i>
                             </div>
                         </div>
@@ -98,13 +97,13 @@
                     </div>
 
                     <!-- Card 2 -->
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800">
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="text-sm text-gray-500 mb-1">Pedidos Pendentes</p>
-                                <h3 class="text-2xl font-bold text-gray-800">0</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Pedidos Pendentes</p>
+                                <h3 class="text-2xl font-bold text-gray-800 dark:text-white">0</h3>
                             </div>
-                            <div class="p-3 bg-orange-50 text-orange-600 rounded-lg">
+                            <div class="p-3 bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-lg">
                                 <i class="fa-solid fa-clock"></i>
                             </div>
                         </div>
@@ -112,43 +111,43 @@
                     </div>
 
                     <!-- Card 3 -->
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800">
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="text-sm text-gray-500 mb-1">Produtos em Alerta</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Produtos em Alerta</p>
                                 <h3 class="text-2xl font-bold text-red-600">0</h3>
                             </div>
-                            <div class="p-3 bg-red-50 text-red-600 rounded-lg">
+                            <div class="p-3 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg">
                                 <i class="fa-solid fa-triangle-exclamation"></i>
                             </div>
                         </div>
-                        <p class="text-xs text-gray-500 mt-4">Estoque abaixo do mínimo</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-4">Estoque abaixo do mínimo</p>
                     </div>
 
                     <!-- Card 4 -->
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800">
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="text-sm text-gray-500 mb-1">Seu Cargo</p>
-                                <h3 class="text-2xl font-bold text-gray-800 capitalize">{{ Auth::user()->role }}</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Seu Cargo</p>
+                                <h3 class="text-2xl font-bold text-gray-800 dark:text-white capitalize">{{ Auth::user()->role }}</h3>
                             </div>
-                            <div class="p-3 bg-green-50 text-green-600 rounded-lg">
+                            <div class="p-3 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg">
                                 <i class="fa-solid fa-user-shield"></i>
                             </div>
                         </div>
-                        <p class="text-xs text-gray-500 mt-4 text-truncate">CPF: {{ Auth::user()->cpf }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-4 text-truncate">CPF: {{ Auth::user()->cpf }}</p>
                     </div>
                 </div>
 
                 <!-- Tabela de Atividade Recente -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-                        <h3 class="font-bold text-gray-800">Últimas Movimentações</h3>
-                        <button class="text-sm text-blue-600 hover:underline">Ver tudo</button>
+                <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800 dark:text-white">Últimas Movimentações</h3>
+                        <button class="text-sm text-blue-600 dark:text-blue-400 hover:underline">Ver tudo</button>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
-                            <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+                            <thead class="bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-400 text-sm uppercase">
                                 <tr>
                                     <th class="px-6 py-4 font-semibold">Produto</th>
                                     <th class="px-6 py-4 font-semibold">Tipo</th>
@@ -157,6 +156,14 @@
                                     <th class="px-6 py-4 font-semibold">Status</th>
                                 </tr>
                             </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" class="px-6 py-12 text-center text-gray-400 dark:text-gray-500">
+                                        <i class="fa-solid fa-inbox text-4xl mb-3 block opacity-40"></i>
+                                        Nenhuma movimentação registrada
+                                    </td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
