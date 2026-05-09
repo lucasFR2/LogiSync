@@ -36,8 +36,8 @@
                 <a href="{{ route('inventory.index') }}" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition">
                     <i class="fa-solid fa-truck-ramp-box mr-3"></i> Entradas
                 </a>
-                <a href="#" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition">
-                    <i class="fa-solid fa-clipboard-list mr-3"></i> Relatórios
+                <a href="{{ route('invoices.index') }}" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition">
+                    <i class="fa-solid fa-file-invoice mr-3"></i> Notas Fiscais
                 </a>
             </nav>
 

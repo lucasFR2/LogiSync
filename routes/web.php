@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SupplierController;
 use Illuminate\Support\Facades\Route;
@@ -25,8 +26,13 @@ Route::middleware('auth')->group(function () {
     // Supplier routes
     Route::resource('suppliers', SupplierController::class);
     Route::get('/suppliers/list', [SupplierController::class, 'list'])->name('suppliers.list');
-    
-    Route::get('/admin',      fn() => 'Área Admin')->middleware('role:admin')->name('admin');
+
+    // Invoice routes
+    Route::resource('invoices', InvoiceController::class);
+    Route::patch('/invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
+    Route::get('/invoices/{invoice}/pdf',      [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+
+    Route::get('/admin', fn() => 'Área Admin')->middleware('role:admin')->name('admin');
 });
 
 Route::get('/', fn() => redirect()->route('login'));
