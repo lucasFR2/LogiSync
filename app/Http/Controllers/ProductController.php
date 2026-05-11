@@ -35,14 +35,16 @@ class ProductController extends Controller
     // Gravar novo produto no banco
     public function store(Request $request)
     {
-        // Validar os dados
         $validated = $request->validate([
             'name'               => 'required|string|max:255',
             'barcode'            => 'nullable|string|unique:products,barcode|regex:/^[0-9]{1,20}$/',
             'description'        => 'nullable|string',
-            'cost_price'         => 'nullable|numeric|min:0.01|max:999999.99',
-            'unit_price'         => 'required|numeric|min:0.01|max:999999.99',
-            'selling_price'      => 'nullable|numeric|min:0.01|max:999999.99',
+            'cost_price'         => 'nullable|numeric|min:0|max:999999.99',
+            'unit_price'         => 'required|numeric|min:0|max:999999.99',
+            'purchase_price'     => 'nullable|numeric|min:0|max:999999.99',
+            'tax_percent'        => 'nullable|numeric|min:0|max:100',
+            'shipping_cost'      => 'nullable|numeric|min:0|max:999999.99',
+            'margin_percent'     => 'nullable|numeric|min:0|max:9999.99',
             'quantity'           => 'required|integer|min:0|max:9999999',
             'max_stock'          => 'nullable|integer|min:1|max:9999999',
             'reorder_level'      => 'required|integer|min:0|max:9999999',
@@ -54,12 +56,12 @@ class ProductController extends Controller
             'category'           => 'nullable|string',
             'unit'               => 'nullable|string',
             'warehouse_location' => 'nullable|string',
+            'warehouse_location_id' => 'nullable|exists:warehouse_locations,id',
             'supplier_id'        => 'nullable|exists:suppliers,id',
             'status'             => 'required|in:ativo,inativo,descontinuado',
         ], [
             'barcode.regex'      => 'Código de barras deve conter apenas números',
-            'cost_price.min'     => 'Custo unitário deve ser maior que R$ 0.00',
-            'unit_price.min'     => 'Preço de venda deve ser maior que R$ 0.00',
+            'unit_price.min'     => 'Preço de venda não pode ser negativo',
             'max_stock.min'      => 'Estoque máximo deve ser pelo menos 1 unidade',
             'supplier_id.exists' => 'Fornecedor inválido',
         ]);
@@ -102,9 +104,12 @@ class ProductController extends Controller
             'name'               => 'required|string|max:255',
             'barcode'            => 'nullable|string|unique:products,barcode,' . $product->id . '|regex:/^[0-9]{1,20}$/',
             'description'        => 'nullable|string',
-            'cost_price'         => 'nullable|numeric|min:0.01|max:999999.99',
-            'unit_price'         => 'required|numeric|min:0.01|max:999999.99',
-            'selling_price'      => 'nullable|numeric|min:0.01|max:999999.99',
+            'cost_price'         => 'nullable|numeric|min:0|max:999999.99',
+            'unit_price'         => 'required|numeric|min:0|max:999999.99',
+            'purchase_price'     => 'nullable|numeric|min:0|max:999999.99',
+            'tax_percent'        => 'nullable|numeric|min:0|max:100',
+            'shipping_cost'      => 'nullable|numeric|min:0|max:999999.99',
+            'margin_percent'     => 'nullable|numeric|min:0|max:9999.99',
             'quantity'           => 'required|integer|min:0|max:9999999',
             'max_stock'          => 'nullable|integer|min:1|max:9999999',
             'reorder_level'      => 'required|integer|min:0|max:9999999',
@@ -116,12 +121,12 @@ class ProductController extends Controller
             'category'           => 'nullable|string',
             'unit'               => 'nullable|string',
             'warehouse_location' => 'nullable|string',
+            'warehouse_location_id' => 'nullable|exists:warehouse_locations,id',
             'supplier_id'        => 'nullable|exists:suppliers,id',
             'status'             => 'required|in:ativo,inativo,descontinuado',
         ], [
             'barcode.regex'      => 'Código de barras deve conter apenas números',
-            'cost_price.min'     => 'Custo unitário deve ser maior que R$ 0.00',
-            'unit_price.min'     => 'Preço de venda deve ser maior que R$ 0.00',
+            'unit_price.min'     => 'Preço de venda não pode ser negativo',
             'max_stock.min'      => 'Estoque máximo deve ser pelo menos 1 unidade',
             'supplier_id.exists' => 'Fornecedor inválido',
         ]);
@@ -180,4 +185,50 @@ class ProductController extends Controller
         return redirect()->route('products.show', $product)
             ->with('success', 'Entrada registrada com sucesso! Quantidade atualizada.');
     }
+<<<<<<< Updated upstream
+=======
+
+    // Adicionar nova categoria (via AJAX)
+    public function storeCategory(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100|unique:categories,name',
+            'description' => 'nullable|string|max:500',
+        ], [
+            'name.required' => 'O nome da categoria é obrigatório',
+            'name.unique' => 'Já existe uma categoria com esse nome',
+            'name.max' => 'O nome da categoria não pode exceder 100 caracteres',
+            'description.max' => 'A descrição não pode exceder 500 caracteres',
+        ]);
+
+        // Salvar categoria no banco de dados
+        $category = Category::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'id' => $category->id,
+            'name' => $category->name,
+            'description' => $category->description ?? '',
+            'message' => 'Categoria adicionada com sucesso!'
+        ]);
+    }
+
+    // Buscar localizações (AJAX)
+    public function searchLocations(Request $request)
+    {
+        $search = $request->query('q', '');
+        
+        $query = \App\Models\WarehouseLocation::query();
+
+        if (!empty($search)) {
+            $query->where('full_code', 'like', "%{$search}%");
+        }
+
+        $locations = $query->where('is_occupied', false)
+            ->limit(20)
+            ->get(['id', 'full_code', 'aisle', 'column', 'level']);
+
+        return response()->json($locations);
+    }
+>>>>>>> Stashed changes
 }

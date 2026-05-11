@@ -25,9 +25,20 @@ class SupplierController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+<<<<<<< Updated upstream
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
+=======
+            'cnpj' => 'nullable|string|max:30|unique:suppliers,cnpj',
+            'state_registration' => 'nullable|string|max:30',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:30',
+            'street' => 'nullable|string|max:255',
+            'number' => 'nullable|string|max:20',
+            'neighborhood' => 'nullable|string|max:255',
+            'zip_code' => 'nullable|string|max:20',
+>>>>>>> Stashed changes
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:2',
             'cnpj' => 'nullable|string|unique:suppliers,cnpj',
@@ -65,9 +76,20 @@ class SupplierController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+<<<<<<< Updated upstream
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
+=======
+            'cnpj' => 'nullable|string|max:30',
+            'state_registration' => 'nullable|string|max:30',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:30',
+            'street' => 'nullable|string|max:255',
+            'number' => 'nullable|string|max:20',
+            'neighborhood' => 'nullable|string|max:255',
+            'zip_code' => 'nullable|string|max:20',
+>>>>>>> Stashed changes
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:2',
             'cnpj' => 'nullable|string|unique:suppliers,cnpj,' . $supplier->id,

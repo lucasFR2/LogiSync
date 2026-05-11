@@ -15,6 +15,10 @@ class Product extends Model
         'cost_price',
         'unit_price',
         'selling_price',
+        'purchase_price',
+        'tax_percent',
+        'shipping_cost',
+        'margin_percent',
         'quantity',
         'max_stock',
         'reorder_level',
@@ -26,6 +30,7 @@ class Product extends Model
         'category',
         'unit',
         'warehouse_location',
+        'warehouse_location_id',
         'supplier_id',
         'status',
     ];
@@ -40,7 +45,19 @@ class Product extends Model
     ];
 
     /**
+<<<<<<< Updated upstream
      * Relationship: Um produto tem muitas entradas/movimentações de estoque
+=======
+     * Relação: produto pertence a uma localização no armazém
+     */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(WarehouseLocation::class, 'warehouse_location_id');
+    }
+
+    /**
+     * Relação: produto possui muitas entradas (inventories)
+>>>>>>> Stashed changes
      */
     public function inventories(): HasMany
     {
