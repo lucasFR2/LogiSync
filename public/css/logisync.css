@@ -160,7 +160,13 @@ body::after {
   padding: 1.5rem 1rem;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform, opacity;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }
+
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
 .sidebar-logo {
   padding: 0.5rem 1rem 2rem;
@@ -198,8 +204,6 @@ body::after {
 .nav-item:hover {
   background: var(--bg-hover);
   color: var(--accent);
-  transform: translateX(8px);
-  box-shadow: inset 0 0 0 1px var(--glass-border);
 }
 
 .nav-item.active {
@@ -212,12 +216,11 @@ body::after {
   width: 20px;
   text-align: center;
   font-size: 1.1rem;
-  transition: transform 0.4s var(--spring);
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+  transition: transform 0.2s;
 }
 
 .nav-item:hover i { 
-  transform: scale(1.2) rotate(-8deg); 
+  transform: scale(1.1); 
   color: var(--accent);
 }
 .nav-item.active:hover i { color: var(--accent-fg); }
@@ -335,7 +338,6 @@ body::after {
   background: var(--accent);
   color: var(--accent-fg);
   border-color: var(--accent);
-  transform: rotate(8deg);
 }
 
 /* ── CARDS ─────────────────────────────── */
@@ -346,22 +348,13 @@ body::after {
   border: 1px solid var(--glass-border);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-sm);
-  transition: all 0.5s var(--spring);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   overflow: hidden;
-  isolation: isolate;
-  transform-style: preserve-3d;
-  perspective: 1000px;
 }
 
 .card:hover {
-  transform: translateY(-8px) rotateX(2deg) rotateY(-1deg);
-  box-shadow: var(--shadow-xl);
-  border-color: var(--accent-subtle);
-}
-
-/* 3D Content effect inside card */
-.card > * {
-  transform: translateZ(20px);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
 
 .card-header {
@@ -384,10 +377,9 @@ body::after {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  transition: all 0.5s var(--spring);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   position: relative;
   overflow: hidden;
-  transform-style: preserve-3d;
 }
 
 .stat-card::before {
@@ -399,8 +391,8 @@ body::after {
 }
 
 .stat-card:hover {
-  transform: translateY(-12px) rotateX(4deg) scale(1.02);
-  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
 }
 
 .stat-icon {
@@ -413,16 +405,13 @@ body::after {
   background: var(--bg-hover);
   color: var(--accent);
   margin-bottom: 0.5rem;
-  transition: all 0.4s var(--spring);
+  transition: all 0.3s ease;
   box-shadow: inset 0 0 0 1px var(--glass-border);
-  transform: translateZ(30px);
 }
 
 .stat-card:hover .stat-icon {
-  transform: translateZ(50px) rotate(12deg) scale(1.1);
   background: var(--accent);
   color: var(--accent-fg);
-  box-shadow: 0 10px 20px -5px var(--accent-glow);
 }
 
 .stat-value {
@@ -432,7 +421,6 @@ body::after {
   color: var(--text-primary);
   line-height: 1;
   letter-spacing: -0.04em;
-  transform: translateZ(40px);
 }
 
 /* ── TABLES ────────────────────────────── */
@@ -473,7 +461,6 @@ body::after {
 
 .table-wrap tbody tr:hover { 
   background: var(--bg-hover); 
-  transform: scale(1.002); 
 }
 
 /* ── FORMS ─────────────────────────────── */
@@ -629,50 +616,25 @@ body::after {
 
 /* ── ANIMATIONS ────────────────────────── */
 @keyframes entrance {
-  from { opacity: 0; transform: translateY(30px) scale(0.95); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes float {
-  0% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-10px) rotate(2deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
-}
-
-@keyframes pulse-glow {
-  0% { box-shadow: 0 0 0 0 rgba(15, 23, 42, 0.4); }
-  70% { box-shadow: 0 0 0 15px rgba(15, 23, 42, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(15, 23, 42, 0); }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .anim-entrance { 
-  animation: entrance 0.8s var(--spring) both;
+  animation: entrance 0.4s ease-out both;
 }
 
-.anim-float {
-  animation: float 4s ease-in-out infinite;
-}
-
-.anim-pulse {
-  animation: pulse-glow 2s infinite;
+.anim-float, .anim-pulse {
+  animation: none !important;
 }
 
 /* 3D Icon Enhancement */
 .icon-3d {
   position: relative;
   display: inline-flex;
-  transition: transform 0.3s var(--spring);
-}
-.icon-3d::after {
-  content: attr(data-icon);
-  position: absolute;
-  top: 2px; left: 2px;
-  opacity: 0.3;
-  filter: blur(2px);
-  z-index: -1;
 }
 .icon-3d:hover {
-  transform: translateZ(50px) scale(1.1);
+  transform: scale(1.1);
 }
 
 /* ── RESPONSIVE ────────────────────────── */

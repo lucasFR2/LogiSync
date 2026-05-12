@@ -5,8 +5,9 @@
 @section('page-subtitle', 'Preencha os dados abaixo para gerar um novo documento fiscal')
 
 @section('content')
-<form method="POST" action="{{ route('invoices.store') }}" id="invoice-form" class="anim-entrance">
+<form method="POST" action="{{ isset($invoice) ? route('invoices.update', $invoice) : route('invoices.store') }}" id="invoice-form" class="anim-entrance">
     @csrf
+    @if(isset($invoice)) @method('PUT') @endif
     <div style="display:flex; flex-direction:column; gap:2rem; padding-bottom: 5rem;">
 
         {{-- General Info Card --}}
@@ -23,22 +24,22 @@
                 <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
                     <div class="form-group">
                         <label class="form-label">Número da NF</label>
-                        <input type="text" value="{{ $number }}" readonly class="form-control" style="background: var(--bg-hover); font-family: monospace; font-weight: 700; opacity: 0.8;">
+                        <input type="text" value="{{ $invoice->number ?? $number }}" readonly class="form-control" style="background: var(--bg-hover); font-family: monospace; font-weight: 700; opacity: 0.8;">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Tipo de Operação <span style="color:var(--red);">*</span></label>
                         <select name="type" required class="form-control">
-                            <option value="saida">↑ Saída (Faturamento)</option>
-                            <option value="entrada">↓ Entrada (Compra)</option>
+                            <option value="saida" {{ (isset($invoice) && $invoice->type === 'saida') ? 'selected' : '' }}>↑ Saída (Faturamento)</option>
+                            <option value="entrada" {{ (isset($invoice) && $invoice->type === 'entrada') ? 'selected' : '' }}>↓ Entrada (Compra)</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Data de Emissão</label>
-                        <input type="date" name="issued_at" value="{{ date('Y-m-d') }}" class="form-control">
+                        <input type="date" name="issued_at" value="{{ isset($invoice) ? $invoice->issued_at->format('Y-m-d') : date('Y-m-d') }}" class="form-control">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Vencimento</label>
-                        <input type="date" name="due_date" class="form-control">
+                        <input type="date" name="due_date" value="{{ isset($invoice) && $invoice->due_date ? $invoice->due_date->format('Y-m-d') : '' }}" class="form-control">
                     </div>
                 </div>
 
@@ -47,17 +48,17 @@
                         <label class="form-label">Fornecedor (opcional)</label>
                         <select name="supplier_id" class="form-control">
                             <option value="">— Selecione se aplicável —</option>
-                            @foreach($suppliers as $s)<option value="{{ $s->id }}">{{ $s->name }}</option>@endforeach
+                            @foreach($suppliers as $s)
+                                <option value="{{ $s->id }}" {{ (isset($invoice) && $invoice->supplier_id == $s->id) ? 'selected' : '' }}>{{ $s->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Forma de Pagamento <span style="color:var(--red);">*</span></label>
                         <select name="payment_method" required class="form-control">
-                            <option value="pix">PIX (Instantâneo)</option>
-                            <option value="boleto">Boleto Bancário</option>
-                            <option value="dinheiro">Dinheiro / Espécie</option>
-                            <option value="cartao_credito">Cartão de Crédito</option>
-                            <option value="cartao_debito">Cartão de Débito</option>
+                            @foreach(['pix' => 'PIX (Instantâneo)', 'boleto' => 'Boleto Bancário', 'dinheiro' => 'Dinheiro / Espécie', 'cartao_credito' => 'Cartão de Crédito', 'cartao_debito' => 'Cartão de Débito'] as $val => $lab)
+                                <option value="{{ $val }}" {{ (isset($invoice) && $invoice->payment_method === $val) ? 'selected' : '' }}>{{ $lab }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -93,41 +94,41 @@
                 </div>
             </div>
             <div class="card-body">
-                <div class="grid" style="grid-template-columns: 2fr 1fr 1.5fr; gap: 1.5rem;">
+                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
                     <div class="form-group">
                         <label class="form-label">Nome / Razão Social <span style="color:var(--red);">*</span></label>
-                        <input type="text" name="recipient_name" id="recipient_name" required class="form-control" placeholder="Nome do cliente">
+                        <input type="text" name="recipient_name" id="recipient_name" value="{{ $invoice->recipient_name ?? '' }}" required class="form-control" placeholder="Nome do cliente">
                     </div>
                     <div class="form-group">
                         <label class="form-label">CPF / CNPJ <span style="color:var(--red);">*</span></label>
-                        <input type="text" name="recipient_document" id="recipient_document" required class="form-control" placeholder="000.000.000-00">
+                        <input type="text" name="recipient_document" id="recipient_document" value="{{ $invoice->recipient_document ?? '' }}" required class="form-control" placeholder="000.000.000-00">
                     </div>
                     <div class="form-group">
                         <label class="form-label">E-mail</label>
-                        <input type="email" name="recipient_email" id="recipient_email" class="form-control" placeholder="cliente@email.com">
+                        <input type="email" name="recipient_email" id="recipient_email" value="{{ $invoice->recipient_email ?? '' }}" class="form-control" placeholder="cliente@email.com">
                     </div>
                 </div>
 
-                <div class="grid" style="grid-template-columns: 1fr 2fr 1fr 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
                     <div class="form-group">
                         <label class="form-label">Telefone</label>
-                        <input type="text" name="recipient_phone" id="recipient_phone" class="form-control" placeholder="(00) 00000-0000">
+                        <input type="text" name="recipient_phone" id="recipient_phone" value="{{ $invoice->recipient_phone ?? '' }}" class="form-control" placeholder="(00) 00000-0000">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Endereço</label>
-                        <input type="text" name="recipient_address" id="recipient_address" class="form-control" placeholder="Rua, Número, Bairro">
+                        <input type="text" name="recipient_address" id="recipient_address" value="{{ $invoice->recipient_address ?? '' }}" class="form-control" placeholder="Rua, Número, Bairro">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Cidade</label>
-                        <input type="text" name="recipient_city" id="recipient_city" class="form-control">
+                        <input type="text" name="recipient_city" id="recipient_city" value="{{ $invoice->recipient_city ?? '' }}" class="form-control">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Estado (UF)</label>
-                        <input type="text" name="recipient_state" id="recipient_state" maxlength="2" class="form-control text-center">
+                        <input type="text" name="recipient_state" id="recipient_state" value="{{ $invoice->recipient_state ?? '' }}" maxlength="2" class="form-control text-center" placeholder="UF">
                     </div>
                     <div class="form-group">
                         <label class="form-label">CEP</label>
-                        <input type="text" name="recipient_zip" id="recipient_zip" class="form-control">
+                        <input type="text" name="recipient_zip" id="recipient_zip" value="{{ $invoice->recipient_zip ?? '' }}" class="form-control" placeholder="00000-000">
                     </div>
                 </div>
             </div>
@@ -147,8 +148,8 @@
                 </button>
             </div>
 
-            <div class="table-wrap">
-                <table style="width: 100%; border-collapse: collapse;" id="items-table">
+            <div class="table-wrap" style="border: none; box-shadow: none; border-radius: 0;">
+                <table style="width: 100%; border-collapse: collapse; min-width: 1100px;" id="items-table">
                     <thead>
                         <tr>
                             <th style="min-width: 280px; padding: 1rem;">Produto / Descrição</th>
@@ -196,7 +197,7 @@
             <div class="card-body">
                 <div class="form-group">
                     <label class="form-label">Observações Complementares</label>
-                    <textarea name="notes" rows="4" class="form-control" placeholder="Informações que sairão no corpo da NF-e..."></textarea>
+                    <textarea name="notes" rows="4" class="form-control" placeholder="Informações que sairão no corpo da NF-e...">{{ $invoice->notes ?? '' }}</textarea>
                 </div>
                 
                 <div style="display:flex; justify-content: flex-end; gap: 1.25rem; margin-top: 2.5rem;">
@@ -262,56 +263,60 @@ function addItem(data = {}) {
     const row = document.createElement('tr');
     const taxRow = document.createElement('tr');
     
-    row.className = 'item-row border-t border-gray-100 dark:border-slate-800';
-    taxRow.className = 'tax-row bg-slate-50/50 dark:bg-slate-800/30 text-[11px] border-b border-gray-100 dark:border-slate-800';
+    row.className = 'item-row';
+    row.style.borderTop = '1px solid var(--border)';
+    taxRow.className = 'tax-row';
+    taxRow.style.background = 'var(--bg-hover)';
+    taxRow.style.fontSize = '11px';
+    taxRow.style.borderBottom = '1px solid var(--border)';
 
     const selectHtml = document.getElementById('product-select-template').innerHTML;
     
     row.innerHTML = `
-        <td class="px-4 py-4">
+        <td style="padding: 1rem;">
             <input type="hidden" name="items[${i}][product_id]" class="product-id-input">
             ${selectHtml.replace(/class="product-select/g, `name="items[${i}][product_id_select]" class="product-select`)}
             <input type="text" name="items[${i}][description]" required placeholder="Descrição"
-                class="desc-input mt-2 form-control" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem;"
+                class="desc-input mt-4 form-control" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem; width: 100%;"
                 value="${data.description || ''}">
         </td>
-        <td class="px-4 py-4">
-            <input type="text" name="items[${i}][ncm]" class="form-control text-center" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem;" placeholder="0000.00.00" value="${data.ncm || '0000.00.00'}">
+        <td style="padding: 1rem;">
+            <input type="text" name="items[${i}][ncm]" class="form-control text-center" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem; width: 100%;" placeholder="0000.00.00" value="${data.ncm || '0000.00.00'}">
         </td>
-        <td class="px-4 py-4">
-            <input type="text" name="items[${i}][cfop]" class="form-control text-center" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem;" placeholder="5.102" value="${data.cfop || '5.102'}">
+        <td style="padding: 1rem;">
+            <input type="text" name="items[${i}][cfop]" class="form-control text-center" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem; width: 100%;" placeholder="5.102" value="${data.cfop || '5.102'}">
         </td>
-        <td class="px-4 py-4">
-            <input type="text" name="items[${i}][unit]" class="unit-input form-control text-center" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem;" value="${data.unit || 'un'}">
+        <td style="padding: 1rem;">
+            <input type="text" name="items[${i}][unit]" class="unit-input form-control text-center" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem; width: 100%;" value="${data.unit || 'un'}">
         </td>
-        <td class="px-4 py-4">
+        <td style="padding: 1rem;">
             <input type="number" name="items[${i}][quantity]" step="0.001" required
-                class="qty-input form-control text-right" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem;"
+                class="qty-input form-control text-right" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem; width: 100%;"
                 oninput="calcTotals()" value="${data.quantity || 1}">
         </td>
-        <td class="px-4 py-4">
+        <td style="padding: 1rem;">
             <input type="number" name="items[${i}][unit_price]" step="0.01" required
-                class="price-input form-control text-right" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem;"
+                class="price-input form-control text-right" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem; width: 100%;"
                 oninput="calcTotals()" value="${data.unit_price || 0}">
         </td>
-        <td class="px-4 py-4">
+        <td style="padding: 1rem;">
             <input type="number" name="items[${i}][discount]" step="0.01"
-                class="disc-input form-control text-right" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem;"
+                class="disc-input form-control text-right" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem; width: 100%;"
                 oninput="calcTotals()" value="${data.discount || 0}">
         </td>
-        <td class="px-4 py-4 text-right font-bold total-display" style="color: var(--text-primary); font-size: 0.9rem;">R$ 0,00</td>
-        <td class="px-4 py-4 text-center">
-            <button type="button" onclick="removeItem(this)" class="text-red-500 hover:text-red-700 transition">
+        <td style="padding: 1rem; text-align: right; font-weight: 700; font-size: 0.9rem; color: var(--text-primary);" class="total-display">R$ 0,00</td>
+        <td style="padding: 1rem; text-align: center;">
+            <button type="button" onclick="removeItem(this)" style="color: var(--red); border: none; background: none; cursor: pointer; font-size: 1rem; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
                 <i class="fa-solid fa-trash-can"></i>
             </button>
         </td>
     `;
 
     taxRow.innerHTML = `
-        <td colspan="3" class="px-4 py-2 text-gray-500 italic">
+        <td colspan="3" style="padding: 0.5rem 1rem; color: var(--text-muted); font-style: italic;">
             <i class="fa-solid fa-calculator mr-1"></i> Composição Tributária (%)
         </td>
-        <td colspan="6" class="px-4 py-2 text-right">
+        <td colspan="6" style="padding: 0.5rem 1rem; text-align: right;">
             <div style="display: flex; gap: 1rem; justify-content: flex-end;">
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <span style="color: var(--text-muted);">ICMS:</span>
@@ -383,7 +388,26 @@ function fillCustomerData(sel) {
 }
 
 // Initialize
-addItem();
+@if(isset($invoice))
+    @foreach($invoice->items as $item)
+        addItem({
+            product_id: "{{ $item->product_id }}",
+            description: "{{ $item->description }}",
+            ncm: "{{ $item->ncm }}",
+            cfop: "{{ $item->cfop }}",
+            unit: "{{ $item->unit }}",
+            quantity: {{ $item->quantity }},
+            unit_price: {{ $item->unit_price }},
+            discount: {{ $item->discount }},
+            icms_rate: {{ $item->icms_rate }},
+            ipi_rate: {{ $item->ipi_rate }},
+            pis_rate: {{ $item->pis_rate }},
+            cofins_rate: {{ $item->cofins_rate }}
+        });
+    @endforeach
+@else
+    addItem();
+@endif
 
 @if(request()->has('simulate'))
 setTimeout(() => {

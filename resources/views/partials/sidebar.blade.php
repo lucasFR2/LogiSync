@@ -7,6 +7,7 @@
         ['route' => 'products.index',      'icon' => 'fa-cubes',                   'label' => 'Produtos',      'permission' => 'products.view'],
         ['route' => 'categories.index',    'icon' => 'fa-tags',                    'label' => 'Categorias',    'permission' => 'categories.manage'],
         ['route' => 'inventory.index',     'icon' => 'fa-arrow-right-to-bracket',  'label' => 'Entradas',      'permission' => 'inventory.view'],
+        ['route' => 'invoices.index',      'icon' => 'fa-file-invoice-dollar',     'label' => 'Emissão NF-e',  'permission' => 'invoices.view'],
         ['route' => 'manifestations.index','icon' => 'fa-file-invoice',            'label' => 'Manifestação',  'permission' => 'manifests.manage'],
         ['route' => 'suppliers.index',     'icon' => 'fa-address-book',            'label' => 'Fornecedores',  'permission' => 'suppliers.manage'],
         ['route' => 'customers.index',     'icon' => 'fa-users',                   'label' => 'Clientes',      'permission' => 'customers.manage'],
@@ -25,8 +26,8 @@
     {{-- Logo --}}
     <div class="sidebar-logo">
         <a href="{{ route('dashboard') }}" style="display:flex;align-items:center;gap:.875rem;text-decoration:none;" class="group">
-            <div class="anim-float" style="background:var(--accent); color:var(--accent-fg); width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:800; font-family:'Outfit'; font-size:1.1rem; box-shadow: 0 8px 16px -4px var(--accent-glow); transform-style: preserve-3d; perspective: 500px;">
-                <span style="transform: translateZ(10px);">LS</span>
+            <div style="background:var(--accent); color:var(--accent-fg); width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:800; font-family:'Outfit'; font-size:1.1rem; box-shadow: 0 4px 8px -2px var(--accent-glow);">
+                <span>LS</span>
             </div>
             <div style="display:flex; flex-direction:column;">
                 <span style="font-family:'Outfit'; font-weight:800; font-size:1.35rem; color:var(--text-primary); letter-spacing:-0.04em; line-height:1;">LogiSync</span>

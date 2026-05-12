@@ -14,12 +14,19 @@ class DashboardController extends Controller
         $user = Auth::user();
         $data = ['user' => $user];
 
-        if ($user->role === 'Administrador' || $user->role === 'Recursos Humanos (RH)') {
-            $data['employees'] = User::orderBy('name')->get();
+        // Logistics Stats (for Logistics and Admin)
+        if ($user->role !== 'Recursos Humanos (RH)') {
+            // Using aggregate sum for better performance
+            $data['totalStock'] = \App\Models\Product::sum('quantity');
+            $data['pendingOrders'] = \App\Models\Invoice::where('status', 'rascunho')->count();
+            $data['lowStockCount'] = \App\Models\Product::baixoEstoque()->count();
         }
 
+        // Removed $data['employees'] as it is not used in the dashboard view
+
         if ($user->role === 'Administrador') {
-            $data['recentLogs'] = ActivityLog::with('user')->latest()->take(5)->get();
+            // Eager load only necessary user fields
+            $data['recentLogs'] = ActivityLog::with('user:id,name,role')->latest()->take(10)->get();
         }
 
         return view('dashboard', $data);

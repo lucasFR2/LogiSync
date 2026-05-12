@@ -42,45 +42,67 @@
     @if(Auth::user()->role !== 'Recursos Humanos (RH)')
         {{-- Stat Cards for Logistics --}}
         <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
-            {{-- Total em Estoque --}}
-            <div class="stat-card">
-                <div class="stat-icon" style="background: var(--blue-bg); color: var(--blue);">
-                    <i class="fa-solid fa-box-open"></i>
-                </div>
-                <div class="stat-label">Total em Estoque</div>
-                <div class="stat-value">{{ $totalStock ?? 0 }}</div>
-                <div class="badge badge-success" style="width: fit-content; margin-top: 0.5rem;">
-                    <i class="fa-solid fa-check"></i> Sincronizado
-                </div>
-            </div>
+            <x-stat-card 
+                label="Total em Estoque" 
+                value="{{ $totalStock ?? 0 }}" 
+                icon="fa-box-open" 
+                bg="var(--blue-bg)" 
+                color="var(--blue)" 
+                badge="Sincronizado" 
+                badgeType="success" 
+                badgeIcon="fa-check" 
+            />
 
-            {{-- Pedidos Pendentes --}}
-            <div class="stat-card">
-                <div class="stat-icon" style="background: var(--orange-bg); color: var(--orange);">
-                    <i class="fa-solid fa-clock"></i>
-                </div>
-                <div class="stat-label">Pedidos Pendentes</div>
-                <div class="stat-value">{{ $pendingOrders ?? 0 }}</div>
-                <div class="badge badge-warning" style="width: fit-content; margin-top: 0.5rem;">
-                    <i class="fa-solid fa-hourglass-half"></i> Pendente
-                </div>
-            </div>
+            <x-stat-card 
+                label="Pedidos Pendentes" 
+                value="{{ $pendingOrders ?? 0 }}" 
+                icon="fa-clock" 
+                bg="var(--orange-bg)" 
+                color="var(--orange)" 
+                badge="Pendente" 
+                badgeType="warning" 
+                badgeIcon="fa-hourglass-half" 
+            />
 
-            {{-- Usuário --}}
-            <div class="stat-card">
-                <div class="stat-icon" style="background: var(--accent-subtle); color: var(--accent);">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
-                <div class="stat-label">Acesso Logístico</div>
-                <div class="stat-value" style="font-size: 1.5rem;">{{ Auth::user()->role }}</div>
-            </div>
+            <x-stat-card 
+                label="Produtos em Alerta" 
+                value="{{ $lowStockCount ?? 0 }}" 
+                icon="fa-triangle-exclamation" 
+                bg="var(--red-bg)" 
+                color="var(--red)" 
+                badge="Estoque Baixo" 
+                badgeType="danger" 
+                badgeIcon="fa-arrow-down" 
+                style="color: var(--red);"
+            />
+
+            <x-stat-card 
+                label="Acesso Logístico" 
+                value="{{ Auth::user()->role }}" 
+                icon="fa-shield-halved" 
+                bg="var(--accent-subtle)" 
+                color="var(--accent)" 
+            />
+
+            <x-stat-card 
+                label="Simulador" 
+                value="Simular Saída (NF-e)" 
+                icon="fa-vial" 
+                bg="rgba(255,255,255,0.2)" 
+                color="white" 
+                style="background: linear-gradient(135deg, #4f46e5, #7c3aed); border: none; color: white;"
+            >
+                <a href="{{ route('invoices.create', ['simulate' => 1]) }}" class="btn" style="background: white; color: #4f46e5; border: none; font-size: 0.75rem; padding: 0.5rem; margin-top: 0.5rem; justify-content: center;">
+                    <i class="fa-solid fa-play"></i> Iniciar Simulação
+                </a>
+            </x-stat-card>
         </div>
     @endif
 
     @if(Auth::user()->role === 'Administrador' || Auth::user()->role === 'Recursos Humanos (RH)')
         {{-- Quick Actions for RH/Admin --}}
         <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
-            <div class="card" style="padding: 2rem; display: flex; align-items: center; gap: 1.5rem; transition: transform 0.2s;">
+            <div class="card" style="padding: 2rem; display: flex; align-items: center; gap: 1.5rem;">
                 <div style="width: 56px; height: 56px; background: var(--accent-subtle); color: var(--accent); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
                     <i class="fa-solid fa-users-gear"></i>
                 </div>
@@ -91,7 +113,7 @@
                 <a href="{{ route('employees.index') }}" class="btn btn-secondary btn-sm">Acessar</a>
             </div>
 
-            <div class="card" style="padding: 2rem; display: flex; align-items: center; gap: 1.5rem; transition: transform 0.2s;">
+            <div class="card" style="padding: 2rem; display: flex; align-items: center; gap: 1.5rem;">
                 <div style="width: 56px; height: 56px; background: var(--blue-bg); color: var(--blue); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
                     <i class="fa-solid fa-user-plus"></i>
                 </div>

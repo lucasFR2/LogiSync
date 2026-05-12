@@ -15,6 +15,11 @@
 
   function setTheme(theme) {
     html.setAttribute('data-theme', theme);
+    if (theme === 'dark') {
+      html.classList.add('dark');
+    } else {
+      html.classList.remove('dark');
+    }
     localStorage.setItem(STORAGE_KEY, theme);
     updateToggleIcons(theme);
   }

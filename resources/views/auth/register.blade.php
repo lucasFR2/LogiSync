@@ -23,6 +23,8 @@
             padding: 0;
             background: var(--bg-base);
             min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
         }
 
         .login-container {
@@ -43,6 +45,7 @@
             justify-content: center;
             padding: 4rem;
             overflow: hidden;
+            border-right: 1px solid var(--glass-border);
         }
 
         .login-visual img.bg {
@@ -51,8 +54,8 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            opacity: 0.3;
-            filter: grayscale(0.5);
+            opacity: 0.25;
+            filter: grayscale(1) contrast(1.1);
         }
 
         .login-visual-content {
@@ -63,31 +66,37 @@
         }
 
         .brand-pill {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            padding: 0.625rem 1.25rem;
             border-radius: 99px;
-            font-size: 0.8rem;
-            font-weight: 700;
+            font-size: 0.75rem;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            display: inline-block;
-            margin-bottom: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            letter-spacing: 0.15em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
         .login-visual h1 {
-            font-size: 3.5rem;
-            line-height: 1.1;
+            font-size: 4rem;
+            line-height: 1.05;
             margin-bottom: 1.5rem;
             color: white;
             font-family: 'Outfit';
+            font-weight: 800;
+            letter-spacing: -0.02em;
         }
 
         .login-visual p {
-            font-size: 1.2rem;
-            opacity: 0.7;
+            font-size: 1.25rem;
+            opacity: 0.75;
             line-height: 1.6;
+            font-weight: 400;
         }
 
         /* Right Side: Form */
@@ -96,72 +105,84 @@
             background: var(--bg-base);
             display: flex;
             flex-direction: column;
-            padding: 4rem;
+            padding: 4rem 2rem;
             position: relative;
             overflow-y: auto;
         }
 
         .login-card {
             width: 100%;
-            max-width: 600px;
+            max-width: 680px;
             margin: auto;
-            padding: 3rem;
-            background: var(--bg-surface);
-            border-radius: var(--r-xl);
-            box-shadow: var(--shadow-xl);
+            padding: 3.5rem;
+            background: var(--glass-bg);
+            border-radius: var(--r-2xl);
+            box-shadow: var(--shadow-2xl);
             border: 1px solid var(--glass-border);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+        
+        .login-card:hover {
+            transform: translateY(-5px) rotateX(2deg);
         }
 
         .login-header {
-            margin-bottom: 2.5rem;
+            margin-bottom: 3rem;
         }
 
         .login-header h2 {
-            font-size: 2rem;
+            font-size: 2.25rem;
             margin-bottom: 0.5rem;
             font-family: 'Outfit';
+            font-weight: 800;
+            color: var(--text-primary);
         }
 
         .login-header p {
             color: var(--text-muted);
-            font-size: 0.9375rem;
+            font-size: 1rem;
+            font-weight: 500;
         }
 
         .auth-form {
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
+            gap: 1.75rem;
         }
 
         .form-section-title {
             font-family: 'Outfit';
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin: 1.5rem 0 0.5rem;
-            color: var(--text-primary);
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin: 2rem 0 0.75rem;
+            color: var(--accent);
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 0.5rem;
+            gap: 0.875rem;
+            border-bottom: 2px solid var(--border-subtle);
+            padding-bottom: 0.75rem;
         }
 
         .auth-footer {
-            margin-top: 3rem;
+            margin-top: 4rem;
             text-align: center;
-            font-size: 0.8rem;
+            font-size: 0.875rem;
             color: var(--text-muted);
+            font-weight: 600;
         }
 
-        @media (max-width: 1200px) {
+        @media (max-width: 1400px) {
             .login-visual { flex: 1; }
             .login-form-side { flex: 1; }
         }
 
         @media (max-width: 992px) {
             .login-visual { display: none; }
-            .login-form-side { flex: 1; padding: 2rem; }
+            .login-form-side { flex: 1; padding: 3rem 1.5rem; }
+            .login-card { padding: 2.5rem 1.5rem; }
         }
     </style>
 </head>
@@ -196,38 +217,40 @@
         <!-- Form Section -->
         <div class="login-form-side anim-entrance" style="animation-delay: 0.2s;">
             
-            <div style="position:absolute; top:2rem; left:2rem;">
-                <a href="{{ route('employees.index') }}" class="btn btn-secondary" style="padding:0.5rem 1rem; font-size:0.8rem;">
-                    <i class="fa-solid fa-arrow-left"></i> Voltar
+            <div style="position:absolute; top:2rem; left:2rem; z-index:100;">
+                <a href="{{ route('employees.index') }}" class="btn btn-secondary" style="padding:0.625rem 1.25rem; font-size:0.875rem; border-radius:12px; box-shadow: var(--shadow-sm);">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> Voltar à Listagem
                 </a>
             </div>
 
-            <div style="position:absolute; top:2rem; right:2rem;">
-                <button class="icon-btn" data-theme-toggle title="Mudar Tema">
+            <div style="position:absolute; top:2rem; right:2rem; z-index:100;">
+                <button class="icon-btn" data-theme-toggle title="Mudar Tema" style="width:42px; height:42px; border-radius:12px; background: var(--bg-surface); border: 1px solid var(--border);">
                     <i class="fa-solid fa-circle-half-stroke"></i>
                 </button>
             </div>
 
             <div class="login-card">
                 <div class="login-header">
-                    <div style="width:48px; height:48px; background:var(--accent); color:var(--accent-fg); border-radius:14px; display:flex; align-items:center; justify-content:center; font-weight:800; font-family:'Outfit'; font-size:1.5rem; margin-bottom:1.5rem;">LS</div>
+                    <div style="width:56px; height:56px; background: linear-gradient(135deg, var(--accent), #4f46e5); color:white; border-radius:16px; display:flex; align-items:center; justify-content:center; font-weight:900; font-family:'Outfit'; font-size:1.75rem; margin-bottom:1.75rem; box-shadow: 0 8px 16px -4px var(--accent-glow);">LS</div>
                     <h2>Cadastro de Funcionário</h2>
-                    <p>Preencha os dados abaixo para criar um novo  acesso ao sistema.</p>
+                    <p>Insira as informações do novo colaborador para habilitar o acesso.</p>
                 </div>
 
                 @if(session('success'))
-                    <div class="alert badge-success" style="margin-bottom:1.5rem; font-size:0.875rem;">
-                        <i class="fa-solid fa-circle-check"></i>
+                    <div class="badge badge-success" style="width:100%; padding:1rem; margin-bottom:2rem; font-size:0.9rem; justify-content:center; border-radius:12px;">
+                        <i class="fa-solid fa-circle-check mr-2"></i>
                         {{ session('success') }}
                     </div>
                 @endif
 
                 @if($errors->any())
-                    <div class="alert badge-danger" style="margin-bottom:1.5rem; font-size:0.875rem;">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                        <div>
+                    <div class="badge badge-danger" style="width:100%; padding:1rem; margin-bottom:2rem; font-size:0.9rem; flex-direction:column; align-items:center; border-radius:12px;">
+                        <div style="display:flex; align-items:center; gap:0.5rem; font-weight:800; margin-bottom:0.5rem;">
+                            <i class="fa-solid fa-circle-exclamation"></i> Ops! Algo deu errado
+                        </div>
+                        <div style="font-size:0.8rem; opacity:0.9;">
                             @foreach($errors->all() as $error)
-                                <div>{{ $error }}</div>
+                                <div>• {{ $error }}</div>
                             @endforeach
                         </div>
                     </div>
@@ -347,9 +370,9 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary" style="padding:1rem; margin-top:1.5rem; font-size:1rem;">
-                        <i class="fa-solid fa-user-plus"></i>
-                        Finalizar Cadastro
+                    <button type="submit" class="btn btn-primary" style="padding:1.125rem; margin-top:2rem; font-size:1.1rem; width:100%; border-radius:14px; background: linear-gradient(135deg, var(--accent), #4f46e5); border:none; box-shadow: 0 10px 20px -5px var(--accent-glow);">
+                        <i class="fa-solid fa-user-plus mr-2"></i>
+                        Finalizar Cadastro de Funcionário
                     </button>
                 </form>
 

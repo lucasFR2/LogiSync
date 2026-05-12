@@ -10,71 +10,43 @@ use App\Models\IncomingInvoice;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\Logger;
 
-class ProductController extends Controller
-{
+    protected $productService;
+
+    public function __construct(\App\Services\ProductService $productService)
+    {
+        $this->productService = $productService;
+    }
+
     // Listar todos os produtos
     public function index(Request $request)
     {
-        $search = $request->query('search');
-        $filterBy = $request->query('filter', 'all');
-        $status = $request->query('status_filter');
-        $priceMin = $request->query('price_min');
-        $priceMax = $request->query('price_max');
-        $stockFilter = $request->query('stock_filter');
+        $products = Product::query()
+            ->when($request->search, function($query, $search) use ($request) {
+                $filterBy = $request->query('filter', 'all');
+                if ($filterBy === 'all') {
+                    $query->where(fn($q) => $q->where('name', 'like', "%$search%")->orWhere('barcode', 'like', "%$search%")->orWhere('category', 'like', "%$search%"));
+                } else {
+                    $query->where($filterBy, 'like', "%$search%");
+                }
+            })
+            ->when($request->status_filter, fn($q, $v) => $q->where('status', $v))
+            ->when($request->price_min, fn($q, $v) => $q->where('unit_price', '>=', $v))
+            ->when($request->price_max, fn($q, $v) => $q->where('unit_price', '<=', $v))
+            ->when($request->stock_filter, function($query, $stockFilter) {
+                if ($stockFilter === 'low') $query->whereColumn('quantity', '<=', 'reorder_level');
+                elseif ($stockFilter === 'medium') $query->whereColumn('quantity', '>', 'reorder_level')->whereColumn('quantity', '<=', 'max_stock');
+                elseif ($stockFilter === 'high') $query->whereColumn('quantity', '>', 'max_stock');
+            })
+            ->paginate(15)
+            ->withQueryString();
 
-        $query = Product::query();
-
-        // Basic Search
-        if ($search) {
-            if ($filterBy === 'all') {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('barcode', 'like', "%{$search}%")
-                      ->orWhere('category', 'like', "%{$search}%");
-                });
-            } else {
-                $query->where($filterBy, 'like', "%{$search}%");
-            }
-        }
-
-        // Status Filter
-        if ($status) {
-            $query->where('status', $status);
-        }
-
-        // Price Range
-        if ($priceMin !== null && $priceMin !== '') {
-            $query->where('unit_price', '>=', $priceMin);
-        }
-        if ($priceMax !== null && $priceMax !== '') {
-            $query->where('unit_price', '<=', $priceMax);
-        }
-
-        // Stock Filter
-        if ($stockFilter) {
-            if ($stockFilter === 'low') {
-                // quantity <= reorder_level
-                $query->whereColumn('quantity', '<=', 'reorder_level');
-            } elseif ($stockFilter === 'medium') {
-                // reorder_level < quantity <= max_stock
-                $query->whereColumn('quantity', '>', 'reorder_level')
-                      ->whereColumn('quantity', '<=', 'max_stock');
-            } elseif ($stockFilter === 'high') {
-                // quantity > max_stock
-                $query->whereColumn('quantity', '>', 'max_stock');
-            }
-        }
-
-        // Preserve all query parameters for pagination
-        $products = $query->paginate(15)->withQueryString();
-
-        return view('products.index', compact('products', 'search', 'filterBy', 'status', 'priceMin', 'priceMax', 'stockFilter'));
+        return view('products.index', array_merge($request->all(), compact('products')));
     }
     
 
     public function inventories()
     {
-        $inventories = Inventory::with(['product.supplier', 'supplier'])
+        $inventories = Inventory::with(['product:id,name,supplier_id', 'product.supplier:id,name', 'supplier:id,name'])
             ->latest()
             ->paginate(15);
 
@@ -88,8 +60,8 @@ class ProductController extends Controller
 
     public function createInventory()
     {
-        $products  = Product::with('supplier')->orderBy('name')->get();
-        $suppliers = Supplier::orderBy('name')->get();
+        $products  = Product::orderBy('name')->get(['id', 'name', 'supplier_id']);
+        $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
         return view('inventory.create', compact('products', 'suppliers'));
     }
 
@@ -105,108 +77,88 @@ class ProductController extends Controller
             'supplier_id' => 'nullable|exists:suppliers,id',
         ]);
 
-        $product = Product::findOrFail($validated['product_id']);
+        DB::transaction(function() use ($validated) {
+            $product = Product::findOrFail($validated['product_id']);
+            Inventory::create(array_merge($validated, [
+                'entry_date' => $validated['entry_date'] ?? now(),
+                'user_id'    => auth()->id(),
+                'type'       => 'entrada',
+                'status'     => 'confirmada',
+            ]));
+            $product->increment('quantity', $validated['quantity']);
+        });
 
-        Inventory::create([
-            'product_id'  => $product->id,
-            'quantity'    => $validated['quantity'],
-            'notes'       => $validated['notes'],
-            'entry_date'  => $validated['entry_date'] ?? now(),
-            'lot_number'  => $validated['lot_number'] ?? null,
-            'expiry_date' => $validated['expiry_date'] ?? null,
-            'supplier_id' => $validated['supplier_id'] ?? null,
-            'user_id'     => auth()->id(),
-            'type'        => 'entrada',
-            'status'      => 'confirmada',
-        ]);
-
-        $product->increment('quantity', $validated['quantity']);
-
-        return redirect()->route('inventory.index')
-            ->with('success', 'Entrada de estoque registrada com sucesso!');
+        return redirect()->route('inventory.index')->with('success', 'Entrada de estoque registrada com sucesso!');
     }
 
-    public function bulkCreate(IncomingInvoice $manifestation)
+    public function bulkCreate(\App\Models\IncomingInvoice $manifestation)
     {
         if ($manifestation->entry_status === 'imported') {
-            return redirect()->route('manifestations.show', $manifestation)
-                             ->with('error', 'Esta Nota Fiscal já foi importada para o estoque.');
+            return redirect()->route('manifestations.show', $manifestation)->with('error', 'Esta Nota Fiscal já foi importada.');
         }
 
         $manifestation->load('items');
-        $products = Product::orderBy('name')->get();
-        $categories = Category::orderBy('name')->get();
+        $products = Product::orderBy('name')->get(['id', 'name']);
+        $categories = \App\Models\Category::orderBy('name')->get(['id', 'name']);
 
         return view('inventory.bulk_import', compact('manifestation', 'products', 'categories'));
     }
 
-    public function bulkStore(Request $request, IncomingInvoice $manifestation)
+    public function bulkStore(Request $request, \App\Models\IncomingInvoice $manifestation)
     {
         if ($manifestation->entry_status === 'imported') {
-            return redirect()->route('manifestations.show', $manifestation)
-                             ->with('error', 'Esta Nota Fiscal já foi importada.');
+            return redirect()->route('manifestations.show', $manifestation)->with('error', 'Esta Nota Fiscal já foi importada.');
         }
 
-        $request->validate([
-            'items' => 'required|array',
-            'items.*.product_id' => 'required|string', // Can be numeric ID or 'new'
-            'items.*.quantity' => 'required|numeric|min:0.001',
-        ]);
+        $request->validate(['items' => 'required|array', 'items.*.product_id' => 'required', 'items.*.quantity' => 'required|numeric|min:0.001']);
 
-        DB::transaction(function () use ($request, $manifestation) {
-            foreach ($request->items as $itemId => $data) {
-                $qty = (float) $data['quantity'];
-                
-                if ($data['product_id'] === 'new') {
-                    // Automagic creation of product based on XML item and user inputs
-                    $xmlItem = $manifestation->items()->find($itemId);
-                    $product = Product::create([
-                        'name' => $data['new_name'] ?? $xmlItem->description,
-                        'barcode' => $data['new_barcode'] ?? $xmlItem->barcode,
-                        'description' => 'Produto importado via NF-e ' . $manifestation->number,
-                        'unit_price' => $xmlItem->unit_price,
-                        'purchase_price' => $xmlItem->unit_price,
-                        'cost_price' => $xmlItem->unit_price,
-                        'quantity' => 0, // will be incremented
-                        'reorder_level' => 10,
-                        'unit' => $xmlItem->unit,
-                        'category' => $data['new_category'] ?? 'Importado Automático',
+        try {
+            DB::transaction(function () use ($request, $manifestation) {
+                foreach ($request->items as $itemId => $data) {
+                    $qty = (float) $data['quantity'];
+                    if ($data['product_id'] === 'new') {
+                        $xmlItem = $manifestation->items()->find($itemId);
+                        $product = Product::create([
+                            'name' => $data['new_name'] ?? $xmlItem->description,
+                            'barcode' => $data['new_barcode'] ?? $xmlItem->barcode,
+                            'unit_price' => $xmlItem->unit_price,
+                            'quantity' => 0,
+                            'reorder_level' => 10,
+                            'unit' => $xmlItem->unit,
+                            'category' => $data['new_category'] ?? 'Importado Automático',
+                            'supplier_id' => $manifestation->supplier_id,
+                            'status' => 'ativo'
+                        ]);
+                    } else {
+                        $product = Product::findOrFail($data['product_id']);
+                    }
+
+                    Inventory::create([
+                        'product_id' => $product->id,
+                        'quantity' => $qty,
+                        'notes' => 'Entrada via NF-e ' . $manifestation->number,
                         'supplier_id' => $manifestation->supplier_id,
-                        'status' => 'ativo'
+                        'user_id' => auth()->id(),
+                        'type' => 'entrada',
+                        'status' => 'confirmada',
                     ]);
-                } else {
-                    $product = Product::findOrFail($data['product_id']);
+
+                    $product->increment('quantity', $qty);
+                    $manifestation->items()->where('id', $itemId)->update(['product_id' => $product->id]);
                 }
-
-                Inventory::create([
-                    'product_id' => $product->id,
-                    'quantity' => $qty,
-                    'notes' => 'Entrada via NF-e ' . $manifestation->number,
-                    'entry_date' => now(),
-                    'supplier_id' => $manifestation->supplier_id,
-                    'user_id' => auth()->id(),
-                    'type' => 'entrada',
-                    'status' => 'confirmada',
-                ]);
-
-                $product->increment('quantity', $qty);
-
-                // Atualizar o item da NF mapeado para o produto
-                $manifestation->items()->where('id', $itemId)->update(['product_id' => $product->id]);
-            }
-
-            $manifestation->update(['entry_status' => 'imported']);
-        });
-
-        return redirect()->route('manifestations.show', $manifestation)
-                         ->with('success', 'Estoque atualizado com sucesso a partir da NF-e!');
+                $manifestation->update(['entry_status' => 'imported']);
+            });
+            return redirect()->route('manifestations.show', $manifestation)->with('success', 'Estoque atualizado com sucesso!');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 
     // Mostrar formulário de criação
     public function create()
     {
-        $suppliers  = Supplier::orderBy('name')->get();
-        $categories = Category::orderBy('name')->get();
+        $suppliers  = Supplier::orderBy('name')->get(['id', 'name']);
+        $categories = \App\Models\Category::orderBy('name')->get(['id', 'name']);
         return view('products.create', compact('suppliers', 'categories'));
     }
 
@@ -216,196 +168,83 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name'               => 'required|string|max:255',
             'barcode'            => 'nullable|string|unique:products,barcode|regex:/^[0-9]{1,20}$/',
-            'description'        => 'nullable|string',
-            'cost_price'         => 'nullable|numeric|min:0|max:999999.99',
-            'unit_price'         => 'required|numeric|min:0|max:999999.99',
-            'purchase_price'     => 'nullable|numeric|min:0|max:999999.99',
-            'tax_percent'        => 'nullable|numeric|min:0|max:100',
-            'shipping_cost'      => 'nullable|numeric|min:0|max:999999.99',
-            'margin_percent'     => 'nullable|numeric|min:0|max:9999.99',
-            'quantity'           => 'required|integer|min:0|max:9999999',
-            'max_stock'          => 'nullable|integer|min:1|max:9999999',
-            'reorder_level'      => 'required|integer|min:0|max:9999999',
-            'package_quantity'   => 'nullable|numeric|min:1|max:999999.99',
-            'weight'             => 'nullable|numeric|min:0|max:999999.99',
-            'height'             => 'nullable|numeric|min:0|max:999999.99',
-            'width'              => 'nullable|numeric|min:0|max:999999.99',
-            'depth'              => 'nullable|numeric|min:0|max:999999.99',
-            'category'           => 'nullable|string',
-            'unit'               => 'nullable|string',
-            'warehouse_location' => 'nullable|string',
+            'unit_price'         => 'required|numeric|min:0',
+            'quantity'           => 'required|integer|min:0',
+            'reorder_level'      => 'required|integer|min:0',
+            'status'             => 'required|in:ativo,inativo,descontinuado',
             'warehouse_location_id' => 'nullable|exists:warehouse_locations,id',
             'supplier_id'        => 'nullable|exists:suppliers,id',
-            'status'             => 'required|in:ativo,inativo,descontinuado',
-        ], [
-            'barcode.regex'      => 'Código de barras deve conter apenas números',
-            'unit_price.min'     => 'Preço de venda não pode ser negativo',
-            'max_stock.min'      => 'Estoque máximo deve ser pelo menos 1 unidade',
-            'supplier_id.exists' => 'Fornecedor inválido',
         ]);
 
-        // Verificar conflito de localização exclusiva
-        if (!empty($validated['warehouse_location_id'])) {
-            $location = \App\Models\WarehouseLocation::find($validated['warehouse_location_id']);
-            if ($location && $location->is_occupied) {
-                $occupant = Product::where('warehouse_location_id', $location->id)->first();
-                return back()->withErrors([
-                    'warehouse_location_id' => 'Esta posição (' . $location->full_code . ') já está ocupada pelo produto "' . ($occupant->name ?? '?') . '". Não é permitido dois produtos no mesmo endereço.',
-                ])->withInput();
-            }
+        try {
+            $product = $this->productService->createProduct($request->all());
+            Logger::log('create_product', "O usuário cadastrou o produto: {$product->name}");
+            return redirect()->route('products.index')->with('success', 'Produto cadastrado com sucesso!');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
-
-        // Criar o produto
-        $product = Product::create($validated);
-
-        // Marcar localização como ocupada
-        if ($product->warehouse_location_id) {
-            \App\Models\WarehouseLocation::where('id', $product->warehouse_location_id)
-                ->update(['is_occupied' => true]);
-        }
-
-        // Registrar entrada inicial de estoque se quantidade > 0
-        if ($validated['quantity'] > 0) {
-            Inventory::create([
-                'product_id' => $product->id,
-                'quantity'   => $validated['quantity'],
-                'notes'      => 'Entrada inicial - Cadastro do produto',
-            ]);
-        }
-
-        Logger::log('create_product', "O usuário cadastrou o produto: {$product->name} (#{$product->id})");
-
-        return redirect()->route('products.index')
-            ->with('success', 'Produto cadastrado com sucesso!');
     }
 
     // Mostrar um produto
     public function show(Product $product)
     {
-        $inventories = $product->inventories()->latest()->paginate(10);
+        $inventories = $product->inventories()->with('user:id,name')->latest()->paginate(10);
         return view('products.show', compact('product', 'inventories'));
     }
 
     // Mostrar formulário de edição
     public function edit(Product $product)
     {
-        $suppliers  = Supplier::orderBy('name')->get();
-        $categories = Category::orderBy('name')->get();
+        $suppliers  = Supplier::orderBy('name')->get(['id', 'name']);
+        $categories = \App\Models\Category::orderBy('name')->get(['id', 'name']);
         return view('products.edit', compact('product', 'suppliers', 'categories'));
     }
 
     // Atualizar produto no banco
     public function update(Request $request, Product $product)
     {
-        // Validar os dados
-        $validated = $request->validate([
-            'name'               => 'required|string|max:255',
-            'barcode'            => 'nullable|string|unique:products,barcode,' . $product->id . '|regex:/^[0-9]{1,20}$/',
-            'description'        => 'nullable|string',
-            'cost_price'         => 'nullable|numeric|min:0|max:999999.99',
-            'unit_price'         => 'required|numeric|min:0|max:999999.99',
-            'purchase_price'     => 'nullable|numeric|min:0|max:999999.99',
-            'tax_percent'        => 'nullable|numeric|min:0|max:100',
-            'shipping_cost'      => 'nullable|numeric|min:0|max:999999.99',
-            'margin_percent'     => 'nullable|numeric|min:0|max:9999.99',
-            'quantity'           => 'required|integer|min:0|max:9999999',
-            'max_stock'          => 'nullable|integer|min:1|max:9999999',
-            'reorder_level'      => 'required|integer|min:0|max:9999999',
-            'package_quantity'   => 'nullable|numeric|min:1|max:999999.99',
-            'weight'             => 'nullable|numeric|min:0|max:999999.99',
-            'height'             => 'nullable|numeric|min:0|max:999999.99',
-            'width'              => 'nullable|numeric|min:0|max:999999.99',
-            'depth'              => 'nullable|numeric|min:0|max:999999.99',
-            'category'           => 'nullable|string',
-            'unit'               => 'nullable|string',
-            'warehouse_location' => 'nullable|string',
-            'warehouse_location_id' => 'nullable|exists:warehouse_locations,id',
-            'supplier_id'        => 'nullable|exists:suppliers,id',
-            'status'             => 'required|in:ativo,inativo,descontinuado',
-        ], [
-            'barcode.regex'      => 'Código de barras deve conter apenas números',
-            'unit_price.min'     => 'Preço de venda não pode ser negativo',
-            'max_stock.min'      => 'Estoque máximo deve ser pelo menos 1 unidade',
-            'supplier_id.exists' => 'Fornecedor inválido',
+        $request->validate([
+            'name'       => 'required|string|max:255',
+            'unit_price' => 'required|numeric|min:0',
+            'quantity'   => 'required|integer|min:0',
+            'status'     => 'required|in:ativo,inativo,descontinuado',
         ]);
 
-        // Verificar conflito de localização exclusiva
-        $newLocId = $validated['warehouse_location_id'] ?? null;
-        $oldLocId = $product->warehouse_location_id;
-
-        if ($newLocId && $newLocId != $oldLocId) {
-            $location = \App\Models\WarehouseLocation::find($newLocId);
-            if ($location && $location->is_occupied) {
-                $occupant = Product::where('warehouse_location_id', $location->id)->where('id', '!=', $product->id)->first();
-                if ($occupant) {
-                    return back()->withErrors([
-                        'warehouse_location_id' => 'Esta posição (' . $location->full_code . ') já está ocupada pelo produto "' . $occupant->name . '". Não é permitido dois produtos no mesmo endereço.',
-                    ])->withInput();
-                }
-            }
+        try {
+            $this->productService->updateProduct($product, $request->all());
+            Logger::log('update_product', "O usuário alterou o produto: {$product->name}");
+            return redirect()->route('products.show', $product)->with('success', 'Produto atualizado com sucesso!');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
-
-        // Liberar localização antiga
-        if ($oldLocId && $oldLocId != $newLocId) {
-            \App\Models\WarehouseLocation::where('id', $oldLocId)
-                ->update(['is_occupied' => false]);
-        }
-
-        // Atualizar o produto
-        $product->update($validated);
-
-        // Marcar nova localização como ocupada
-        if ($newLocId && $newLocId != $oldLocId) {
-            \App\Models\WarehouseLocation::where('id', $newLocId)
-                ->update(['is_occupied' => true]);
-        }
-
-        Logger::log('update_product', "O usuário alterou o produto: {$product->name} (#{$product->id})");
-
-        return redirect()->route('products.show', $product)
-            ->with('success', 'Produto atualizado com sucesso!');
     }
 
     // Deletar produto
     public function destroy(Product $product)
     {
-        $prodName = $product->name;
-        $prodId = $product->id;
+        $name = $product->name;
         $product->delete();
-
-        Logger::log('delete_product', "O usuário removeu o produto: {$prodName} (#{$prodId})");
-
-        return redirect()->route('products.index')
-            ->with('success', 'Produto deletado com sucesso!');
+        Logger::log('delete_product', "O usuário removeu o produto: {$name}");
+        return redirect()->route('products.index')->with('success', 'Produto deletado!');
     }
 
-    // Registrar entrada de estoque
+    // Registrar entrada de estoque rápida
     public function addInventory(Request $request, Product $product)
     {
-        // Validar os dados
-        $validated = $request->validate([
-            'quantity' => 'required|integer|min:1|max:9999999',
-            'notes'    => 'nullable|string|max:500',
-        ], [
-            'quantity.required' => 'A quantidade é obrigatória',
-            'quantity.min'      => 'A quantidade deve ser pelo menos 1 unidade',
-            'quantity.max'      => 'A quantidade não pode exceder 9.999.999 unidades',
-        ]);
-
-        // Criar registro de entrada
-        Inventory::create([
-            'product_id' => $product->id,
-            'quantity'   => $validated['quantity'],
-            'notes'      => $validated['notes'] ?? null,
-        ]);
-
-        // Atualizar quantidade do produto
-        $product->increment('quantity', $validated['quantity']);
-
-        Logger::log('inventory_entry', "O usuário registrou entrada de {$validated['quantity']} unidades para o produto: {$product->name} (#{$product->id})");
-
-        return redirect()->route('products.show', $product)
-            ->with('success', 'Entrada registrada com sucesso! Quantidade atualizada.');
+        $validated = $request->validate(['quantity' => 'required|integer|min:1']);
+        DB::transaction(function() use ($product, $validated, $request) {
+            Inventory::create([
+                'product_id' => $product->id,
+                'quantity'   => $validated['quantity'],
+                'notes'      => $request->notes,
+                'user_id'    => auth()->id(),
+                'type'       => 'entrada',
+                'status'     => 'confirmada',
+            ]);
+            $product->increment('quantity', $validated['quantity']);
+        });
+        Logger::log('inventory_entry', "Entrada de {$validated['quantity']} para {$product->name}");
+        return redirect()->route('products.show', $product)->with('success', 'Estoque atualizado!');
     }
     // Adicionar nova categoria (via AJAX)
     public function storeCategory(Request $request)
