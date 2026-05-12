@@ -5,6 +5,8 @@ use App\Models\Product;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use App\Models\Inventory;
+use App\Models\IncomingInvoice;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -120,6 +122,81 @@ class ProductController extends Controller
 
         return redirect()->route('inventory.index')
             ->with('success', 'Entrada de estoque registrada com sucesso!');
+    }
+
+    public function bulkCreate(IncomingInvoice $manifestation)
+    {
+        if ($manifestation->entry_status === 'imported') {
+            return redirect()->route('manifestations.show', $manifestation)
+                             ->with('error', 'Esta Nota Fiscal já foi importada para o estoque.');
+        }
+
+        $manifestation->load('items');
+        $products = Product::orderBy('name')->get();
+
+        return view('inventory.bulk_import', compact('manifestation', 'products'));
+    }
+
+    public function bulkStore(Request $request, IncomingInvoice $manifestation)
+    {
+        if ($manifestation->entry_status === 'imported') {
+            return redirect()->route('manifestations.show', $manifestation)
+                             ->with('error', 'Esta Nota Fiscal já foi importada.');
+        }
+
+        $request->validate([
+            'items' => 'required|array',
+            'items.*.product_id' => 'required|string', // Can be numeric ID or 'new'
+            'items.*.quantity' => 'required|numeric|min:0.001',
+        ]);
+
+        DB::transaction(function () use ($request, $manifestation) {
+            foreach ($request->items as $itemId => $data) {
+                $qty = (float) $data['quantity'];
+                
+                if ($data['product_id'] === 'new') {
+                    // Automagic creation of product based on XML item and user inputs
+                    $xmlItem = $manifestation->items()->find($itemId);
+                    $product = Product::create([
+                        'name' => $data['new_name'] ?? $xmlItem->description,
+                        'barcode' => $data['new_barcode'] ?? $xmlItem->barcode,
+                        'description' => 'Produto importado via NF-e ' . $manifestation->number,
+                        'unit_price' => $xmlItem->unit_price,
+                        'purchase_price' => $xmlItem->unit_price,
+                        'cost_price' => $xmlItem->unit_price,
+                        'quantity' => 0, // will be incremented
+                        'reorder_level' => 10,
+                        'unit' => $xmlItem->unit,
+                        'category' => $data['new_category'] ?? 'Importado Automático',
+                        'supplier_id' => $manifestation->supplier_id,
+                        'status' => 'ativo'
+                    ]);
+                } else {
+                    $product = Product::findOrFail($data['product_id']);
+                }
+
+                Inventory::create([
+                    'product_id' => $product->id,
+                    'quantity' => $qty,
+                    'notes' => 'Entrada via NF-e ' . $manifestation->number,
+                    'entry_date' => now(),
+                    'supplier_id' => $manifestation->supplier_id,
+                    'user_id' => auth()->id(),
+                    'type' => 'entrada',
+                    'status' => 'confirmada',
+                ]);
+
+                $product->increment('quantity', $qty);
+
+                // Atualizar o item da NF mapeado para o produto
+                $manifestation->items()->where('id', $itemId)->update(['product_id' => $product->id]);
+            }
+
+            $manifestation->update(['entry_status' => 'imported']);
+        });
+
+        return redirect()->route('manifestations.show', $manifestation)
+                         ->with('success', 'Estoque atualizado com sucesso a partir da NF-e!');
     }
 
     // Mostrar formulário de criação

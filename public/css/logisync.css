@@ -490,6 +490,8 @@ body::before {
 .badge-success { background: var(--green-bg); color: var(--green); }
 .badge-warning { background: var(--orange-bg); color: var(--orange); }
 .badge-danger  { background: var(--red-bg); color: var(--red); }
+.badge-info    { background: var(--blue-bg); color: var(--blue); }
+.badge-gray    { background: var(--bg-hover); color: var(--text-muted); }
 
 /* ── ALERTS ────────────────────────────── */
 .alert {
