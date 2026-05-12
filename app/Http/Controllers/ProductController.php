@@ -134,8 +134,9 @@ class ProductController extends Controller
 
         $manifestation->load('items');
         $products = Product::orderBy('name')->get();
+        $categories = Category::orderBy('name')->get();
 
-        return view('inventory.bulk_import', compact('manifestation', 'products'));
+        return view('inventory.bulk_import', compact('manifestation', 'products', 'categories'));
     }
 
     public function bulkStore(Request $request, IncomingInvoice $manifestation)

@@ -115,7 +115,7 @@
             }
 
             // Inject new option into every category <select> on the page
-            document.querySelectorAll('select[name="category"]').forEach(sel => {
+            document.querySelectorAll('select[name="category"], .category-select').forEach(sel => {
                 const opt = document.createElement('option');
                 opt.value    = json.name;
                 opt.text     = json.name;
