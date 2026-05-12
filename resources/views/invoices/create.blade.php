@@ -1,241 +1,235 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova Nota Fiscal - LogiSync WMS</title>
-    <script>tailwindConfig = { darkMode: 'class' };</script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="{{ asset('js/theme-toggle.js') }}"></script>
-</head>
-<body class="bg-gray-50 dark:bg-slate-950 font-sans transition-colors duration-300">
-<div class="min-h-screen flex">
+@extends('layouts.app')
 
-    {{-- Sidebar --}}
-    <aside class="w-64 bg-slate-900 dark:bg-slate-950 text-white hidden md:flex flex-col">
-        <div class="p-6 border-b border-slate-800 flex justify-center">
-            <a href="/"><img src="{{ asset('images/logisync-logo.png') }}" alt="LogiSync" class="w-40 brightness-0 invert"></a>
-        </div>
-        <nav class="flex-1 px-4 mt-4 space-y-2">
-            <a href="{{ route('dashboard') }}" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition"><i class="fa-solid fa-chart-line mr-3"></i> Dashboard</a>
-            <a href="{{ route('products.index') }}" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition"><i class="fa-solid fa-boxes-stacked mr-3"></i> Produtos</a>
-            <a href="{{ route('inventory.index') }}" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition"><i class="fa-solid fa-truck-ramp-box mr-3"></i> Entradas</a>
-            <a href="{{ route('suppliers.index') }}" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition"><i class="fa-solid fa-handshake mr-3"></i> Fornecedores</a>
-            <a href="{{ route('invoices.index') }}" class="flex items-center p-3 bg-blue-600 rounded-lg text-white"><i class="fa-solid fa-file-invoice mr-3"></i> Notas Fiscais</a>
-        </nav>
-        <div class="p-4 border-t border-slate-800">
-            <form method="POST" action="{{ route('logout') }}">@csrf
-                <button type="submit" class="flex items-center w-full p-3 text-red-400 hover:bg-red-900/20 rounded-lg transition"><i class="fa-solid fa-right-from-bracket mr-3"></i> Sair</button>
-            </form>
-        </div>
-    </aside>
+@section('title', 'Emissão NF-e')
+@section('page-title', 'Emissão de Nota Fiscal')
+@section('page-subtitle', 'Preencha os dados abaixo para gerar um novo documento fiscal')
 
-    <main class="flex-1">
-        <header class="bg-white dark:bg-slate-900 shadow-sm px-8 py-4 flex justify-between items-center border-b dark:border-slate-800">
-            <div class="flex items-center gap-3">
-                <a href="{{ route('invoices.index') }}" class="text-gray-400 hover:text-blue-600 transition"><i class="fa-solid fa-arrow-left"></i></a>
-                <h1 class="text-2xl font-bold text-slate-900 dark:text-white"><i class="fa-solid fa-file-invoice-dollar text-blue-600 mr-2"></i>Nova Nota Fiscal</h1>
-            </div>
-            <div class="flex items-center gap-4">
-                <button onclick="toggleTheme()" data-theme-toggle class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition text-gray-600 dark:text-gray-400"><i class="fa-solid fa-moon"></i></button>
-                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">{{ substr(auth()->user()->name, 0, 1) }}</div>
-            </div>
-        </header>
+@section('content')
+<form method="POST" action="{{ route('invoices.store') }}" id="invoice-form" class="anim-entrance">
+    @csrf
+    <div style="display:flex; flex-direction:column; gap:2rem; padding-bottom: 5rem;">
 
-        <form method="POST" action="{{ route('invoices.store') }}" id="invoice-form">
-        @csrf
-        <div class="p-8 space-y-6">
-
-            {{-- Errors --}}
-            @if($errors->any())
-            <div class="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
-                <ul class="list-disc list-inside text-red-700 dark:text-red-300 text-sm space-y-1">
-                    @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
-                </ul>
-            </div>
-            @endif
-
-            {{-- Cabeçalho da NF --}}
-            <div class="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 p-6">
-                <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2"><i class="fa-solid fa-info-circle text-blue-500"></i> Informações Gerais</h2>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Número</label>
-                        <input type="text" value="{{ $number }}" readonly class="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg bg-gray-50 text-gray-500 font-mono text-sm">
+        {{-- General Info Card --}}
+        <div class="card">
+            <div class="card-header">
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <div style="width:32px; height:32px; background:var(--blue-bg); color:var(--blue); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">
+                        <i class="fa-solid fa-circle-info"></i>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo <span class="text-red-500">*</span></label>
-                        <select name="type" required class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
-                            <option value="saida">↑ Saída</option>
-                            <option value="entrada">↓ Entrada</option>
+                    <h3 style="margin:0; font-family:'Outfit';">Informações Gerais da NF</h3>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label">Número da NF</label>
+                        <input type="text" value="{{ $number }}" readonly class="form-control" style="background: var(--bg-hover); font-family: monospace; font-weight: 700; opacity: 0.8;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tipo de Operação <span style="color:var(--red);">*</span></label>
+                        <select name="type" required class="form-control">
+                            <option value="saida">↑ Saída (Faturamento)</option>
+                            <option value="entrada">↓ Entrada (Compra)</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Emissão</label>
-                        <input type="date" name="issued_at" value="{{ date('Y-m-d') }}" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                    <div class="form-group">
+                        <label class="form-label">Data de Emissão</label>
+                        <input type="date" name="issued_at" value="{{ date('Y-m-d') }}" class="form-control">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vencimento</label>
-                        <input type="date" name="due_date" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                    <div class="form-group">
+                        <label class="form-label">Vencimento</label>
+                        <input type="date" name="due_date" class="form-control">
                     </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fornecedor (opcional)</label>
-                        <select name="supplier_id" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
-                            <option value="">— Nenhum —</option>
+                </div>
+
+                <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label">Fornecedor (opcional)</label>
+                        <select name="supplier_id" class="form-control">
+                            <option value="">— Selecione se aplicável —</option>
                             @foreach($suppliers as $s)<option value="{{ $s->id }}">{{ $s->name }}</option>@endforeach
                         </select>
                     </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Forma de Pagamento <span class="text-red-500">*</span></label>
-                        <select name="payment_method" required class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
-                            <option value="pix">PIX</option>
+                    <div class="form-group">
+                        <label class="form-label">Forma de Pagamento <span style="color:var(--red);">*</span></label>
+                        <select name="payment_method" required class="form-control">
+                            <option value="pix">PIX (Instantâneo)</option>
                             <option value="boleto">Boleto Bancário</option>
-                            <option value="dinheiro">Dinheiro</option>
+                            <option value="dinheiro">Dinheiro / Espécie</option>
                             <option value="cartao_credito">Cartão de Crédito</option>
                             <option value="cartao_debito">Cartão de Débito</option>
-                            <option value="transferencia">Transferência Bancária</option>
                         </select>
                     </div>
                 </div>
             </div>
+        </div>
 
-            {{-- Destinatário --}}
-            <div class="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 p-6">
-                <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2"><i class="fa-solid fa-user text-green-500"></i> Destinatário / Remetente</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome / Razão Social <span class="text-red-500">*</span></label>
-                        <input type="text" name="recipient_name" required value="{{ old('recipient_name') }}" placeholder="Ex: Empresa XYZ Ltda" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+        {{-- Recipient Card --}}
+        <div class="card">
+            <div class="card-header">
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <div style="width:32px; height:32px; background:var(--accent-subtle); color:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">
+                        <i class="fa-solid fa-user-tag"></i>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CPF / CNPJ</label>
-                        <input type="text" name="recipient_document" value="{{ old('recipient_document') }}" placeholder="00.000.000/0001-00" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                    <h3 style="margin:0; font-family:'Outfit';">Dados do Destinatário</h3>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <select id="customer-select" class="form-control" style="width: 250px; font-size: 0.8rem; height: 38px; padding: 0 1rem;" onchange="fillCustomerData(this)">
+                        <option value="">Buscar Cliente Cadastrado...</option>
+                        @foreach($customers as $c)
+                            <option value="{{ $c->id }}" 
+                                    data-name="{{ $c->name }}" 
+                                    data-document="{{ $c->document }}" 
+                                    data-email="{{ $c->email }}" 
+                                    data-phone="{{ $c->phone }}" 
+                                    data-address="{{ $c->address }}"
+                                    data-city="{{ $c->city }}"
+                                    data-state="{{ $c->state }}"
+                                    data-zip="{{ $c->zip_code }}">
+                                {{ $c->name }} ({{ $c->document }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="grid" style="grid-template-columns: 2fr 1fr 1.5fr; gap: 1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label">Nome / Razão Social <span style="color:var(--red);">*</span></label>
+                        <input type="text" name="recipient_name" id="recipient_name" required class="form-control" placeholder="Nome do cliente">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail</label>
-                        <input type="email" name="recipient_email" value="{{ old('recipient_email') }}" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                    <div class="form-group">
+                        <label class="form-label">CPF / CNPJ <span style="color:var(--red);">*</span></label>
+                        <input type="text" name="recipient_document" id="recipient_document" required class="form-control" placeholder="000.000.000-00">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefone</label>
-                        <input type="text" name="recipient_phone" value="{{ old('recipient_phone') }}" placeholder="(11) 99999-9999" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                    <div class="form-group">
+                        <label class="form-label">E-mail</label>
+                        <input type="email" name="recipient_email" id="recipient_email" class="form-control" placeholder="cliente@email.com">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CEP</label>
-                        <input type="text" name="recipient_zip" value="{{ old('recipient_zip') }}" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                </div>
+
+                <div class="grid" style="grid-template-columns: 1fr 2fr 1fr 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label">Telefone</label>
+                        <input type="text" name="recipient_phone" id="recipient_phone" class="form-control" placeholder="(00) 00000-0000">
                     </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Endereço</label>
-                        <input type="text" name="recipient_address" value="{{ old('recipient_address') }}" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                    <div class="form-group">
+                        <label class="form-label">Endereço</label>
+                        <input type="text" name="recipient_address" id="recipient_address" class="form-control" placeholder="Rua, Número, Bairro">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cidade</label>
-                        <input type="text" name="recipient_city" value="{{ old('recipient_city') }}" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                    <div class="form-group">
+                        <label class="form-label">Cidade</label>
+                        <input type="text" name="recipient_city" id="recipient_city" class="form-control">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">UF</label>
-                        <input type="text" name="recipient_state" value="{{ old('recipient_state') }}" maxlength="2" placeholder="SP" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm uppercase">
+                    <div class="form-group">
+                        <label class="form-label">Estado (UF)</label>
+                        <input type="text" name="recipient_state" id="recipient_state" maxlength="2" class="form-control text-center">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">CEP</label>
+                        <input type="text" name="recipient_zip" id="recipient_zip" class="form-control">
                     </div>
                 </div>
             </div>
+        </div>
 
-            {{-- Itens --}}
-            <div class="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-list text-purple-500"></i> Itens da Nota</h2>
-                    <button type="button" onclick="addItem()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
-                        <i class="fa-solid fa-plus"></i> Adicionar Item
-                    </button>
+        {{-- Items Table --}}
+        <div class="card" style="overflow: visible;">
+            <div class="card-header">
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <div style="width:32px; height:32px; background:var(--blue-bg); color:var(--blue); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <h3 style="margin:0; font-family:'Outfit';">Itens da Nota Fiscal</h3>
                 </div>
+                <button type="button" onclick="addItem()" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+                    <i class="fa-solid fa-plus mr-1"></i> Adicionar Item
+                </button>
+            </div>
 
-                <div class="overflow-x-auto">
-                <table class="w-full text-sm" id="items-table">
-                    <thead class="bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-400">
+            <div class="table-wrap">
+                <table style="width: 100%; border-collapse: collapse;" id="items-table">
+                    <thead>
                         <tr>
-                            <th class="px-3 py-3 text-left font-semibold w-1/3">Produto / Descrição</th>
-                            <th class="px-3 py-3 text-left font-semibold w-20">Unid.</th>
-                            <th class="px-3 py-3 text-right font-semibold w-24">Qtde</th>
-                            <th class="px-3 py-3 text-right font-semibold w-28">Preço Unit.</th>
-                            <th class="px-3 py-3 text-right font-semibold w-20">Desc. %</th>
-                            <th class="px-3 py-3 text-right font-semibold w-28">Total</th>
-                            <th class="px-3 py-3 w-10"></th>
+                            <th style="min-width: 280px; padding: 1rem;">Produto / Descrição</th>
+                            <th style="width: 120px; padding: 1rem;">NCM</th>
+                            <th style="width: 100px; padding: 1rem;">CFOP</th>
+                            <th style="width: 70px; padding: 1rem; text-align: center;">Unid.</th>
+                            <th style="width: 90px; padding: 1rem; text-align: right;">Qtde</th>
+                            <th style="width: 130px; padding: 1rem; text-align: right;">Preço Unit.</th>
+                            <th style="width: 90px; padding: 1rem; text-align: right;">Desc. %</th>
+                            <th style="width: 140px; padding: 1rem; text-align: right;">Total</th>
+                            <th style="width: 60px; padding: 1rem;"></th>
                         </tr>
                     </thead>
                     <tbody id="items-body">
-                        {{-- linhas adicionadas por JS --}}
+                        {{-- Injected by JS --}}
                     </tbody>
-                    <tfoot class="border-t-2 border-gray-200 dark:border-slate-700">
-                        <tr>
-                            <td colspan="4"></td>
-                            <td class="px-3 py-2 text-right text-sm text-gray-600 dark:text-gray-400 font-medium">Subtotal</td>
-                            <td class="px-3 py-2 text-right font-bold text-gray-800 dark:text-white" id="subtotal-display">R$ 0,00</td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td colspan="4"></td>
-                            <td class="px-3 py-2 text-right text-sm text-gray-600 dark:text-gray-400">
-                                <span>Desconto (R$)</span>
-                                <input type="number" name="discount" id="discount-input" value="0" min="0" step="0.01"
-                                    class="ml-2 w-24 text-right px-2 py-1 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded text-sm" oninput="calcTotals()">
-                            </td>
-                            <td class="px-3 py-2 text-right text-red-600 dark:text-red-400 font-semibold" id="discount-display">- R$ 0,00</td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td colspan="4"></td>
-                            <td class="px-3 py-2 text-right text-sm text-gray-600 dark:text-gray-400">
-                                <span>Frete (R$)</span>
-                                <input type="number" name="shipping" id="shipping-input" value="0" min="0" step="0.01"
-                                    class="ml-2 w-24 text-right px-2 py-1 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded text-sm" oninput="calcTotals()">
-                            </td>
-                            <td class="px-3 py-2 text-right text-blue-600 dark:text-blue-400 font-semibold" id="shipping-display">+ R$ 0,00</td>
-                            <td></td>
-                        </tr>
-                        <tr class="bg-blue-50 dark:bg-blue-900/20">
-                            <td colspan="4"></td>
-                            <td class="px-3 py-3 text-right font-bold text-gray-800 dark:text-white">TOTAL</td>
-                            <td class="px-3 py-3 text-right text-xl font-bold text-blue-600 dark:text-blue-400" id="total-display">R$ 0,00</td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
                 </table>
+            </div>
+
+            {{-- Footer Summary --}}
+            <div style="padding: 2rem; background: var(--bg-hover); display: flex; justify-content: flex-end; border-top: 1px solid var(--border);">
+                <div style="width: 350px; display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.95rem;">
+                        <span style="color: var(--text-secondary);">Subtotal Produtos:</span>
+                        <span id="subtotal-display" style="color: var(--text-primary); font-weight: 700;">R$ 0,00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--text-secondary);">Desconto Total (R$):</span>
+                        <input type="number" name="discount" id="discount-input" step="0.01" class="form-control" style="width: 120px; text-align: right; height: 36px; padding: 0.5rem;" oninput="calcTotals()" value="0">
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--text-secondary);">Frete / Seguro (R$):</span>
+                        <input type="number" name="shipping" id="shipping-input" step="0.01" class="form-control" style="width: 120px; text-align: right; height: 36px; padding: 0.5rem;" oninput="calcTotals()" value="0">
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; padding-top: 1.5rem; border-top: 2px dashed var(--border-strong); align-items: center;">
+                        <span style="font-family: 'Outfit'; font-weight: 800; font-size: 1.25rem;">VALOR TOTAL:</span>
+                        <span id="total-display" style="font-family: 'Outfit'; font-weight: 800; font-size: 1.75rem; color: var(--blue);">R$ 0,00</span>
+                    </div>
                 </div>
             </div>
-
-            {{-- Observações --}}
-            <div class="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 p-6">
-                <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2"><i class="fa-solid fa-note-sticky text-yellow-500"></i> Observações</h2>
-                <textarea name="notes" rows="3" placeholder="Informações adicionais, condições de entrega, etc..." class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm resize-none">{{ old('notes') }}</textarea>
-            </div>
-
-            {{-- Botões de ação --}}
-            <div class="flex justify-end gap-3 pb-8">
-                <a href="{{ route('invoices.index') }}" class="px-6 py-3 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition font-semibold">
-                    Cancelar
-                </a>
-                <button type="submit" name="action" value="draft" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-semibold transition flex items-center gap-2">
-                    <i class="fa-solid fa-floppy-disk"></i> Salvar Rascunho
-                </button>
-                <button type="submit" name="action" value="emit" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition flex items-center gap-2">
-                    <i class="fa-solid fa-paper-plane"></i> Emitir Nota Fiscal
-                </button>
-            </div>
-
         </div>
-        </form>
-    </main>
-</div>
 
-{{-- Select de produto (template) --}}
+        {{-- Notes & Actions --}}
+        <div class="card">
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">Observações Complementares</label>
+                    <textarea name="notes" rows="4" class="form-control" placeholder="Informações que sairão no corpo da NF-e..."></textarea>
+                </div>
+                
+                <div style="display:flex; justify-content: flex-end; gap: 1.25rem; margin-top: 2.5rem;">
+                    <a href="{{ route('invoices.index') }}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" name="action" value="save" class="btn btn-secondary">
+                        <i class="fa-solid fa-floppy-disk mr-2"></i> Salvar Rascunho
+                    </button>
+                    <button type="submit" name="action" value="emit" class="btn btn-primary" style="padding: 1rem 2.5rem; font-size: 1rem;">
+                        <i class="fa-solid fa-paper-plane mr-2"></i> Emitir NF-e agora
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{{-- Product Template --}}
 <template id="product-select-template">
-    <select class="product-select w-full px-2 py-1.5 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded text-sm focus:ring-2 focus:ring-blue-500" onchange="fillProductData(this)">
-        <option value="">— Digitar descrição —</option>
+    <select class="product-select form-control" style="font-size: 0.85rem; height: 36px; padding: 0 0.5rem;">
+        <option value="">— Selecione o Produto —</option>
         @foreach($products as $p)
-        <option value="{{ $p->id }}" data-price="{{ $p->unit_price }}" data-unit="{{ $p->unit }}" data-name="{{ $p->name }}">{{ $p->name }}</option>
+            <option value="{{ $p->id }}" 
+                    data-price="{{ $p->unit_price }}" 
+                    data-unit="{{ $p->unit }}"
+                    data-name="{{ $p->name }}"
+                    data-stock="{{ $p->quantity }}">
+                {{ $p->name }} [Est: {{ $p->quantity }}]
+            </option>
         @endforeach
     </select>
 </template>
 
+@push('scripts')
 <script>
 let itemIndex = 0;
 
@@ -253,50 +247,94 @@ function calcTotals() {
         row.querySelector('.total-display').textContent = fmtBR(total);
         subtotal += total;
     });
-    const discount = parseFloat(document.getElementById('discount-input').value) || 0;
-    const shipping = parseFloat(document.getElementById('shipping-input').value) || 0;
-    const grand    = subtotal - discount + shipping;
-    document.getElementById('subtotal-display').textContent  = fmtBR(subtotal);
-    document.getElementById('discount-display').textContent  = '- ' + fmtBR(discount);
-    document.getElementById('shipping-display').textContent  = '+ ' + fmtBR(shipping);
-    document.getElementById('total-display').textContent     = fmtBR(grand);
+    
+    const discountTotal = parseFloat(document.getElementById('discount-input').value) || 0;
+    const shippingTotal = parseFloat(document.getElementById('shipping-input').value) || 0;
+    const grandTotal    = subtotal - discountTotal + shippingTotal;
+    
+    document.getElementById('subtotal-display').textContent = fmtBR(subtotal);
+    document.getElementById('total-display').textContent    = fmtBR(grandTotal);
 }
 
 function addItem(data = {}) {
-    const i   = itemIndex++;
+    const i = itemIndex++;
+    const tbody = document.getElementById('items-body');
     const row = document.createElement('tr');
-    row.className = 'item-row border-b border-gray-100 dark:border-slate-800';
+    const taxRow = document.createElement('tr');
+    
+    row.className = 'item-row border-t border-gray-100 dark:border-slate-800';
+    taxRow.className = 'tax-row bg-slate-50/50 dark:bg-slate-800/30 text-[11px] border-b border-gray-100 dark:border-slate-800';
+
     const selectHtml = document.getElementById('product-select-template').innerHTML;
+    
     row.innerHTML = `
-        <td class="px-3 py-2">
+        <td class="px-4 py-4">
             <input type="hidden" name="items[${i}][product_id]" class="product-id-input">
-            ${selectHtml.replace(/name="/g, `name_dummy="`)}
-            <input type="text" name="items[${i}][description]" required placeholder="Descrição do item"
-                class="desc-input mt-1 w-full px-2 py-1.5 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded text-sm"
+            ${selectHtml.replace(/class="product-select/g, `name="items[${i}][product_id_select]" class="product-select`)}
+            <input type="text" name="items[${i}][description]" required placeholder="Descrição"
+                class="desc-input mt-2 form-control" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem;"
                 value="${data.description || ''}">
         </td>
-        <td class="px-3 py-2">
-            <input type="text" name="items[${i}][unit]" placeholder="un" value="${data.unit || 'un'}"
-                class="unit-input w-full px-2 py-1.5 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded text-sm text-center">
+        <td class="px-4 py-4">
+            <input type="text" name="items[${i}][ncm]" class="form-control text-center" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem;" placeholder="0000.00.00" value="${data.ncm || '0000.00.00'}">
         </td>
-        <td class="px-3 py-2">
-            <input type="number" name="items[${i}][quantity]" required min="0.001" step="0.001" value="${data.quantity || 1}"
-                class="qty-input w-full px-2 py-1.5 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded text-sm text-right" oninput="calcTotals()">
+        <td class="px-4 py-4">
+            <input type="text" name="items[${i}][cfop]" class="form-control text-center" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem;" placeholder="5.102" value="${data.cfop || '5.102'}">
         </td>
-        <td class="px-3 py-2">
-            <input type="number" name="items[${i}][unit_price]" required min="0" step="0.01" value="${data.unit_price || '0.00'}"
-                class="price-input w-full px-2 py-1.5 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded text-sm text-right" oninput="calcTotals()">
+        <td class="px-4 py-4">
+            <input type="text" name="items[${i}][unit]" class="unit-input form-control text-center" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem;" value="${data.unit || 'un'}">
         </td>
-        <td class="px-3 py-2">
-            <input type="number" name="items[${i}][discount]" min="0" max="100" step="0.01" value="${data.discount || 0}"
-                class="disc-input w-full px-2 py-1.5 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded text-sm text-right" oninput="calcTotals()">
+        <td class="px-4 py-4">
+            <input type="number" name="items[${i}][quantity]" step="0.001" required
+                class="qty-input form-control text-right" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem;"
+                oninput="calcTotals()" value="${data.quantity || 1}">
         </td>
-        <td class="px-3 py-2 text-right font-semibold text-gray-800 dark:text-white total-display">R$ 0,00</td>
-        <td class="px-3 py-2 text-center">
-            <button type="button" onclick="this.closest('tr').remove(); calcTotals();" class="text-red-400 hover:text-red-600 transition"><i class="fa-solid fa-trash-can"></i></button>
+        <td class="px-4 py-4">
+            <input type="number" name="items[${i}][unit_price]" step="0.01" required
+                class="price-input form-control text-right" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem;"
+                oninput="calcTotals()" value="${data.unit_price || 0}">
+        </td>
+        <td class="px-4 py-4">
+            <input type="number" name="items[${i}][discount]" step="0.01"
+                class="disc-input form-control text-right" style="font-size: 0.8rem; height: 32px; padding: 0.25rem 0.5rem;"
+                oninput="calcTotals()" value="${data.discount || 0}">
+        </td>
+        <td class="px-4 py-4 text-right font-bold total-display" style="color: var(--text-primary); font-size: 0.9rem;">R$ 0,00</td>
+        <td class="px-4 py-4 text-center">
+            <button type="button" onclick="removeItem(this)" class="text-red-500 hover:text-red-700 transition">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
         </td>
     `;
-    document.getElementById('items-body').appendChild(row);
+
+    taxRow.innerHTML = `
+        <td colspan="3" class="px-4 py-2 text-gray-500 italic">
+            <i class="fa-solid fa-calculator mr-1"></i> Composição Tributária (%)
+        </td>
+        <td colspan="6" class="px-4 py-2 text-right">
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="color: var(--text-muted);">ICMS:</span>
+                    <input type="number" name="items[${i}][icms_rate]" step="0.01" class="form-control text-right" style="width: 65px; font-size: 11px; padding: 4px; height: auto;" value="18" oninput="calcTotals()">
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="color: var(--text-muted);">IPI:</span>
+                    <input type="number" name="items[${i}][ipi_rate]" step="0.01" class="form-control text-right" style="width: 65px; font-size: 11px; padding: 4px; height: auto;" value="0" oninput="calcTotals()">
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="color: var(--text-muted);">PIS:</span>
+                    <input type="number" name="items[${i}][pis_rate]" step="0.01" class="form-control text-right" style="width: 65px; font-size: 11px; padding: 4px; height: auto;" value="1.65" oninput="calcTotals()">
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="color: var(--text-muted);">COF.:</span>
+                    <input type="number" name="items[${i}][cofins_rate]" step="0.01" class="form-control text-right" style="width: 65px; font-size: 11px; padding: 4px; height: auto;" value="7.6" oninput="calcTotals()">
+                </div>
+            </div>
+        </td>
+    `;
+
+    tbody.appendChild(row);
+    tbody.appendChild(taxRow);
 
     // Bind product select
     const sel = row.querySelector('select');
@@ -305,19 +343,58 @@ function addItem(data = {}) {
     calcTotals();
 }
 
-function fillProductData(sel) {
-    const row = sel.closest('tr');
-    const opt = sel.options[sel.selectedIndex];
-    if (!opt || !opt.value) return;
-    row.querySelector('.product-id-input').value = opt.value;
-    row.querySelector('.desc-input').value   = opt.dataset.name || '';
-    row.querySelector('.price-input').value  = opt.dataset.price || 0;
-    row.querySelector('.unit-input').value   = opt.dataset.unit || 'un';
+function removeItem(btn) {
+    const row = btn.closest('tr');
+    const taxRow = row.nextElementSibling;
+    if (taxRow && taxRow.classList.contains('tax-row')) taxRow.remove();
+    row.remove();
     calcTotals();
 }
 
-// Adiciona 1 item inicial
+function fillProductData(sel) {
+    const row = sel.closest('tr');
+    const opt = sel.options[sel.selectedIndex];
+    
+    if (!opt || !opt.value) {
+        row.querySelector('.product-id-input').value = '';
+        return;
+    }
+    
+    row.querySelector('.product-id-input').value = opt.value;
+    row.querySelector('.desc-input').value = opt.dataset.name || '';
+    row.querySelector('.price-input').value = opt.dataset.price || 0;
+    row.querySelector('.unit-input').value = opt.dataset.unit || 'un';
+    
+    calcTotals();
+}
+
+function fillCustomerData(sel) {
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt || !opt.value) return;
+    
+    document.getElementById('recipient_name').value = opt.dataset.name || '';
+    document.getElementById('recipient_document').value = opt.dataset.document || '';
+    document.getElementById('recipient_email').value = opt.dataset.email || '';
+    document.getElementById('recipient_phone').value = opt.dataset.phone || '';
+    document.getElementById('recipient_address').value = opt.dataset.address || '';
+    document.getElementById('recipient_city').value = opt.dataset.city || '';
+    document.getElementById('recipient_state').value = opt.dataset.state || '';
+    document.getElementById('recipient_zip').value = opt.dataset.zip || '';
+}
+
+// Initialize
 addItem();
+
+@if(request()->has('simulate'))
+setTimeout(() => {
+    const custSelect = document.getElementById('customer-select');
+    if (custSelect.options.length > 1) {
+        custSelect.selectedIndex = 1;
+        fillCustomerData(custSelect);
+    }
+    document.querySelector('[name="notes"]').value = "Simulação de saída de mercadoria via LogiSync WMS.";
+}, 500);
+@endif
 </script>
-</body>
-</html>
+@endpush
+@endsection

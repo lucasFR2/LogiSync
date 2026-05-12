@@ -43,7 +43,11 @@ class CustomerController extends Controller
             'zip_code' => 'nullable|string|max:15',
         ]);
 
-        Customer::create($validated);
+        $customer = Customer::create($validated);
+
+        if ($request->ajax()) {
+            return response()->json($customer);
+        }
 
         return redirect()->route('customers.index')->with('success', 'Cliente cadastrado com sucesso.');
     }

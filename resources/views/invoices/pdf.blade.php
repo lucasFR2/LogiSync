@@ -3,212 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>{{ $invoice->number }}</title>
+    <title>DANFE - {{ $invoice->number }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; background: #fff; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 8px; color: #000; background: #fff; }
 
-        .page { padding: 30px 36px; }
+        .page { padding: 15px; }
 
-        /* ── Header ── */
-        .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 18px; border-bottom: 3px solid #2563eb; margin-bottom: 20px; }
-        .company-name { font-size: 20px; font-weight: 700; color: #1e40af; }
-        .company-info { font-size: 10px; color: #64748b; margin-top: 4px; line-height: 1.5; }
-        .nf-badge { text-align: right; }
-        .nf-title { font-size: 15px; font-weight: 700; color: #2563eb; letter-spacing: 1px; }
-        .nf-number { font-size: 24px; font-weight: 900; color: #1e293b; }
-        .nf-meta { font-size: 10px; color: #64748b; margin-top: 3px; }
+        /* ── DANFE Header Structure ── */
+        .danfe-box { border: 1px solid #000; margin-bottom: 5px; }
+        .danfe-row { display: table; width: 100%; table-layout: fixed; border-bottom: 1px solid #000; }
+        .danfe-row:last-child { border-bottom: none; }
+        .danfe-col { display: table-cell; padding: 3px 5px; border-right: 1px solid #000; vertical-align: top; }
+        .danfe-col:last-child { border-right: none; }
 
-        /* ── Status bar ── */
-        .status-bar { display: flex; gap: 12px; margin-bottom: 18px; }
-        .status-pill { padding: 4px 14px; border-radius: 99px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-        .pill-emitida   { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .pill-rascunho  { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
-        .pill-cancelada { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        .pill-saida  { background: #fed7aa; color: #9a3412; border: 1px solid #fdba74; }
-        .pill-entrada { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+        .label { font-size: 6px; text-transform: uppercase; font-weight: bold; margin-bottom: 2px; display: block; }
+        .value { font-size: 9px; font-weight: bold; }
+        .value-sm { font-size: 8px; font-weight: normal; }
 
-        /* ── Parties ── */
-        .parties { display: flex; gap: 16px; margin-bottom: 18px; }
-        .party-box { flex: 1; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; }
-        .party-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; margin-bottom: 8px; }
-        .party-name { font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
-        .party-detail { font-size: 10px; color: #475569; line-height: 1.6; }
+        /* ── Top Section (DANFE Identification) ── */
+        .id-section { height: 120px; }
+        .company-info { width: 40%; text-align: center; padding-top: 10px; }
+        .danfe-label { width: 15%; text-align: center; border-left: 1px solid #000; border-right: 1px solid #000; padding: 10px 0; }
+        .danfe-label h1 { font-size: 14px; font-weight: 800; margin-bottom: 5px; }
+        .danfe-label p { font-size: 7px; line-height: 1.2; }
+        .barcode-section { width: 45%; padding: 5px; }
 
-        /* ── Payment info ── */
-        .info-row { display: flex; gap: 12px; margin-bottom: 18px; }
-        .info-box { flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; }
-        .info-label { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 3px; }
-        .info-value { font-size: 11px; font-weight: 600; color: #1e293b; }
+        .access-key-box { border: 1px solid #000; padding: 5px; margin-bottom: 5px; text-align: center; }
+        .access-key { font-family: 'Courier', monospace; font-size: 11px; letter-spacing: 1px; font-weight: bold; }
 
-        /* ── Items table ── */
-        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-        .items-table thead tr { background: #1e40af; }
-        .items-table thead th { color: #fff; padding: 9px 12px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
-        .items-table thead th.text-right { text-align: right; }
-        .items-table thead th.text-center { text-align: center; }
-        .items-table tbody tr:nth-child(even) { background: #f8fafc; }
-        .items-table tbody td { padding: 8px 12px; font-size: 10.5px; border-bottom: 1px solid #f1f5f9; }
-        .items-table tbody td.text-right { text-align: right; }
-        .items-table tbody td.text-center { text-align: center; }
+        /* ── Sections ── */
+        .section-title { font-size: 7px; font-weight: 800; background: #f0f0f0; padding: 2px 5px; border: 1px solid #000; border-bottom: none; margin-top: 10px; text-transform: uppercase; }
 
-        /* ── Totals ── */
-        .totals-wrap { display: flex; justify-content: flex-end; margin-bottom: 18px; }
-        .totals-table { width: 260px; }
-        .totals-table tr td { padding: 5px 12px; font-size: 11px; }
-        .totals-table tr td:first-child { color: #64748b; }
-        .totals-table tr td:last-child { text-align: right; font-weight: 600; }
-        .totals-table .grand-row td { font-size: 14px; font-weight: 800; color: #1e40af; border-top: 2px solid #2563eb; padding-top: 8px; }
-
-        /* ── Notes ── */
-        .notes-box { border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; background: #fffbeb; margin-bottom: 18px; }
-        .notes-label { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #92400e; margin-bottom: 6px; }
-        .notes-text { font-size: 10px; color: #451a03; line-height: 1.6; }
+        /* ── Tables ── */
+        .data-table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
+        .data-table th { background: #f0f0f0; border: 1px solid #000; padding: 3px; font-size: 7px; text-transform: uppercase; text-align: left; }
+        .data-table td { border: 1px solid #000; padding: 3px; font-size: 8px; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
 
         /* ── Footer ── */
-        .footer { border-top: 1px solid #e2e8f0; padding-top: 12px; display: flex; justify-content: space-between; }
-        .footer-text { font-size: 9px; color: #94a3b8; }
+        .footer { margin-top: 10px; font-size: 7px; text-align: center; border-top: 1px dashed #000; padding-top: 5px; }
 
-        /* ── Signature ── */
-        .signatures { display: flex; gap: 40px; margin-top: 30px; }
-        .sig-line { flex: 1; border-top: 1px solid #94a3b8; padding-top: 6px; text-align: center; font-size: 9px; color: #64748b; }
+        /* ── Fake Barcode ── */
+        .fake-barcode { background: repeating-linear-gradient(90deg, #000, #000 1px, #fff 1px, #fff 3px); height: 40px; width: 100%; border: 1px solid #000; margin-bottom: 5px; }
 
-        /* ── Watermark for cancelled ── */
-        .watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-35deg); font-size: 80px; font-weight: 900; color: rgba(239,68,68,0.12); letter-spacing: 8px; text-transform: uppercase; pointer-events: none; }
+        /* ── Watermark ── */
+        .watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 60px; font-weight: bold; color: rgba(0,0,0,0.05); z-index: -1; }
     </style>
 </head>
 <body>
 <div class="page">
+    <div class="watermark">SIMULAÇÃO SEM VALOR FISCAL</div>
 
-    @if($invoice->status === 'cancelada')
-    <div class="watermark">CANCELADA</div>
-    @endif
-
-    {{-- Header --}}
-    <div class="header">
-        <div>
-            <div class="company-name">{{ $invoice->issuer_name }}</div>
-            <div class="company-info">
-                CNPJ: {{ $invoice->issuer_cnpj }}<br>
-                {{ $invoice->issuer_address }}<br>
-                {{ $invoice->issuer_city }} – {{ $invoice->issuer_state }} &bull; CEP {{ $invoice->issuer_zip }}
+    {{-- Recibo --}}
+    <div class="danfe-box">
+        <div class="danfe-row" style="height: 40px;">
+            <div class="danfe-col" style="width: 80%;">
+                <span class="label">Recebemos de {{ $invoice->issuer_name }} os produtos/serviços constantes na Nota Fiscal indicada ao lado</span>
+                <div style="margin-top: 10px; border-bottom: 1px solid #000; width: 100%;"></div>
+                <div style="display: flex; justify-content: space-between; margin-top: 2px;">
+                    <span class="label">DATA DE RECEBIMENTO</span>
+                    <span class="label">IDENTIFICAÇÃO E ASSINATURA DO RECEBEDOR</span>
+                </div>
             </div>
-        </div>
-        <div class="nf-badge">
-            <div class="nf-title">NOTA FISCAL</div>
-            <div class="nf-number">{{ $invoice->number }}</div>
-            <div class="nf-meta">
-                Série {{ $invoice->series }} &bull;
-                Emissão: {{ $invoice->issued_at ? $invoice->issued_at->format('d/m/Y') : date('d/m/Y') }}
+            <div class="danfe-col" style="width: 20%; text-align: center;">
+                <span class="label">NF-e</span>
+                <span class="value" style="font-size: 14px;">Nº {{ str_replace('NF-', '', $invoice->number) }}</span><br>
+                <span class="label">SÉRIE {{ $invoice->series }}</span>
             </div>
         </div>
     </div>
 
-    {{-- Status bar --}}
-    <div class="status-bar">
-        <span class="status-pill pill-{{ $invoice->status }}">{{ $invoice->statusLabel() }}</span>
-        <span class="status-pill pill-{{ $invoice->type }}">
-            {{ $invoice->type === 'saida' ? '↑ Saída' : '↓ Entrada' }}
-        </span>
-        <span class="status-pill" style="background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;">
-            Pagto: {{ $invoice->paymentLabel() }}
-        </span>
-        @if($invoice->due_date)
-        <span class="status-pill" style="background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;">
-            Venc: {{ $invoice->due_date->format('d/m/Y') }}
-        </span>
-        @endif
-    </div>
-
-    {{-- Parties --}}
-    <div class="parties">
-        <div class="party-box">
-            <div class="party-label">Emitente</div>
-            <div class="party-name">{{ $invoice->issuer_name }}</div>
-            <div class="party-detail">
-                CNPJ: {{ $invoice->issuer_cnpj }}<br>
-                {{ $invoice->issuer_address }}<br>
-                {{ $invoice->issuer_city }} – {{ $invoice->issuer_state }}
+    {{-- Identificação do Emitente --}}
+    <div class="danfe-box">
+        <div class="danfe-row" style="border-bottom: none;">
+            <div class="danfe-col company-info">
+                <span class="value" style="font-size: 12px; display: block; margin-bottom: 5px;">{{ $invoice->issuer_name }}</span>
+                <span class="value-sm">{{ $invoice->issuer_address }}<br>{{ $invoice->issuer_zip }} - {{ $invoice->issuer_city }} - {{ $invoice->issuer_state }}<br>Fone: (11) 3344-5566</span>
             </div>
-        </div>
-        <div class="party-box">
-            <div class="party-label">Destinatário / Remetente</div>
-            <div class="party-name">{{ $invoice->recipient_name }}</div>
-            <div class="party-detail">
-                @if($invoice->recipient_document)CPF/CNPJ: {{ $invoice->recipient_document }}<br>@endif
-                @if($invoice->recipient_address){{ $invoice->recipient_address }}<br>@endif
-                @if($invoice->recipient_city){{ $invoice->recipient_city }} – {{ $invoice->recipient_state }}@endif
-                @if($invoice->recipient_email)<br>E-mail: {{ $invoice->recipient_email }}@endif
-                @if($invoice->recipient_phone) | Tel: {{ $invoice->recipient_phone }}@endif
+            <div class="danfe-col danfe-label">
+                <h1>DANFE</h1>
+                <p>Documento Auxiliar da<br>Nota Fiscal Eletrônica</p>
+                <div style="margin: 5px 0;">
+                    <span class="label">0 - ENTRADA<br>1 - SAÍDA</span>
+                    <span class="value" style="border: 1px solid #000; padding: 2px 8px;">{{ $invoice->type === 'saida' ? '1' : '0' }}</span>
+                </div>
+                <span class="value">Nº {{ str_replace('NF-', '', $invoice->number) }}</span><br>
+                <span class="label">SÉRIE 001</span><br>
+                <span class="label">PÁGINA 1 de 1</span>
+            </div>
+            <div class="danfe-col barcode-section">
+                <span class="label">CONTROLE DO FISCO</span>
+                <div class="fake-barcode"></div>
+                <span class="label">CHAVE DE ACESSO</span>
+                <div class="access-key-box">
+                    <span class="access-key">3524 05{{ rand(10000000, 99999999) }} {{ rand(10000000, 99999999) }} {{ rand(1000, 9999) }} 5500 1000 {{ rand(100000, 999999) }}</span>
+                </div>
+                <div style="text-align: center;">
+                    <span class="label">Consulta de autenticidade no portal nacional da NF-e www.nfe.fazenda.gov.br</span>
+                </div>
             </div>
         </div>
     </div>
 
-    {{-- Items table --}}
-    <table class="items-table">
+    {{-- Natureza da Operação --}}
+    <div class="danfe-box">
+        <div class="danfe-row">
+            <div class="danfe-col" style="width: 60%;">
+                <span class="label">NATUREZA DA OPERAÇÃO</span>
+                <span class="value">{{ $invoice->type === 'saida' ? 'VENDA DE MERCADORIA' : 'COMPRA PARA INDUSTRIALIZACAO' }}</span>
+            </div>
+            <div class="danfe-col" style="width: 40%;">
+                <span class="label">PROTOCOLO DE AUTORIZAÇÃO DE USO</span>
+                <span class="value">{{ rand(100000000000000, 999999999999999) }} - {{ now()->format('d/m/Y H:i:s') }}</span>
+            </div>
+        </div>
+        <div class="danfe-row" style="border-bottom: none;">
+            <div class="danfe-col"><span class="label">INSCRIÇÃO ESTADUAL</span><span class="value">123.456.789.110</span></div>
+            <div class="danfe-col"><span class="label">INSC.ESTADUAL DO SUBST. TRIB.</span><span class="value"></span></div>
+            <div class="danfe-col"><span class="label">CNPJ</span><span class="value">{{ $invoice->issuer_cnpj }}</span></div>
+        </div>
+    </div>
+
+    {{-- Destinatário / Remetente --}}
+    <div class="section-title">Destinatário / Remetente</div>
+    <div class="danfe-box">
+        <div class="danfe-row">
+            <div class="danfe-col" style="width: 70%;"><span class="label">NOME / RAZÃO SOCIAL</span><span class="value">{{ $invoice->recipient_name }}</span></div>
+            <div class="danfe-col" style="width: 20%;"><span class="label">CNPJ / CPF</span><span class="value">{{ $invoice->recipient_document }}</span></div>
+            <div class="danfe-col" style="width: 10%;"><span class="label">DATA EMISSÃO</span><span class="value">{{ $invoice->issued_at->format('d/m/Y') }}</span></div>
+        </div>
+        <div class="danfe-row">
+            <div class="danfe-col" style="width: 50%;"><span class="label">ENDEREÇO</span><span class="value">{{ $invoice->recipient_address }}</span></div>
+            <div class="danfe-col" style="width: 25%;"><span class="label">BAIRRO / DISTRITO</span><span class="value">CENTRO</span></div>
+            <div class="danfe-col" style="width: 15%;"><span class="label">CEP</span><span class="value">{{ $invoice->recipient_zip }}</span></div>
+            <div class="danfe-col" style="width: 10%;"><span class="label">DATA SAÍDA</span><span class="value">{{ $invoice->issued_at->format('d/m/Y') }}</span></div>
+        </div>
+        <div class="danfe-row" style="border-bottom: none;">
+            <div class="danfe-col" style="width: 40%;"><span class="label">MUNICÍPIO</span><span class="value">{{ $invoice->recipient_city }}</span></div>
+            <div class="danfe-col" style="width: 10%;"><span class="label">UF</span><span class="value">{{ $invoice->recipient_state }}</span></div>
+            <div class="danfe-col" style="width: 20%;"><span class="label">FONE / FAX</span><span class="value">{{ $invoice->recipient_phone }}</span></div>
+            <div class="danfe-col" style="width: 20%;"><span class="label">INSCRIÇÃO ESTADUAL</span><span class="value">ISENTO</span></div>
+            <div class="danfe-col" style="width: 10%;"><span class="label">HORA SAÍDA</span><span class="value">{{ now()->format('H:i') }}</span></div>
+        </div>
+    </div>
+
+    {{-- Cálculo do Imposto --}}
+    <div class="section-title">Cálculo do Imposto</div>
+    <div class="danfe-box">
+        <div class="danfe-row">
+            <div class="danfe-col"><span class="label">BASE DE CÁLC. ICMS</span><span class="value">{{ number_format($invoice->items->sum('icms_base'), 2, ',', '.') }}</span></div>
+            <div class="danfe-col"><span class="label">VALOR DO ICMS</span><span class="value">{{ number_format($invoice->items->sum('icms_value'), 2, ',', '.') }}</span></div>
+            <div class="danfe-col"><span class="label">BASE CÁLC. ICMS S.T.</span><span class="value">0,00</span></div>
+            <div class="danfe-col"><span class="label">VALOR DO ICMS S.T.</span><span class="value">0,00</span></div>
+            <div class="danfe-col"><span class="label">VALOR TOTAL DOS PRODUTOS</span><span class="value">R$ {{ number_format($invoice->subtotal, 2, ',', '.') }}</span></div>
+        </div>
+        <div class="danfe-row" style="border-bottom: none;">
+            <div class="danfe-col"><span class="label">VALOR DO FRETE</span><span class="value">R$ {{ number_format($invoice->shipping, 2, ',', '.') }}</span></div>
+            <div class="danfe-col"><span class="label">VALOR DO SEGURO</span><span class="value">0,00</span></div>
+            <div class="danfe-col"><span class="label">DESCONTO</span><span class="value">R$ {{ number_format($invoice->discount, 2, ',', '.') }}</span></div>
+            <div class="danfe-col"><span class="label">VALOR DO IPI</span><span class="value">{{ number_format($invoice->items->sum('ipi_value'), 2, ',', '.') }}</span></div>
+            <div class="danfe-col"><span class="label">VALOR DO PIS/COFINS</span><span class="value">{{ number_format($invoice->items->sum('pis_value') + $invoice->items->sum('cofins_value'), 2, ',', '.') }}</span></div>
+            <div class="danfe-col"><span class="label">VALOR TOTAL DA NOTA</span><span class="value" style="font-size: 11px;">R$ {{ number_format($invoice->total, 2, ',', '.') }}</span></div>
+        </div>
+    </div>
+
+    {{-- Dados do Produto / Serviço --}}
+    <div class="section-title">Dados do Produto / Serviço</div>
+    <table class="data-table">
         <thead>
             <tr>
-                <th style="width:30px">#</th>
-                <th>Descrição do Produto / Serviço</th>
-                <th class="text-center" style="width:40px">Unid.</th>
-                <th class="text-right" style="width:55px">Qtde</th>
-                <th class="text-right" style="width:80px">Preço Unit.</th>
-                <th class="text-right" style="width:50px">Desc. %</th>
-                <th class="text-right" style="width:80px">Total</th>
+                <th style="width: 10%;">CÓDIGO</th>
+                <th style="width: 32%;">DESCRIÇÃO DO PRODUTO / SERVIÇO</th>
+                <th style="width: 10%;">NCM</th>
+                <th style="width: 6%;">CFOP</th>
+                <th style="width: 5%;">UNID.</th>
+                <th style="width: 7%;" class="text-right">QUANT.</th>
+                <th style="width: 8%;" class="text-right">V. UNIT.</th>
+                <th style="width: 8%;" class="text-right">V. TOTAL</th>
+                <th style="width: 7%;" class="text-right">BC ICMS</th>
+                <th style="width: 7%;" class="text-right">V. ICMS</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($invoice->items as $idx => $item)
+            @foreach($invoice->items as $item)
             <tr>
-                <td style="color:#94a3b8">{{ $idx + 1 }}</td>
-                <td><strong>{{ $item->description }}</strong></td>
+                <td>{{ $item->product->barcode ?? '0000' }}</td>
+                <td>{{ $item->description }}</td>
+                <td class="text-center">{{ $item->ncm }}</td>
+                <td class="text-center">{{ $item->cfop }}</td>
                 <td class="text-center">{{ $item->unit }}</td>
-                <td class="text-right">{{ number_format($item->quantity, 3, ',', '.') }}</td>
-                <td class="text-right">R$ {{ number_format($item->unit_price, 2, ',', '.') }}</td>
-                <td class="text-right">{{ $item->discount > 0 ? number_format($item->discount, 2, ',', '.').'%' : '–' }}</td>
-                <td class="text-right"><strong>R$ {{ number_format($item->total, 2, ',', '.') }}</strong></td>
+                <td class="text-right">{{ number_format($item->quantity, 2, ',', '.') }}</td>
+                <td class="text-right">{{ number_format($item->unit_price, 2, ',', '.') }}</td>
+                <td class="text-right">{{ number_format($item->total, 2, ',', '.') }}</td>
+                <td class="text-right">{{ number_format($item->icms_base, 2, ',', '.') }}</td>
+                <td class="text-right">{{ number_format($item->icms_value, 2, ',', '.') }}</td>
             </tr>
             @endforeach
         </tbody>
     </table>
 
-    {{-- Totals --}}
-    <div class="totals-wrap">
-        <table class="totals-table">
-            <tr><td>Subtotal</td><td>R$ {{ number_format($invoice->subtotal, 2, ',', '.') }}</td></tr>
-            @if($invoice->discount > 0)
-            <tr><td style="color:#dc2626">Desconto</td><td style="color:#dc2626">– R$ {{ number_format($invoice->discount, 2, ',', '.') }}</td></tr>
-            @endif
-            @if($invoice->shipping > 0)
-            <tr><td style="color:#2563eb">Frete</td><td style="color:#2563eb">+ R$ {{ number_format($invoice->shipping, 2, ',', '.') }}</td></tr>
-            @endif
-            <tr class="grand-row">
-                <td>TOTAL GERAL</td>
-                <td>R$ {{ number_format($invoice->total, 2, ',', '.') }}</td>
-            </tr>
-        </table>
+    {{-- Dados Adicionais --}}
+    <div class="section-title">Dados Adicionais</div>
+    <div class="danfe-box">
+        <div class="danfe-row" style="border-bottom: none; height: 60px;">
+            <div class="danfe-col" style="width: 70%;">
+                <span class="label">INFORMAÇÕES COMPLEMENTARES</span>
+                <span class="value-sm">
+                    Pagamento via: {{ $invoice->paymentLabel() }}<br>
+                    {{ $invoice->notes }}<br>
+                    Documento gerado em ambiente de teste LogiSync WMS.
+                </span>
+            </div>
+            <div class="danfe-col" style="width: 30%;">
+                <span class="label">RESERVADO AO FISCO</span>
+            </div>
+        </div>
     </div>
 
-    @if($invoice->notes)
-    <div class="notes-box">
-        <div class="notes-label">Observações</div>
-        <div class="notes-text">{{ $invoice->notes }}</div>
+    <div class="footer">
+        Gerado por LogiSync WMS &bull; Este documento é uma simulação sem validade jurídica.
     </div>
-    @endif
-
-    {{-- Signatures --}}
-    <div class="signatures">
-        <div class="sig-line">Emitente<br>{{ $invoice->issuer_name }}</div>
-        <div class="sig-line">Destinatário<br>{{ $invoice->recipient_name }}</div>
-        <div class="sig-line">Transportador / Recebedor</div>
-    </div>
-
-    {{-- Footer --}}
-    <div class="footer" style="margin-top: 20px;">
-        <div class="footer-text">Documento gerado pelo sistema LogiSync WMS &bull; {{ now()->format('d/m/Y H:i') }}</div>
-        <div class="footer-text">Este documento é fictício e não possui validade fiscal</div>
-    </div>
-
 </div>
 </body>
 </html>

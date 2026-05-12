@@ -25,7 +25,7 @@
         </div>
         {{-- Decorative element --}}
         <div style="position: absolute; right: -50px; bottom: -50px; width: 300px; height: 300px; background: rgba(255,255,255,0.05); border-radius: 50%; pointer-events: none;"></div>
-        <div style="position: absolute; right: 20px; top: 20px; font-size: 8rem; opacity: 0.05; pointer-events: none;">
+        <div class="anim-float" style="position: absolute; right: 40px; top: 40px; font-size: 8rem; opacity: 0.1; pointer-events: none; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.4));">
             <i class="fa-solid fa-warehouse"></i>
         </div>
     </div>
@@ -79,6 +79,18 @@
                 ID: {{ Auth::user()->id }} · CPF: {{ Auth::user()->cpf }}
             </div>
         </div>
+
+        {{-- Simulador Quick Card --}}
+        <div class="stat-card" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); border: none;">
+            <div class="stat-icon" style="background: rgba(255,255,255,0.2); color: white;">
+                <i class="fa-solid fa-vial"></i>
+            </div>
+            <div class="stat-label" style="color: rgba(255,255,255,0.8);">Simulador</div>
+            <div class="stat-value" style="font-size: 1.25rem; color: white;">Simular Saída (NF-e)</div>
+            <a href="{{ route('invoices.create', ['simulate' => 1]) }}" class="btn" style="background: white; color: #4f46e5; border: none; font-size: 0.75rem; padding: 0.5rem; margin-top: 0.5rem; justify-content: center;">
+                <i class="fa-solid fa-play"></i> Iniciar Simulação
+            </a>
+        </div>
     </div>
 
     {{-- Recent Activity Table --}}
@@ -107,8 +119,8 @@
                     <tr>
                         <td colspan="5">
                             <div class="empty-state" style="padding: 5rem 2rem;">
-                                <div style="width:80px; height:80px; background:var(--bg-hover); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.5rem;">
-                                    <i class="fa-solid fa-folder-open" style="font-size:2rem; color:var(--text-muted);"></i>
+                                <div class="anim-float" style="width:100px; height:100px; background:var(--bg-hover); border-radius:24px; display:flex; align-items:center; justify-content:center; margin:0 auto 2rem; box-shadow: var(--shadow-md); transform: rotate(-5deg);">
+                                    <i class="fa-solid fa-folder-open" style="font-size:2.5rem; color:var(--text-muted);"></i>
                                 </div>
                                 <h4 style="font-family:'Outfit'; font-size:1.25rem;">Nenhuma movimentação recente</h4>
                                 <p style="color:var(--text-muted); margin-bottom:1.5rem;">As novas entradas de mercadorias aparecerão listadas nesta tabela.</p>

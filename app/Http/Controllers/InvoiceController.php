@@ -48,10 +48,11 @@ class InvoiceController extends Controller
     public function create()
     {
         $number    = Invoice::nextNumber();
-        $products  = Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode']);
+        $products  = Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode', 'quantity']);
         $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
+        $customers = \App\Models\Customer::orderBy('name')->get();
 
-        return view('invoices.create', compact('number', 'products', 'suppliers'));
+        return view('invoices.create', compact('number', 'products', 'suppliers', 'customers'));
     }
 
     /**
@@ -77,69 +78,119 @@ class InvoiceController extends Controller
             'issued_at'          => 'nullable|date',
             'supplier_id'        => 'nullable|exists:suppliers,id',
             'items'              => 'required|array|min:1',
+            'items.*.product_id'  => 'nullable|exists:products,id',
             'items.*.description' => 'required|string',
             'items.*.quantity'    => 'required|numeric|min:0.001',
             'items.*.unit_price'  => 'required|numeric|min:0',
             'items.*.discount'    => 'nullable|numeric|min:0|max:100',
             'items.*.unit'        => 'nullable|string|max:10',
+            'items.*.ncm'         => 'nullable|string|max:15',
+            'items.*.cfop'        => 'nullable|string|max:10',
+            'items.*.icms_rate'   => 'nullable|numeric|min:0',
+            'items.*.ipi_rate'    => 'nullable|numeric|min:0',
+            'items.*.pis_rate'    => 'nullable|numeric|min:0',
+            'items.*.cofins_rate' => 'nullable|numeric|min:0',
         ]);
 
-        DB::transaction(function () use ($request) {
-            $subtotal = 0;
-            $itemsData = [];
+        $isEmitting = $request->input('action') === 'emit';
 
-            foreach ($request->items as $item) {
-                $disc  = (float) ($item['discount'] ?? 0);
-                $qty   = (float) $item['quantity'];
-                $price = (float) $item['unit_price'];
-                $total = $qty * $price * (1 - $disc / 100);
-                $subtotal += $total;
+        try {
+            DB::transaction(function () use ($request, $isEmitting) {
+                $subtotal = 0;
+                $itemsData = [];
 
-                $itemsData[] = [
-                    'product_id'  => $item['product_id'] ?? null,
-                    'description' => $item['description'],
-                    'unit'        => $item['unit'] ?? 'un',
-                    'quantity'    => $qty,
-                    'unit_price'  => $price,
-                    'discount'    => $disc,
-                    'total'       => round($total, 2),
-                ];
-            }
+                foreach ($request->items as $item) {
+                    $disc  = (float) ($item['discount'] ?? 0);
+                    $qty   = (float) $item['quantity'];
+                    $price = (float) $item['unit_price'];
+                    $total = $qty * $price * (1 - $disc / 100);
+                    $subtotal += $total;
 
-            $discount  = (float) ($request->discount ?? 0);
-            $shipping  = (float) ($request->shipping ?? 0);
-            $grandTotal = $subtotal - $discount + $shipping;
+                    $itemsData[] = [
+                        'product_id'   => $item['product_id'] ?? null,
+                        'description'  => $item['description'],
+                        'ncm'          => $item['ncm'] ?? '0000.00.00',
+                        'cfop'         => $item['cfop'] ?? '5.102',
+                        'unit'         => $item['unit'] ?? 'un',
+                        'quantity'     => $qty,
+                        'unit_price'   => $price,
+                        'discount'     => $disc,
+                        'total'        => round($total, 2),
+                        'icms_base'    => round($total, 2),
+                        'icms_rate'    => (float) ($item['icms_rate'] ?? 0),
+                        'icms_value'   => round($total * (($item['icms_rate'] ?? 0) / 100), 2),
+                        'ipi_rate'     => (float) ($item['ipi_rate'] ?? 0),
+                        'ipi_value'    => round($total * (($item['ipi_rate'] ?? 0) / 100), 2),
+                        'pis_rate'     => (float) ($item['pis_rate'] ?? 0),
+                        'pis_value'    => round($total * (($item['pis_rate'] ?? 0) / 100), 2),
+                        'cofins_rate'  => (float) ($item['cofins_rate'] ?? 0),
+                        'cofins_value' => round($total * (($item['cofins_rate'] ?? 0) / 100), 2),
+                    ];
 
-            $invoice = Invoice::create([
-                'number'             => Invoice::nextNumber(),
-                'series'             => '001',
-                'type'               => $request->type,
-                'status'             => $request->input('action') === 'emit' ? 'emitida' : 'rascunho',
-                'recipient_name'     => $request->recipient_name,
-                'recipient_document' => $request->recipient_document,
-                'recipient_email'    => $request->recipient_email,
-                'recipient_phone'    => $request->recipient_phone,
-                'recipient_address'  => $request->recipient_address,
-                'recipient_city'     => $request->recipient_city,
-                'recipient_state'    => $request->recipient_state,
-                'recipient_zip'      => $request->recipient_zip,
-                'subtotal'           => round($subtotal, 2),
-                'discount'           => $discount,
-                'shipping'           => $shipping,
-                'total'              => round($grandTotal, 2),
-                'payment_method'     => $request->payment_method,
-                'notes'              => $request->notes,
-                'due_date'           => $request->due_date,
-                'issued_at'          => $request->issued_at ?? now()->toDateString(),
-                'user_id'            => Auth::id(),
-                'supplier_id'        => $request->supplier_id,
-            ]);
+                    // Stock Deduction / Addition
+                    if ($isEmitting && !empty($item['product_id'])) {
+                        $product = Product::findOrFail($item['product_id']);
+                        
+                        if ($request->type === 'saida') {
+                            if ($product->quantity < $qty) {
+                                throw new \Exception("Estoque insuficiente para o produto '{$product->name}'. Disponível: {$product->quantity}");
+                            }
+                            $product->decrement('quantity', $qty);
+                            $movType = 'saida';
+                        } else {
+                            $product->increment('quantity', $qty);
+                            $movType = 'entrada';
+                        }
 
-            $invoice->items()->createMany($itemsData);
-        });
+                        // Gravar movimentação de estoque
+                        \App\Models\Inventory::create([
+                            'product_id' => $product->id,
+                            'quantity'   => $qty,
+                            'type'       => $movType,
+                            'status'     => 'confirmada',
+                            'notes'      => 'Movimentação automática via ' . ($request->type === 'saida' ? 'Saída' : 'Entrada') . ' de NF',
+                            'user_id'    => Auth::id(),
+                        ]);
+                    }
+                }
+
+                $discount  = (float) ($request->discount ?? 0);
+                $shipping  = (float) ($request->shipping ?? 0);
+                $grandTotal = $subtotal - $discount + $shipping;
+
+                $invoice = Invoice::create([
+                    'number'             => Invoice::nextNumber(),
+                    'series'             => '001',
+                    'type'               => $request->type,
+                    'status'             => $isEmitting ? 'emitida' : 'rascunho',
+                    'recipient_name'     => $request->recipient_name,
+                    'recipient_document' => $request->recipient_document,
+                    'recipient_email'    => $request->recipient_email,
+                    'recipient_phone'    => $request->recipient_phone,
+                    'recipient_address'  => $request->recipient_address,
+                    'recipient_city'     => $request->recipient_city,
+                    'recipient_state'    => $request->recipient_state,
+                    'recipient_zip'      => $request->recipient_zip,
+                    'subtotal'           => round($subtotal, 2),
+                    'discount'           => $discount,
+                    'shipping'           => $shipping,
+                    'total'              => round($grandTotal, 2),
+                    'payment_method'     => $request->payment_method,
+                    'notes'              => $request->notes,
+                    'due_date'           => $request->due_date,
+                    'issued_at'          => $request->issued_at ?? now()->toDateString(),
+                    'user_id'            => Auth::id(),
+                    'supplier_id'        => $request->supplier_id,
+                ]);
+
+                $invoice->items()->createMany($itemsData);
+            });
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()])->withInput();
+        }
 
         return redirect()->route('invoices.index')
-                         ->with('success', 'Nota fiscal criada com sucesso!');
+                         ->with('success', $isEmitting ? 'Nota fiscal emitida e estoque atualizado!' : 'Rascunho de nota fiscal salvo!');
     }
 
     /**
@@ -164,8 +215,9 @@ class InvoiceController extends Controller
         $invoice->load('items.product', 'supplier');
         $products  = Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode']);
         $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
+        $customers = \App\Models\Customer::orderBy('name')->get();
 
-        return view('invoices.edit', compact('invoice', 'products', 'suppliers'));
+        return view('invoices.create', compact('invoice', 'products', 'suppliers', 'customers'));
     }
 
     /**
@@ -183,65 +235,116 @@ class InvoiceController extends Controller
             'recipient_name'     => 'required|string|max:255',
             'payment_method'     => 'required',
             'items'              => 'required|array|min:1',
+            'items.*.product_id'  => 'nullable|exists:products,id',
             'items.*.description' => 'required|string',
             'items.*.quantity'    => 'required|numeric|min:0.001',
             'items.*.unit_price'  => 'required|numeric|min:0',
+            'items.*.discount'    => 'nullable|numeric|min:0|max:100',
+            'items.*.unit'        => 'nullable|string|max:10',
+            'items.*.ncm'         => 'nullable|string|max:15',
+            'items.*.cfop'        => 'nullable|string|max:10',
+            'items.*.icms_rate'   => 'nullable|numeric|min:0',
+            'items.*.ipi_rate'    => 'nullable|numeric|min:0',
+            'items.*.pis_rate'    => 'nullable|numeric|min:0',
+            'items.*.cofins_rate' => 'nullable|numeric|min:0',
         ]);
 
-        DB::transaction(function () use ($request, $invoice) {
-            $subtotal  = 0;
-            $itemsData = [];
+        $isEmitting = $request->input('action') === 'emit';
 
-            foreach ($request->items as $item) {
-                $disc  = (float) ($item['discount'] ?? 0);
-                $qty   = (float) $item['quantity'];
-                $price = (float) $item['unit_price'];
-                $total = $qty * $price * (1 - $disc / 100);
-                $subtotal += $total;
+        try {
+            DB::transaction(function () use ($request, $invoice, $isEmitting) {
+                $subtotal  = 0;
+                $itemsData = [];
 
-                $itemsData[] = [
-                    'product_id'  => $item['product_id'] ?? null,
-                    'description' => $item['description'],
-                    'unit'        => $item['unit'] ?? 'un',
-                    'quantity'    => $qty,
-                    'unit_price'  => $price,
-                    'discount'    => $disc,
-                    'total'       => round($total, 2),
-                ];
-            }
+                foreach ($request->items as $item) {
+                    $disc  = (float) ($item['discount'] ?? 0);
+                    $qty   = (float) $item['quantity'];
+                    $price = (float) $item['unit_price'];
+                    $total = $qty * $price * (1 - $disc / 100);
+                    $subtotal += $total;
 
-            $discount   = (float) ($request->discount ?? 0);
-            $shipping   = (float) ($request->shipping ?? 0);
-            $grandTotal = $subtotal - $discount + $shipping;
+                    $itemsData[] = [
+                        'product_id'   => $item['product_id'] ?? null,
+                        'description'  => $item['description'],
+                        'ncm'          => $item['ncm'] ?? '0000.00.00',
+                        'cfop'         => $item['cfop'] ?? '5.102',
+                        'unit'         => $item['unit'] ?? 'un',
+                        'quantity'     => $qty,
+                        'unit_price'   => $price,
+                        'discount'     => $disc,
+                        'total'        => round($total, 2),
+                        'icms_base'    => round($total, 2),
+                        'icms_rate'    => (float) ($item['icms_rate'] ?? 0),
+                        'icms_value'   => round($total * (($item['icms_rate'] ?? 0) / 100), 2),
+                        'ipi_rate'     => (float) ($item['ipi_rate'] ?? 0),
+                        'ipi_value'    => round($total * (($item['ipi_rate'] ?? 0) / 100), 2),
+                        'pis_rate'     => (float) ($item['pis_rate'] ?? 0),
+                        'pis_value'    => round($total * (($item['pis_rate'] ?? 0) / 100), 2),
+                        'cofins_rate'  => (float) ($item['cofins_rate'] ?? 0),
+                        'cofins_value' => round($total * (($item['cofins_rate'] ?? 0) / 100), 2),
+                    ];
 
-            $invoice->update([
-                'type'               => $request->type,
-                'status'             => $request->input('action') === 'emit' ? 'emitida' : 'rascunho',
-                'recipient_name'     => $request->recipient_name,
-                'recipient_document' => $request->recipient_document,
-                'recipient_email'    => $request->recipient_email,
-                'recipient_phone'    => $request->recipient_phone,
-                'recipient_address'  => $request->recipient_address,
-                'recipient_city'     => $request->recipient_city,
-                'recipient_state'    => $request->recipient_state,
-                'recipient_zip'      => $request->recipient_zip,
-                'subtotal'           => round($subtotal, 2),
-                'discount'           => $discount,
-                'shipping'           => $shipping,
-                'total'              => round($grandTotal, 2),
-                'payment_method'     => $request->payment_method,
-                'notes'              => $request->notes,
-                'due_date'           => $request->due_date,
-                'issued_at'          => $request->issued_at,
-                'supplier_id'        => $request->supplier_id,
-            ]);
+                    // Stock Deduction / Addition ONLY if emitting now
+                    if ($isEmitting && !empty($item['product_id'])) {
+                        $product = Product::findOrFail($item['product_id']);
+                        
+                        if ($request->type === 'saida') {
+                            if ($product->quantity < $qty) {
+                                throw new \Exception("Estoque insuficiente para o produto '{$product->name}'. Disponível: {$product->quantity}");
+                            }
+                            $product->decrement('quantity', $qty);
+                            $movType = 'saida';
+                        } else {
+                            $product->increment('quantity', $qty);
+                            $movType = 'entrada';
+                        }
 
-            $invoice->items()->delete();
-            $invoice->items()->createMany($itemsData);
-        });
+                        \App\Models\Inventory::create([
+                            'product_id' => $product->id,
+                            'quantity'   => $qty,
+                            'type'       => $movType,
+                            'status'     => 'confirmada',
+                            'notes'      => 'Movimentação automática via ' . ($request->type === 'saida' ? 'Saída' : 'Entrada') . ' de NF',
+                            'user_id'    => Auth::id(),
+                        ]);
+                    }
+                }
+
+                $discount   = (float) ($request->discount ?? 0);
+                $shipping   = (float) ($request->shipping ?? 0);
+                $grandTotal = $subtotal - $discount + $shipping;
+
+                $invoice->update([
+                    'type'               => $request->type,
+                    'status'             => $isEmitting ? 'emitida' : 'rascunho',
+                    'recipient_name'     => $request->recipient_name,
+                    'recipient_document' => $request->recipient_document,
+                    'recipient_email'    => $request->recipient_email,
+                    'recipient_phone'    => $request->recipient_phone,
+                    'recipient_address'  => $request->recipient_address,
+                    'recipient_city'     => $request->recipient_city,
+                    'recipient_state'    => $request->recipient_state,
+                    'recipient_zip'      => $request->recipient_zip,
+                    'subtotal'           => round($subtotal, 2),
+                    'discount'           => $discount,
+                    'shipping'           => $shipping,
+                    'total'              => round($grandTotal, 2),
+                    'payment_method'     => $request->payment_method,
+                    'notes'              => $request->notes,
+                    'due_date'           => $request->due_date,
+                    'issued_at'          => $request->issued_at,
+                    'supplier_id'        => $request->supplier_id,
+                ]);
+
+                $invoice->items()->delete();
+                $invoice->items()->createMany($itemsData);
+            });
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()])->withInput();
+        }
 
         return redirect()->route('invoices.show', $invoice)
-                         ->with('success', 'Nota fiscal atualizada!');
+                         ->with('success', $isEmitting ? 'Nota fiscal emitida e estoque atualizado!' : 'Nota fiscal atualizada!');
     }
 
     /**

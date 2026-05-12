@@ -15,6 +15,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     {{-- Design System --}}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        zinc: {
+                            950: '#020617',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <link rel="stylesheet" href="{{ asset('css/logisync.css') }}?v=2.0.0">
 
     {{-- Theme (must run before render) --}}

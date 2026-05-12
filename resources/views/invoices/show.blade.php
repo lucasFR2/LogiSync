@@ -1,192 +1,206 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $invoice->number }} - LogiSync WMS</title>
-    <script>tailwindConfig = { darkMode: 'class' };</script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="{{ asset('js/theme-toggle.js') }}"></script>
-</head>
-<body class="bg-gray-50 dark:bg-slate-950 font-sans transition-colors duration-300">
-<div class="min-h-screen flex">
+@extends('layouts.app')
 
-    {{-- Sidebar --}}
-    <aside class="w-64 bg-slate-900 dark:bg-slate-950 text-white hidden md:flex flex-col">
-        <div class="p-6 border-b border-slate-800 flex justify-center">
-            <a href="/"><img src="{{ asset('images/logisync-logo.png') }}" alt="LogiSync" class="w-40 brightness-0 invert"></a>
-        </div>
-        <nav class="flex-1 px-4 mt-4 space-y-2">
-            <a href="{{ route('dashboard') }}" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition"><i class="fa-solid fa-chart-line mr-3"></i> Dashboard</a>
-            <a href="{{ route('products.index') }}" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition"><i class="fa-solid fa-boxes-stacked mr-3"></i> Produtos</a>
-            <a href="{{ route('inventory.index') }}" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition"><i class="fa-solid fa-truck-ramp-box mr-3"></i> Entradas</a>
-            <a href="{{ route('suppliers.index') }}" class="flex items-center p-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition"><i class="fa-solid fa-handshake mr-3"></i> Fornecedores</a>
-            <a href="{{ route('invoices.index') }}" class="flex items-center p-3 bg-blue-600 rounded-lg text-white"><i class="fa-solid fa-file-invoice mr-3"></i> Notas Fiscais</a>
-        </nav>
-        <div class="p-4 border-t border-slate-800">
-            <form method="POST" action="{{ route('logout') }}">@csrf
-                <button type="submit" class="flex items-center w-full p-3 text-red-400 hover:bg-red-900/20 rounded-lg transition"><i class="fa-solid fa-right-from-bracket mr-3"></i> Sair</button>
-            </form>
-        </div>
-    </aside>
+@section('title', 'Detalhes da Nota Fiscal')
+@section('page-title', $invoice->number)
+@section('page-subtitle', 'Série ' . $invoice->series . ' • ' . ($invoice->type === 'saida' ? 'Saída' : 'Entrada'))
 
-    <main class="flex-1">
-        <header class="bg-white dark:bg-slate-900 shadow-sm px-8 py-4 flex justify-between items-center border-b dark:border-slate-800">
-            <div class="flex items-center gap-3">
-                <a href="{{ route('invoices.index') }}" class="text-gray-400 hover:text-blue-600 transition"><i class="fa-solid fa-arrow-left"></i></a>
-                <div>
-                    <h1 class="text-xl font-bold text-slate-900 dark:text-white">{{ $invoice->number }}</h1>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Série {{ $invoice->series }} &bull; {{ $invoice->type === 'saida' ? 'Nota de Saída' : 'Nota de Entrada' }}</p>
-                </div>
+@section('content')
+<div class="anim-entrance" style="display:flex; flex-direction:column; gap:2rem;">
+
+    {{-- Action Bar --}}
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+            @php
+                $statusConfig = [
+                    'rascunho' => ['color' => 'var(--orange)', 'bg' => 'var(--orange-bg)', 'icon' => 'fa-pen'],
+                    'emitida' => ['color' => 'var(--green)', 'bg' => 'var(--green-bg)', 'icon' => 'fa-check-circle'],
+                    'cancelada' => ['color' => 'var(--red)', 'bg' => 'var(--red-bg)', 'icon' => 'fa-ban']
+                ][$invoice->status] ?? ['color' => 'var(--text-muted)', 'bg' => 'var(--bg-hover)', 'icon' => 'fa-circle'];
+            @endphp
+            <div class="badge" style="background: {{ $statusConfig['bg'] }}; color: {{ $statusConfig['color'] }}; padding: 0.5rem 1rem; font-size: 0.9rem; font-weight: 700;">
+                <i class="fa-solid {{ $statusConfig['icon'] }} mr-2"></i> {{ $invoice->statusLabel() }}
             </div>
-            <div class="flex items-center gap-3">
-                <button onclick="toggleTheme()" data-theme-toggle class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition text-gray-600 dark:text-gray-400"><i class="fa-solid fa-moon"></i></button>
+            <span style="color: var(--text-muted); font-size: 0.875rem; font-weight: 500;">
+                <i class="fa-solid fa-clock-rotate-left mr-1"></i> {{ $invoice->issued_at ? $invoice->issued_at->format('d/m/Y H:i') : 'Pendente' }}
+            </span>
+        </div>
 
-                @if($invoice->status === 'emitida')
-                <a href="{{ route('invoices.pdf', $invoice) }}" target="_blank"
-                    class="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition text-sm">
-                    <i class="fa-solid fa-file-pdf"></i> Baixar PDF
+        <div style="display: flex; gap: 0.75rem;">
+            @if($invoice->status === 'emitida')
+                <a href="{{ route('invoices.pdf', $invoice) }}" target="_blank" class="btn btn-primary" style="background: var(--green); border-color: var(--green); box-shadow: 0 8px 16px -4px var(--green-bg);">
+                    <i class="fa-solid fa-file-pdf mr-2"></i> Visualizar DANFE
                 </a>
-                @endif
+            @endif
 
-                @if($invoice->status === 'rascunho')
-                <a href="{{ route('invoices.edit', $invoice) }}"
-                    class="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-semibold transition text-sm">
-                    <i class="fa-solid fa-pencil"></i> Editar
+            @if($invoice->status === 'rascunho')
+                <a href="{{ route('invoices.edit', $invoice) }}" class="btn btn-primary" style="background: var(--orange); border-color: var(--orange); box-shadow: 0 8px 16px -4px var(--orange-bg);">
+                    <i class="fa-solid fa-pen-to-square mr-2"></i> Editar Rascunho
                 </a>
-                @endif
+            @endif
 
-                @if($invoice->status !== 'cancelada')
-                <form method="POST" action="{{ route('invoices.cancel', $invoice) }}" onsubmit="return confirm('Cancelar esta nota fiscal?')">
+            @if($invoice->status !== 'cancelada')
+                <form action="{{ route('invoices.cancel', $invoice) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja cancelar esta nota?')">
                     @csrf @method('PATCH')
-                    <button type="submit" class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition text-sm">
-                        <i class="fa-solid fa-ban"></i> Cancelar NF
+                    <button type="submit" class="btn btn-secondary" style="color: var(--red); border-color: var(--red-bg);">
+                        <i class="fa-solid fa-ban mr-2"></i> Cancelar Nota
                     </button>
                 </form>
-                @endif
-
-                <div class="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">{{ substr(auth()->user()->name, 0, 1) }}</div>
-            </div>
-        </header>
-
-        <div class="p-8 space-y-6">
-
-            {{-- Alertas --}}
-            @foreach(['success' => 'green', 'error' => 'red'] as $key => $color)
-            @if($msg = session($key))
-            <div class="p-4 bg-{{ $color }}-50 dark:bg-{{ $color }}-950 border border-{{ $color }}-200 dark:border-{{ $color }}-800 rounded-lg flex items-center gap-3">
-                <i class="fa-solid fa-{{ $color === 'green' ? 'check-circle' : 'circle-exclamation' }} text-{{ $color }}-600"></i>
-                <span class="text-{{ $color }}-700 dark:text-{{ $color }}-300">{{ $msg }}</span>
-            </div>
             @endif
-            @endforeach
-
-            {{-- Status badge --}}
-            @php
-            $statusMap = ['rascunho' => ['color'=>'yellow','icon'=>'pen'], 'emitida' => ['color'=>'green','icon'=>'check-circle'], 'cancelada' => ['color'=>'red','icon'=>'ban']];
-            $s = $statusMap[$invoice->status] ?? ['color'=>'gray','icon'=>'circle'];
-            @endphp
-            <div class="flex items-center gap-4">
-                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-{{ $s['color'] }}-100 text-{{ $s['color'] }}-800 dark:bg-{{ $s['color'] }}-900/30 dark:text-{{ $s['color'] }}-400">
-                    <i class="fa-solid fa-{{ $s['icon'] }}"></i> {{ $invoice->statusLabel() }}
-                </span>
-                <span class="text-sm text-gray-500 dark:text-gray-400">Emitido em {{ $invoice->issued_at ? $invoice->issued_at->format('d/m/Y') : '-' }} &bull; por {{ $invoice->user->name }}</span>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {{-- Emitente --}}
-                <div class="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 p-6">
-                    <h2 class="font-bold text-gray-700 dark:text-gray-300 text-xs uppercase tracking-wider mb-4 flex items-center gap-2"><i class="fa-solid fa-building text-blue-500"></i> Emitente</h2>
-                    <p class="font-bold text-gray-900 dark:text-white text-lg">{{ $invoice->issuer_name }}</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">CNPJ: {{ $invoice->issuer_cnpj }}</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ $invoice->issuer_address }}</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ $invoice->issuer_city }} - {{ $invoice->issuer_state }} &bull; CEP: {{ $invoice->issuer_zip }}</p>
-                </div>
-
-                {{-- Destinatário --}}
-                <div class="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 p-6">
-                    <h2 class="font-bold text-gray-700 dark:text-gray-300 text-xs uppercase tracking-wider mb-4 flex items-center gap-2"><i class="fa-solid fa-user text-green-500"></i> Destinatário</h2>
-                    <p class="font-bold text-gray-900 dark:text-white text-lg">{{ $invoice->recipient_name }}</p>
-                    @if($invoice->recipient_document)<p class="text-sm text-gray-600 dark:text-gray-400">CPF/CNPJ: {{ $invoice->recipient_document }}</p>@endif
-                    @if($invoice->recipient_email)<p class="text-sm text-gray-600 dark:text-gray-400"><i class="fa-solid fa-envelope mr-1"></i>{{ $invoice->recipient_email }}</p>@endif
-                    @if($invoice->recipient_phone)<p class="text-sm text-gray-600 dark:text-gray-400"><i class="fa-solid fa-phone mr-1"></i>{{ $invoice->recipient_phone }}</p>@endif
-                    @if($invoice->recipient_address)<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ $invoice->recipient_address }}, {{ $invoice->recipient_city }} - {{ $invoice->recipient_state }}</p>@endif
-                </div>
-            </div>
-
-            {{-- Detalhes financeiros --}}
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 p-5">
-                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Pagamento</p>
-                    <p class="font-bold text-gray-900 dark:text-white">{{ $invoice->paymentLabel() }}</p>
-                </div>
-                @if($invoice->due_date)
-                <div class="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 p-5">
-                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Vencimento</p>
-                    <p class="font-bold text-gray-900 dark:text-white">{{ $invoice->due_date->format('d/m/Y') }}</p>
-                </div>
-                @endif
-                <div class="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 p-5">
-                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Subtotal</p>
-                    <p class="font-bold text-gray-900 dark:text-white">R$ {{ number_format($invoice->subtotal, 2, ',', '.') }}</p>
-                </div>
-                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-900 p-5">
-                    <p class="text-xs text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">Total</p>
-                    <p class="font-bold text-blue-700 dark:text-blue-300 text-2xl">R$ {{ number_format($invoice->total, 2, ',', '.') }}</p>
-                </div>
-            </div>
-
-            {{-- Itens --}}
-            <div class="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800">
-                    <h2 class="font-bold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-list text-purple-500"></i> Itens ({{ $invoice->items->count() }})</h2>
-                </div>
-                <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-400 text-xs uppercase">
-                        <tr>
-                            <th class="px-6 py-3 text-left">#</th>
-                            <th class="px-6 py-3 text-left">Descrição</th>
-                            <th class="px-6 py-3 text-center">Unid.</th>
-                            <th class="px-6 py-3 text-right">Qtde</th>
-                            <th class="px-6 py-3 text-right">Preço Unit.</th>
-                            <th class="px-6 py-3 text-right">Desc. %</th>
-                            <th class="px-6 py-3 text-right">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($invoice->items as $idx => $item)
-                        <tr class="border-b border-gray-100 dark:border-slate-800">
-                            <td class="px-6 py-4 text-gray-500 dark:text-gray-500">{{ $idx + 1 }}</td>
-                            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">{{ $item->description }}</td>
-                            <td class="px-6 py-4 text-center text-gray-600 dark:text-gray-400">{{ $item->unit }}</td>
-                            <td class="px-6 py-4 text-right text-gray-700 dark:text-gray-300">{{ number_format($item->quantity, 3, ',', '.') }}</td>
-                            <td class="px-6 py-4 text-right text-gray-700 dark:text-gray-300">R$ {{ number_format($item->unit_price, 2, ',', '.') }}</td>
-                            <td class="px-6 py-4 text-right text-gray-500 dark:text-gray-400">{{ $item->discount > 0 ? number_format($item->discount, 2, ',', '.').'%' : '-' }}</td>
-                            <td class="px-6 py-4 text-right font-bold text-gray-900 dark:text-white">R$ {{ number_format($item->total, 2, ',', '.') }}</td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                    <tfoot class="bg-gray-50 dark:bg-slate-800">
-                        <tr><td colspan="6" class="px-6 py-2 text-right text-gray-600 dark:text-gray-400 text-xs">Subtotal</td><td class="px-6 py-2 text-right font-semibold text-gray-800 dark:text-white">R$ {{ number_format($invoice->subtotal, 2, ',', '.') }}</td></tr>
-                        @if($invoice->discount > 0)<tr><td colspan="6" class="px-6 py-1 text-right text-red-600 text-xs">Desconto</td><td class="px-6 py-1 text-right text-red-600">- R$ {{ number_format($invoice->discount, 2, ',', '.') }}</td></tr>@endif
-                        @if($invoice->shipping > 0)<tr><td colspan="6" class="px-6 py-1 text-right text-blue-600 text-xs">Frete</td><td class="px-6 py-1 text-right text-blue-600">+ R$ {{ number_format($invoice->shipping, 2, ',', '.') }}</td></tr>@endif
-                        <tr class="border-t-2 border-gray-200 dark:border-slate-700"><td colspan="6" class="px-6 py-3 text-right font-bold text-gray-800 dark:text-white">TOTAL GERAL</td><td class="px-6 py-3 text-right text-xl font-bold text-blue-600 dark:text-blue-400">R$ {{ number_format($invoice->total, 2, ',', '.') }}</td></tr>
-                    </tfoot>
-                </table>
-                </div>
-            </div>
-
-            @if($invoice->notes)
-            <div class="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 p-6">
-                <h2 class="font-bold text-gray-700 dark:text-gray-300 text-xs uppercase tracking-wider mb-3 flex items-center gap-2"><i class="fa-solid fa-note-sticky text-yellow-500"></i> Observações</h2>
-                <p class="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">{{ $invoice->notes }}</p>
-            </div>
-            @endif
-
         </div>
-    </main>
+    </div>
+
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;">
+        {{-- Issuer Card --}}
+        <div class="card">
+            <div class="card-header">
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <div style="width:32px; height:32px; background:var(--blue-bg); color:var(--blue); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">
+                        <i class="fa-solid fa-building"></i>
+                    </div>
+                    <h3 style="margin:0; font-family:'Outfit';">Dados do Emitente</h3>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                    <div style="font-weight: 700; color: var(--text-primary); font-size: 1.15rem;">{{ $invoice->issuer_name }}</div>
+                    <div style="font-size: 0.9rem; color: var(--text-muted); display: grid; grid-template-columns: 80px 1fr; gap: 0.5rem;">
+                        <span>CNPJ:</span> <span style="color: var(--text-primary); font-weight: 600;">{{ $invoice->issuer_cnpj }}</span>
+                        <span>Endereço:</span> <span style="color: var(--text-primary);">{{ $invoice->issuer_address }}</span>
+                        <span>Cidade/UF:</span> <span style="color: var(--text-primary);">{{ $invoice->issuer_city }} / {{ $invoice->issuer_state }}</span>
+                        <span>CEP:</span> <span style="color: var(--text-primary);">{{ $invoice->issuer_zip }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="anim-float" style="position: absolute; right: -10px; bottom: -10px; font-size: 8rem; opacity: 0.03; pointer-events: none;">
+                <i class="fa-solid fa-building-circle-check"></i>
+            </div>
+        </div>
+
+        {{-- Recipient Card --}}
+        <div class="card">
+            <div class="card-header">
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <div style="width:32px; height:32px; background:var(--accent-subtle); color:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">
+                        <i class="fa-solid fa-user-tie"></i>
+                    </div>
+                    <h3 style="margin:0; font-family:'Outfit';">Dados do Destinatário</h3>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                    <div style="font-weight: 700; color: var(--text-primary); font-size: 1.15rem;">{{ $invoice->recipient_name }}</div>
+                    <div style="font-size: 0.9rem; color: var(--text-muted); display: grid; grid-template-columns: 80px 1fr; gap: 0.5rem;">
+                        <span>CPF/CNPJ:</span> <span style="color: var(--text-primary); font-weight: 600;">{{ $invoice->recipient_document ?: '-' }}</span>
+                        <span>Contato:</span> <span style="color: var(--text-primary);">{{ $invoice->recipient_phone ?: '-' }}</span>
+                        <span>Email:</span> <span style="color: var(--text-primary);">{{ $invoice->recipient_email ?: '-' }}</span>
+                        <span>Local:</span> <span style="color: var(--text-primary);">{{ $invoice->recipient_city }} / {{ $invoice->recipient_state }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="anim-float" style="position: absolute; right: -10px; bottom: -10px; font-size: 8rem; opacity: 0.03; pointer-events: none;">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+        </div>
+    </div>
+
+    {{-- Financial Summary --}}
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+        <div class="stat-card">
+            <div class="stat-label" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Pagamento</div>
+            <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin-top: 0.5rem;">
+                <i class="fa-solid fa-wallet mr-2" style="color: var(--blue);"></i> {{ $invoice->paymentLabel() }}
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Subtotal Itens</div>
+            <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin-top: 0.5rem; font-family: 'Outfit';">
+                R$ {{ number_format($invoice->subtotal, 2, ',', '.') }}
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Descontos / Frete</div>
+            <div style="font-size: 1.25rem; font-weight: 800; color: var(--red); margin-top: 0.5rem; font-family: 'Outfit';">
+                - R$ {{ number_format($invoice->discount, 2, ',', '.') }}
+                @if($invoice->shipping > 0)
+                    <span style="color: var(--blue); font-size: 0.9rem; font-weight: 600;"> / + R$ {{ number_format($invoice->shipping, 2, ',', '.') }}</span>
+                @endif
+            </div>
+        </div>
+        <div class="stat-card" style="background: var(--accent); border: none; box-shadow: 0 15px 30px -10px var(--accent-glow);">
+            <div class="stat-label" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.7);">VALOR TOTAL</div>
+            <div style="font-size: 1.75rem; font-weight: 800; color: white; margin-top: 0.5rem; font-family: 'Outfit';">
+                R$ {{ number_format($invoice->total, 2, ',', '.') }}
+            </div>
+        </div>
+    </div>
+
+    {{-- Items Table --}}
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="card-header">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+                <div style="width:32px; height:32px; background:var(--blue-bg); color:var(--blue); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">
+                    <i class="fa-solid fa-list-ol"></i>
+                </div>
+                <h3 style="margin:0; font-family:'Outfit';">Itens da Nota Fiscal</h3>
+            </div>
+            <div class="badge" style="background: var(--bg-hover); color: var(--text-primary); font-weight: 700;">{{ $invoice->items->count() }} PRODUTOS</div>
+        </div>
+        <div class="table-wrap">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="width: 60px; text-align: center; padding: 1rem;">#</th>
+                        <th style="padding: 1rem;">Produto / Descrição</th>
+                        <th style="text-align: center; padding: 1rem;">NCM / CFOP</th>
+                        <th style="text-align: center; padding: 1rem;">Unid.</th>
+                        <th style="text-align: right; padding: 1rem;">Qtd.</th>
+                        <th style="text-align: right; padding: 1rem;">Preço Unit.</th>
+                        <th style="text-align: right; padding: 1rem;">Subtotal</th>
+                        <th style="text-align: right; padding: 1rem;">Tributos (ICMS)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($invoice->items as $idx => $item)
+                        <tr class="anim-entrance" style="animation-delay: {{ $idx * 0.05 }}s;">
+                            <td style="text-align: center; color: var(--text-muted); font-size: 0.8rem;">{{ str_pad($idx + 1, 2, '0', STR_PAD_LEFT) }}</td>
+                            <td style="padding: 1rem;">
+                                <div style="font-weight: 700; color: var(--text-primary);">{{ $item->description }}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">SKU: {{ $item->product_id ?: 'MANUAL' }}</div>
+                            </td>
+                            <td style="text-align: center; padding: 1rem;">
+                                <span style="font-family: monospace; font-size: 0.75rem; background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary);">{{ $item->ncm }}</span>
+                                <div style="margin-top: 4px;">
+                                    <span style="font-family: monospace; font-size: 0.75rem; background: var(--blue-bg); padding: 2px 6px; border-radius: 4px; color: var(--blue);">{{ $item->cfop }}</span>
+                                </div>
+                            </td>
+                            <td style="text-align: center; color: var(--text-secondary); font-weight: 600;">{{ strtoupper($item->unit) }}</td>
+                            <td style="text-align: right; font-weight: 700; color: var(--text-primary);">{{ number_format($item->quantity, 2, ',', '.') }}</td>
+                            <td style="text-align: right; color: var(--text-secondary);">R$ {{ number_format($item->unit_price, 2, ',', '.') }}</td>
+                            <td style="text-align: right; font-weight: 800; color: var(--accent); font-family: 'Outfit';">R$ {{ number_format($item->total, 2, ',', '.') }}</td>
+                            <td style="text-align: right; padding: 1rem;">
+                                <div style="font-size: 0.75rem; line-height: 1.4;">
+                                    <div style="color: var(--blue); font-weight: 600;">ICMS: R$ {{ number_format($item->icms_value, 2, ',', '.') }} ({{ number_format($item->icms_rate, 1) }}%)</div>
+                                    <div style="color: var(--text-muted); font-size: 0.65rem;">IPI/PIS/COF: R$ {{ number_format($item->ipi_value + $item->pis_value + $item->cofins_value, 2, ',', '.') }}</div>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @if($invoice->notes)
+        <div class="card" style="border-left: 4px solid var(--accent);">
+            <div class="card-body" style="padding: 1.5rem;">
+                <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom: 1rem;">
+                    <i class="fa-solid fa-comment-dots" style="color: var(--accent);"></i>
+                    <h3 style="margin:0; font-family:'Outfit'; font-size:1.1rem;">Observações da Nota</h3>
+                </div>
+                <p style="margin:0; font-size:0.95rem; color:var(--text-secondary); line-height:1.7; white-space: pre-wrap;">{{ $invoice->notes }}</p>
+            </div>
+        </div>
+    @endif
+
 </div>
-</body>
-</html>
+@endsection

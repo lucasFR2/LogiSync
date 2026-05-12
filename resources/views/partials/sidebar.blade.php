@@ -5,6 +5,7 @@
         ['route' => 'products.index',      'icon' => 'fa-cubes',                   'label' => 'Produtos'],
         ['route' => 'categories.index',    'icon' => 'fa-tags',                    'label' => 'Categorias'],
         ['route' => 'inventory.index',     'icon' => 'fa-arrow-right-to-bracket',  'label' => 'Entradas'],
+        ['route' => 'invoices.index',      'icon' => 'fa-file-invoice-dollar',     'label' => 'Emissão NF-e'],
         ['route' => 'manifestations.index','icon' => 'fa-file-invoice',            'label' => 'Manifestação (NF-e)'],
         ['route' => 'suppliers.index',     'icon' => 'fa-address-book',            'label' => 'Fornecedores'],
         ['route' => 'customers.index',     'icon' => 'fa-users',                   'label' => 'Clientes'],
@@ -14,9 +15,14 @@
 <aside class="sidebar" id="sidebar">
     {{-- Logo --}}
     <div class="sidebar-logo">
-        <a href="{{ route('dashboard') }}" style="display:flex;align-items:center;gap:.75rem;text-decoration:none;">
-            <div style="background:var(--accent); color:var(--accent-fg); width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-family:'Outfit';">LS</div>
-            <span style="font-family:'Outfit'; font-weight:800; font-size:1.25rem; color:var(--text-primary); letter-spacing:-0.03em;">LogiSync</span>
+        <a href="{{ route('dashboard') }}" style="display:flex;align-items:center;gap:.875rem;text-decoration:none;" class="group">
+            <div class="anim-float" style="background:var(--accent); color:var(--accent-fg); width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:800; font-family:'Outfit'; font-size:1.1rem; box-shadow: 0 8px 16px -4px var(--accent-glow); transform-style: preserve-3d; perspective: 500px;">
+                <span style="transform: translateZ(10px);">LS</span>
+            </div>
+            <div style="display:flex; flex-direction:column;">
+                <span style="font-family:'Outfit'; font-weight:800; font-size:1.35rem; color:var(--text-primary); letter-spacing:-0.04em; line-height:1;">LogiSync</span>
+                <span style="font-size:0.65rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.1em; margin-top:2px;">WMS System</span>
+            </div>
         </a>
     </div>
 
