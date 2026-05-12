@@ -156,23 +156,19 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
                     <div class="form-group">
                         <label class="form-label">Categoria</label>
-                        <select name="category" id="category" class="form-select">
-                            <option value="">-- Selecione uma categoria --</option>
-                            @if(isset($categories) && $categories->count())
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->name }}" {{ old('category') == $category->name ? 'selected' : '' }}>
-                                        {{ $category->name }}
+                        <div style="display:flex; gap:0.5rem;">
+                            <select name="category" id="category" class="form-select" style="flex:1;">
+                                <option value="">-- Selecione uma categoria --</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->name }}" {{ old('category') == $cat->name ? 'selected' : '' }}>
+                                        {{ $cat->name }}
                                     </option>
                                 @endforeach
-                            @else
-                                <option value="Eletrônicos" {{ old('category') == 'Eletrônicos' ? 'selected' : '' }}>Eletrônicos</option>
-                                <option value="Informática" {{ old('category') == 'Informática' ? 'selected' : '' }}>Informática</option>
-                                <option value="Periféricos" {{ old('category') == 'Periféricos' ? 'selected' : '' }}>Periféricos</option>
-                                <option value="Acessórios" {{ old('category') == 'Acessórios' ? 'selected' : '' }}>Acessórios</option>
-                                <option value="Software" {{ old('category') == 'Software' ? 'selected' : '' }}>Software</option>
-                                <option value="Outros" {{ old('category') == 'Outros' ? 'selected' : '' }}>Outros</option>
-                            @endif
-                        </select>
+                            </select>
+                            <button type="button" class="btn btn-secondary" data-open-category-modal title="Nova categoria">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -252,6 +248,7 @@
 
 @include('partials.location_picker')
 @include('partials.supplier_quick_create')
+@include('partials.category_quick_create')
 
 @push('scripts')
 <script>

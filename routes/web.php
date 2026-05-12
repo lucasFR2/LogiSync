@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProductController;
@@ -32,6 +33,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/products/{product}/add-inventory', [ProductController::class, 'addInventory'])->name('products.add-inventory');
     Route::post('products/store-category', [ProductController::class, 'storeCategory'])->name('products.store-category');
     Route::get('locations/search', [ProductController::class, 'searchLocations'])->name('locations.search');
+
+    // Category routes (quick-store MUST come before the resource to avoid {category} collision)
+    Route::post('categories/quick-store', [CategoryController::class, 'storeQuick'])->name('categories.quick-store');
+    Route::resource('categories', CategoryController::class);
     
     
     // Supplier routes

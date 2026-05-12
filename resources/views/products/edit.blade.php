@@ -73,12 +73,20 @@
                             <div class="grid grid-2" style="gap:1rem;">
                                 <div class="form-group">
                                     <label class="form-label">Categoria</label>
-                                    <select name="category" class="form-select">
-                                        <option value="Eletrônicos" {{ $product->category == 'Eletrônicos' ? 'selected' : '' }}>Eletrônicos</option>
-                                        <option value="Informática" {{ $product->category == 'Informática' ? 'selected' : '' }}>Informática</option>
-                                        <option value="Periféricos" {{ $product->category == 'Periféricos' ? 'selected' : '' }}>Periféricos</option>
-                                        <option value="Acessórios" {{ $product->category == 'Acessórios' ? 'selected' : '' }}>Acessórios</option>
-                                    </select>
+                                    <div style="display:flex; gap:0.5rem;">
+                                        <select name="category" class="form-select" style="flex:1;">
+                                            <option value="">-- Selecione --</option>
+                                            @foreach($categories as $cat)
+                                                <option value="{{ $cat->name }}"
+                                                    {{ old('category', $product->category) == $cat->name ? 'selected' : '' }}>
+                                                    {{ $cat->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <button type="button" class="btn btn-secondary" data-open-category-modal title="Nova categoria">
+                                            <i class="fa-solid fa-plus"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Unidade</label>
@@ -214,6 +222,7 @@
 
 @include('partials.location_picker')
 @include('partials.supplier_quick_create')
+@include('partials.category_quick_create')
 
 @push('scripts')
 <script>

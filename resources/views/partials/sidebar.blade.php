@@ -1,12 +1,13 @@
 @php
     $currentRoute = request()->route()->getName();
     $navItems = [
-        ['route' => 'dashboard',        'icon' => 'fa-chart-pie',      'label' => 'Dashboard'],
-        ['route' => 'products.index',   'icon' => 'fa-cubes',          'label' => 'Produtos'],
-        ['route' => 'inventory.index',  'icon' => 'fa-arrow-right-to-bracket',  'label' => 'Entradas'],
-        ['route' => 'manifestations.index','icon' => 'fa-file-invoice',    'label' => 'Manifestação (NF-e)'],
-        ['route' => 'suppliers.index',  'icon' => 'fa-address-book',    'label' => 'Fornecedores'],
-        ['route' => 'customers.index',  'icon' => 'fa-users',           'label' => 'Clientes'],
+        ['route' => 'dashboard',           'icon' => 'fa-chart-pie',               'label' => 'Dashboard'],
+        ['route' => 'products.index',      'icon' => 'fa-cubes',                   'label' => 'Produtos'],
+        ['route' => 'categories.index',    'icon' => 'fa-tags',                    'label' => 'Categorias'],
+        ['route' => 'inventory.index',     'icon' => 'fa-arrow-right-to-bracket',  'label' => 'Entradas'],
+        ['route' => 'manifestations.index','icon' => 'fa-file-invoice',            'label' => 'Manifestação (NF-e)'],
+        ['route' => 'suppliers.index',     'icon' => 'fa-address-book',            'label' => 'Fornecedores'],
+        ['route' => 'customers.index',     'icon' => 'fa-users',                   'label' => 'Clientes'],
     ];
 @endphp
 

@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
@@ -202,8 +203,9 @@ class ProductController extends Controller
     // Mostrar formulário de criação
     public function create()
     {
-        $suppliers = Supplier::all();
-        return view('products.create', compact('suppliers'));
+        $suppliers  = Supplier::orderBy('name')->get();
+        $categories = Category::orderBy('name')->get();
+        return view('products.create', compact('suppliers', 'categories'));
     }
 
     // Gravar novo produto no banco
@@ -283,8 +285,9 @@ class ProductController extends Controller
     // Mostrar formulário de edição
     public function edit(Product $product)
     {
-        $suppliers = Supplier::all();
-        return view('products.edit', compact('product', 'suppliers'));
+        $suppliers  = Supplier::orderBy('name')->get();
+        $categories = Category::orderBy('name')->get();
+        return view('products.edit', compact('product', 'suppliers', 'categories'));
     }
 
     // Atualizar produto no banco
