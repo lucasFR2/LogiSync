@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Helpers\Logger;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
@@ -39,7 +40,8 @@ class CategoryController extends Controller
             'name.max'      => 'O nome da categoria não pode exceder 100 caracteres',
         ]);
 
-        Category::create($validated);
+        $category = Category::create($validated);
+        Logger::log('create_category', "O usuário criou a categoria: {$category->name} (#{$category->id})");
 
         return redirect()->route('categories.index')
             ->with('success', 'Categoria criada com sucesso!');
@@ -61,6 +63,7 @@ class CategoryController extends Controller
         ]);
 
         $category->update($validated);
+        Logger::log('update_category', "O usuário alterou a categoria: {$category->name} (#{$category->id})");
 
         return redirect()->route('categories.index')
             ->with('success', 'Categoria atualizada com sucesso!');
@@ -68,7 +71,10 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
+        $catName = $category->name;
+        $catId = $category->id;
         $category->delete();
+        Logger::log('delete_category', "O usuário removeu a categoria: {$catName} (#{$catId})");
 
         return redirect()->route('categories.index')
             ->with('success', 'Categoria excluída com sucesso!');
@@ -88,6 +94,7 @@ class CategoryController extends Controller
         ]);
 
         $category = Category::create($validated);
+        Logger::log('create_category', "O usuário criou a categoria (rápido): {$category->name} (#{$category->id})");
 
         return response()->json([
             'success'     => true,

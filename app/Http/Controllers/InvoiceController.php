@@ -10,6 +10,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\Logger;
 
 class InvoiceController extends Controller
 {
@@ -189,6 +190,9 @@ class InvoiceController extends Controller
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
 
+        $invoice = Invoice::latest()->first();
+        Logger::log('create_invoice', "O usuário criou a NF #{$invoice->number} para {$invoice->recipient_name}");
+
         return redirect()->route('invoices.index')
                          ->with('success', $isEmitting ? 'Nota fiscal emitida e estoque atualizado!' : 'Rascunho de nota fiscal salvo!');
     }
@@ -343,6 +347,8 @@ class InvoiceController extends Controller
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
 
+        Logger::log('update_invoice', "O usuário alterou a NF #{$invoice->number}");
+
         return redirect()->route('invoices.show', $invoice)
                          ->with('success', $isEmitting ? 'Nota fiscal emitida e estoque atualizado!' : 'Nota fiscal atualizada!');
     }
@@ -353,6 +359,8 @@ class InvoiceController extends Controller
     public function cancel(Invoice $invoice)
     {
         $invoice->update(['status' => 'cancelada']);
+
+        Logger::log('cancel_invoice', "O usuário cancelou a NF #{$invoice->number}");
 
         return redirect()->route('invoices.show', $invoice)
                          ->with('success', 'Nota fiscal cancelada!');
@@ -368,7 +376,10 @@ class InvoiceController extends Controller
                              ->with('error', 'Apenas rascunhos podem ser excluídos.');
         }
 
+        $invNum = $invoice->number;
         $invoice->delete();
+
+        Logger::log('delete_invoice', "O usuário removeu o rascunho da NF #{$invNum}");
 
         return redirect()->route('invoices.index')
                          ->with('success', 'Nota fiscal excluída!');

@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Supplier;
+use App\Helpers\Logger;
 use Illuminate\Http\Request;
 
 class SupplierController extends Controller
@@ -47,6 +48,7 @@ class SupplierController extends Controller
         ]);
 
         $supplier = Supplier::create($validated);
+        Logger::log('create_supplier', "O usuário cadastrou o fornecedor: {$supplier->name} (#{$supplier->id})");
 
         // Se é requisição AJAX, retorna JSON
         if ($request->ajax()) {
@@ -91,6 +93,7 @@ class SupplierController extends Controller
         ]);
 
         $supplier->update($validated);
+        Logger::log('update_supplier', "O usuário alterou o fornecedor: {$supplier->name} (#{$supplier->id})");
 
         return redirect()->route('suppliers.index')
                         ->with('success', 'Fornecedor atualizado com sucesso!');
@@ -99,7 +102,10 @@ class SupplierController extends Controller
     // Deletar fornecedor
     public function destroy(Supplier $supplier)
     {
+        $supName = $supplier->name;
+        $supId = $supplier->id;
         $supplier->delete();
+        Logger::log('delete_supplier', "O usuário removeu o fornecedor: {$supName} (#{$supId})");
 
         return redirect()->route('suppliers.index')
                         ->with('success', 'Fornecedor deletado com sucesso!');

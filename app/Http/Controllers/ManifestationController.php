@@ -9,6 +9,7 @@ use App\Models\Supplier;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Helpers\Logger;
 
 class ManifestationController extends Controller
 {
@@ -62,6 +63,8 @@ class ManifestationController extends Controller
         $manifestation->update([
             'manifestation_status' => $request->status
         ]);
+
+        Logger::log('manifest_action', "O usuário alterou o status da NF-e #{$manifestation->number} para: " . strtoupper($request->status));
 
         return redirect()->back()->with('success', 'Manifestação registrada com sucesso!');
     }
@@ -147,6 +150,7 @@ class ManifestationController extends Controller
             }
 
             DB::commit();
+            Logger::log('xml_import', "O usuário importou o XML da NF-e #{$invoice->number} (Chave: {$invoice->access_key})");
             return redirect()->route('manifestations.show', $invoice)->with('success', 'XML processado com sucesso!');
 
         } catch (\Exception $e) {
