@@ -6,81 +6,109 @@ use Illuminate\Http\Request;
 
 class SupplierController extends Controller
 {
+    // Listar todos os fornecedores
     public function index(Request $request)
     {
+        $search = $request->query('search');
+
         $query = Supplier::query();
-        if ($search = $request->get('search')) {
-            $query->where('name', 'like', "%{$search}%");
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('cnpj', 'like', "%{$search}%");
         }
-        $suppliers = $query->orderBy('name')->paginate(15);
-        return view('suppliers.index', compact('suppliers'));
+
+        $suppliers = $query->paginate(15)->appends(['search' => $search]);
+
+        return view('suppliers.index', compact('suppliers', 'search'));
     }
 
+    // Mostrar formulário de criação
     public function create()
     {
         return view('suppliers.create');
     }
 
+    // Gravar novo fornecedor (AJAX)
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'cnpj' => 'nullable|string|max:30|unique:suppliers,cnpj',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:30',
-            'address' => 'nullable|string|max:255',
+            'street' => 'nullable|string|max:255',
+            'number' => 'nullable|string|max:20',
+            'neighborhood' => 'nullable|string|max:255',
+            'zip_code' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:2',
+            'cnpj' => 'nullable|string|max:30|unique:suppliers,cnpj',
+            'state_registration' => 'nullable|string|max:30',
         ]);
 
-        try {
-            $supplier = Supplier::create($validated);
-        } catch (\Illuminate\Database\QueryException $e) {
-            // Handle unique constraint race or other DB errors
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'message' => 'Erro ao criar fornecedor. CNPJ já existe ou dados inválidos.'
-                ], 409);
-            }
+        $supplier = Supplier::create($validated);
 
-            return redirect()->back()->withInput()->withErrors(['cnpj' => 'CNPJ já cadastrado.']);
-        }
-
-        if ($request->wantsJson() || $request->ajax()) {
+        // Se é requisição AJAX, retorna JSON
+        if ($request->ajax()) {
             return response()->json([
+                'success' => true,
+                'message' => 'Fornecedor cadastrado com sucesso!',
                 'supplier' => $supplier,
-                'message' => 'Fornecedor criado com sucesso.'
-            ], 201);
+            ]);
         }
 
-        return redirect()->route('suppliers.index')->with('success', 'Fornecedor criado com sucesso.');
+        return redirect()->route('suppliers.index')
+                        ->with('success', 'Fornecedor cadastrado com sucesso!');
     }
 
+    // Mostrar um fornecedor
+    public function show(Supplier $supplier)
+    {
+        return view('suppliers.show', compact('supplier'));
+    }
+
+    // Mostrar formulário de edição
     public function edit(Supplier $supplier)
     {
         return view('suppliers.edit', compact('supplier'));
     }
 
+    // Atualizar fornecedor
     public function update(Request $request, Supplier $supplier)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'cnpj' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:30',
-            'address' => 'nullable|string|max:255',
+            'street' => 'nullable|string|max:255',
+            'number' => 'nullable|string|max:20',
+            'neighborhood' => 'nullable|string|max:255',
+            'zip_code' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:2',
+            'cnpj' => 'nullable|string|max:30|unique:suppliers,cnpj,' . $supplier->id,
+            'state_registration' => 'nullable|string|max:30',
         ]);
 
         $supplier->update($validated);
 
-        return redirect()->route('suppliers.index')->with('success', 'Fornecedor atualizado.');
+        return redirect()->route('suppliers.index')
+                        ->with('success', 'Fornecedor atualizado com sucesso!');
     }
 
+    // Deletar fornecedor
     public function destroy(Supplier $supplier)
     {
         $supplier->delete();
-        return redirect()->route('suppliers.index')->with('success', 'Fornecedor removido.');
+
+        return redirect()->route('suppliers.index')
+                        ->with('success', 'Fornecedor deletado com sucesso!');
+    }
+
+    // Listar fornecedores (AJAX para select)
+    public function list()
+    {
+        $suppliers = Supplier::all(['id', 'name']);
+        return response()->json($suppliers);
     }
 }

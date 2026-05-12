@@ -1,365 +1,189 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta de Produtos - LogiSync WMS</title>
-    <script>
-        tailwindConfig = {
-            darkMode: 'class',
-        };
-    </script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ asset('css/dashboard-dark.css') }}">
-    <script src="{{ asset('js/theme-toggle.js') }}"></script>
-</head>
-<body class="bg-[#020617] font-sans text-[#FFFFFF]">
+@extends('layouts.app')
 
-    <div class="min-h-screen flex">
-        <!-- Sidebar -->
-        <aside class="w-64 bg-[#0F172A] text-white hidden md:flex flex-col border-r border-[#1E293B] shadow-xl">
-            <div class="p-6 border-b border-[#1E293B] flex justify-center">
-                <a href="/">
-                    <img src="{{ asset('images/logisync-logo.png') }}" alt="LogiSync Logo" class="w-40 h-auto brightness-0 invert">
-                </a>
-            </div>
+@section('title', 'Consulta de Produtos')
+@section('page-title', 'Produtos')
+@section('page-subtitle', 'Gerencie seu catálogo de produtos com eficiência')
+
+@section('content')
+<div class="anim-entrance" style="display:flex; flex-direction:column; gap:2rem;">
+
+    {{-- Success / Error alerts --}}
+    @if(session('success'))
+        <div class="alert badge-success" style="padding:1rem; border-radius:var(--r-md); display:flex; align-items:center; gap:0.75rem;">
+            <i class="fa-solid fa-circle-check"></i>
+            <span style="font-weight:600;">{{ session('success') }}</span>
+        </div>
+    @endif
+
+    {{-- Main Controls Card --}}
+    <div class="card" style="padding:1.5rem;">
+        <div style="display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between;">
             
-            <nav class="flex-1 px-4 mt-4 space-y-2">
-                <a href="{{ route('dashboard') }}" class="flex items-center p-3 text-[#94A3B8] hover:bg-[#1A2438] hover:text-white rounded-lg transition">
-                    <i class="fa-solid fa-chart-line mr-3"></i> Dashboard
-                </a>
-                <a href="{{ route('products.index') }}" class="flex items-center p-3 bg-[#2563EB] rounded-lg text-white">
-                    <i class="fa-solid fa-boxes-stacked mr-3"></i> Produtos
-                </a>
-                <a href="{{ route('inventory.index') }}" class="flex items-center p-3 text-[#94A3B8] hover:bg-[#1A2438] hover:text-white rounded-lg transition">
-                    <i class="fa-solid fa-truck-ramp-box mr-3"></i> Entradas
-                </a>
-                <a href="{{ route('suppliers.index') }}" class="flex items-center p-3 text-[#94A3B8] hover:bg-[#1A2438] hover:text-white rounded-lg transition">
-                    <i class="fa-solid fa-handshake mr-3"></i> Fornecedores
-                </a>
-            </nav>
-
-            <div class="p-4 border-t border-[#1E293B]">
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="flex items-center w-full p-3 text-red-400 hover:bg-red-900/20 rounded-lg transition">
-                        <i class="fa-solid fa-right-from-bracket mr-3"></i> Sair
-                    </button>
-                </form>
-            </div>
-        </aside>
-
-        <!-- Conteúdo Principal -->
-        <main class="flex-1">
-            <!-- Header Superior -->
-            <header class="bg-[#0F172A] shadow-lg px-8 py-4 flex justify-between items-center border-b border-[#1E293B]">
-                <h1 class="text-2xl font-bold text-[#FFFFFF]">
-                    <i class="fa-solid fa-boxes-stacked text-[#2563EB] mr-2"></i>Consulta de Produtos
-                </h1>
-                <div class="flex items-center gap-4">
-                    <button onclick="toggleTheme()" data-theme-toggle class="p-2 rounded-lg hover:bg-[#1A2438] transition text-[#94A3B8]" title="Alternar tema">
-                        <i class="fa-solid fa-moon"></i>
-                    </button>
-                    <span class="text-[#94A3B8]">{{ auth()->user()->name }}</span>
-                    <div class="w-10 h-10 bg-[#2563EB] rounded-full flex items-center justify-center text-white font-bold">
-                        {{ substr(auth()->user()->name, 0, 1) }}
-                    </div>
+            {{-- Combined Search & Filter Form --}}
+            <form method="GET" action="{{ route('products.index') }}" style="width: 100%;">
+                <div style="display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between;">
+                    <div style="display:flex; gap:0.75rem; flex:1; min-width:320px;">
+                <div class="form-group" style="flex:1; position:relative;">
+                    <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:1.25rem; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.9rem;"></i>
+                    <input type="text" name="search" value="{{ $search ?? '' }}" 
+                           placeholder="Pesquisar produtos, códigos ou categorias..." 
+                           class="form-input" style="padding-left:3rem; border-radius:var(--r-md);">
                 </div>
-            </header>
-
-            <!-- Conteúdo da Página -->
-            <section class="p-8 bg-[#020617]">
-                <!-- Mensagens de Sucesso/Erro -->
-                @if ($message = session('success'))
-                    <div class="mb-6 p-4 bg-green-900/20 border border-green-600 rounded-lg flex items-center gap-3">
-                        <i class="fa-solid fa-check-circle text-green-400"></i>
-                        <span class="text-green-300">{{ $message }}</span>
+                <select name="filter" class="form-select" style="width:160px; border-radius:var(--r-md);">
+                    <option value="all" {{ ($filterBy??'all')=='all' ? 'selected':'' }}>Todos os Campos</option>
+                    <option value="name" {{ ($filterBy??'all')=='name' ? 'selected':'' }}>Nome</option>
+                    <option value="barcode" {{ ($filterBy??'all')=='barcode' ? 'selected':'' }}>Código</option>
+                    <option value="category" {{ ($filterBy??'all')=='category' ? 'selected':'' }}>Categoria</option>
+                </select>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-search"></i>
+                </button>
                     </div>
-                @endif
 
-                <!-- Controles Superiores -->
-                <div class="mb-6 space-y-4">
-                    <!-- Linha 1: Pesquisa + Filtro Rápido + Botões de Ação -->
-                    <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-                        <!-- Campo de Pesquisa -->
-                        <form method="GET" action="{{ route('products.index') }}" class="flex-1 flex gap-2">
-                            <div class="flex-1 relative">
-                                <input 
-                                    type="text" 
-                                    name="search" 
-                                    placeholder="Pesquisar por nome, código ou categoria..." 
-                                    value="{{ $search ?? '' }}"
-                                    class="w-full px-4 py-2.5 pl-10 border-2 border-[#1E293B] bg-[#0F172A] text-[#FFFFFF] placeholder-[#94A3B8] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
-                                >
-                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-[#94A3B8]"></i>
-                            </div>
-
-                            <!-- Selector de Filtro Rápido -->
-                            <select 
-                                name="filter" 
-                                class="px-3 py-2.5 border-2 border-[#1E293B] bg-[#0F172A] text-[#FFFFFF] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer text-sm"
-                            >
-                                <option value="all" {{ ($filterBy ?? 'all') == 'all' ? 'selected' : '' }}>Todos</option>
-                                <option value="name" {{ ($filterBy ?? 'all') == 'name' ? 'selected' : '' }}>Nome</option>
-                                <option value="barcode" {{ ($filterBy ?? 'all') == 'barcode' ? 'selected' : '' }}>Código</option>
-                                <option value="category" {{ ($filterBy ?? 'all') == 'category' ? 'selected' : '' }}>Categoria</option>
-                                <option value="status" {{ ($filterBy ?? 'all') == 'status' ? 'selected' : '' }}>Status</option>
-                            </select>
-
-                            <!-- Botão Pesquisar (apenas ícone) -->
-                            <button 
-                                type="submit" 
-                                class="px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold flex items-center justify-center transition whitespace-nowrap"
-                                title="Pesquisar"
-                            >
-                                <i class="fa-solid fa-search"></i>
-                            </button>
-
-                            <!-- Botão Limpar (apenas ícone) -->
-                            @if (!empty($search))
-                                <a 
-                                    href="{{ route('products.index') }}" 
-                                    class="px-3 py-2.5 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold flex items-center justify-center transition whitespace-nowrap"
-                                    title="Limpar filtro"
-                                >
-                                    <i class="fa-solid fa-times"></i>
-                                </a>
-                            @endif
-                        </form>
-
-                        <!-- Botão Filtro Avançado -->
-                        <button 
-                            onclick="toggleAdvancedFilter()" 
-                            class="bg-[#2563EB] hover:bg-blue-800 text-white px-4 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2 transition whitespace-nowrap"
-                            title="Abrir filtro avançado"
-                        >
-                            <i class="fa-solid fa-sliders"></i> <span class="hidden sm:inline text-sm">Avançado</span>
+                    {{-- Action Buttons --}}
+                    <div class="flex" style="gap:0.75rem;">
+                        <button type="button" onclick="toggleAdvancedFilter()" class="btn btn-secondary">
+                            <i class="fa-solid fa-sliders"></i> <span>Filtros</span>
                         </button>
-
-                        <!-- Botão Novo Produto -->
-                        <a href="{{ route('products.create') }}" class="bg-[#2563EB] hover:bg-blue-800 text-white px-4 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2 transition whitespace-nowrap">
-                            <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline text-sm">Novo</span>
+                        <a href="{{ route('products.create') }}" class="btn btn-primary">
+                            <i class="fa-solid fa-plus"></i> <span>Novo Produto</span>
                         </a>
                     </div>
+                </div>
+        </div>
 
-                    <!-- Info de Filtro Ativo -->
-                    @if (!empty($search))
-                        <div class="flex items-center justify-between gap-3 p-3 bg-blue-900/20 border border-blue-600 rounded-lg text-xs sm:text-sm">
-                            <span class="text-blue-300">
-                                <i class="fa-solid fa-filter text-blue-400 mr-2"></i>
-                                Buscando: <strong>"{{ $search }}"</strong>
-                            </span>
-                        </div>
-                    @endif
-
-                    <!-- Painel de Filtro Avançado (Oculto por padrão) -->
-                    <div id="advancedFilterPanel" class="hidden bg-[#0F172A] border-2 border-[#1E293B] rounded-lg p-4 space-y-4">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-sliders"></i> Filtros Avançados
-                            </h3>
-                            <button onclick="toggleAdvancedFilter()" class="text-gray-400 hover:text-white transition">
-                                <i class="fa-solid fa-times text-lg"></i>
-                            </button>
-                        </div>
-
-                        <form method="GET" action="{{ route('products.index') }}" class="space-y-4">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <!-- Status -->
-                                <div>
-                                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-2">Status</label>
-                                    <select 
-                                        name="status_filter" 
-                                        class="w-full px-3 py-2 border border-[#1E293B] bg-[#1A2438] text-[#FFFFFF] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-                                    >
-                                        <option value="">Todos os Status</option>
-                                        <option value="ativo">Ativo</option>
-                                        <option value="inativo">Inativo</option>
-                                        <option value="descontinuado">Descontinuado</option>
-                                    </select>
-                                </div>
-
-                                <!-- Faixa de Preço -->
-                                <div>
-                                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-2">Preço Mínimo (R$)</label>
-                                    <input 
-                                        type="number" 
-                                        name="price_min"
-                                        placeholder="0.00"
-                                        step="0.01"
-                                        min="0"
-                                        class="w-full px-3 py-2 border border-[#1E293B] bg-[#1A2438] text-[#FFFFFF] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-                                    >
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-2">Preço Máximo (R$)</label>
-                                    <input 
-                                        type="number" 
-                                        name="price_max"
-                                        placeholder="99999.99"
-                                        step="0.01"
-                                        min="0"
-                                        class="w-full px-3 py-2 border border-[#1E293B] bg-[#1A2438] text-[#FFFFFF] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-                                    >
-                                </div>
-
-                                <!-- Estoque -->
-                                <div>
-                                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-2">Estoque</label>
-                                    <select 
-                                        name="stock_filter" 
-                                        class="w-full px-3 py-2 border border-[#1E293B] bg-[#1A2438] text-[#FFFFFF] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-                                    >
-                                        <option value="">Qualquer estoque</option>
-                                        <option value="low">Estoque baixo</option>
-                                        <option value="medium">Estoque médio</option>
-                                        <option value="high">Estoque alto</option>
-                                    </select>
-                                </div>
-
-                                <!-- Categoria -->
-                                <div>
-                                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-2">Categoria</label>
-                                    <input 
-                                        type="text" 
-                                        name="category_filter"
-                                        placeholder="Ex: Informática"
-                                        class="w-full px-3 py-2 border border-[#1E293B] bg-[#1A2438] text-[#FFFFFF] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-                                    >
-                                </div>
-
-                                <!-- Fornecedor -->
-                                <div>
-                                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-2">Fornecedor</label>
-                                    <input 
-                                        type="text" 
-                                        name="supplier_filter"
-                                        placeholder="Ex: Distribuidora 1"
-                                        class="w-full px-3 py-2 border border-[#1E293B] bg-[#1A2438] text-[#FFFFFF] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-                                    >
-                                </div>
-                            </div>
-
-                            <!-- Botões do Filtro Avançado -->
-                            <div class="flex gap-3 pt-2 border-t border-[#1E293B]">
-                                <button 
-                                    type="submit" 
-                                    class="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition text-sm"
-                                >
-                                    <i class="fa-solid fa-filter"></i> Aplicar Filtros
-                                </button>
-                                <a 
-                                    href="{{ route('products.index') }}" 
-                                    class="flex-1 px-4 py-2.5 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition text-sm"
-                                >
-                                    <i class="fa-solid fa-rotate-left"></i> Resetar
-                                </a>
-                            </div>
-                        </form>
+        {{-- Advanced Filter Panel --}}
+        <div id="advancedFilterPanel" class="{{ request()->hasAny(['status_filter', 'price_min', 'price_max', 'stock_filter']) ? '' : 'hidden' }}" style="margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid var(--border);">
+                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1.25rem;">
+                    <div class="form-group">
+                        <label class="form-label">Status do Produto</label>
+                        <select name="status_filter" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="ativo" {{ request('status_filter') == 'ativo' ? 'selected' : '' }}>Ativo</option>
+                            <option value="inativo" {{ request('status_filter') == 'inativo' ? 'selected' : '' }}>Inativo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Preço Mínimo (R$)</label>
+                        <input type="number" name="price_min" value="{{ request('price_min') }}" placeholder="0.00" step="0.01" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Preço Máximo (R$)</label>
+                        <input type="number" name="price_max" value="{{ request('price_max') }}" placeholder="10.000,00" step="0.01" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nível de Estoque</label>
+                        <select name="stock_filter" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="low" {{ request('stock_filter') == 'low' ? 'selected' : '' }}>Abaixo do Mínimo</option>
+                            <option value="medium" {{ request('stock_filter') == 'medium' ? 'selected' : '' }}>Estoque Médio</option>
+                            <option value="high" {{ request('stock_filter') == 'high' ? 'selected' : '' }}>Estoque Alto</option>
+                        </select>
                     </div>
                 </div>
-
-                <!-- Tabela de Produtos -->
-                <div class="bg-[#0F172A] rounded-lg shadow-lg border border-[#1E293B] overflow-hidden">
-                    @if ($products->count() > 0)
-                        <table class="w-full">
-                            <thead class="bg-[#0F172A] border-b border-[#1E293B]">
-                                <tr>
-                                    <th class="px-6 py-4 text-left text-sm font-semibold text-[#FFFFFF]">Produto</th>
-                                    <th class="px-6 py-4 text-left text-sm font-semibold text-[#FFFFFF]">Código de Barras</th>
-                                    <th class="px-6 py-4 text-center text-sm font-semibold text-[#FFFFFF]">Quantidade</th>
-                                    <th class="px-6 py-4 text-right text-sm font-semibold text-[#FFFFFF]">Valor Unit.</th>
-                                    <th class="px-6 py-4 text-center text-sm font-semibold text-[#FFFFFF]">Nível Ressupr.</th>
-                                    <th class="px-6 py-4 text-center text-sm font-semibold text-[#FFFFFF]">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($products as $product)
-                                    <tr class="border-b border-[#1E293B] hover:bg-[#1A2438] transition">
-                                        <td class="px-6 py-4">
-                                            <div class="font-semibold text-[#FFFFFF]">{{ $product->name }}</div>
-                                            <div class="text-sm text-[#94A3B8]">{{ Str::limit($product->description, 40) }}</div>
-                                        </td>
-                                        <td class="px-6 py-4 text-[#94A3B8]">{{ $product->barcode ?? '-' }}</td>
-                                        <td class="px-6 py-4 text-center">
-                                            <span class="
-                                                px-3 py-1 rounded-lg text-sm font-semibold
-                                                @if ($product->quantity <= $product->reorder_level)
-                                                    bg-red-900/20 text-red-400
-                                                    @elseif ($product->quantity <= ($product->reorder_level * 1.5))
-                                                    bg-[#1A2438] text-[#FFFFFF]
-                                                @else
-                                                    bg-green-900/20 text-green-400
-                                                @endif
-                                            ">
-                                                {{ $product->quantity }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 text-right text-[#FFFFFF] font-semibold">
-                                            R$ {{ number_format($product->unit_price, 2, '.', '') }}
-                                        </td>
-                                        <td class="px-6 py-4 text-center text-[#94A3B8]">{{ $product->reorder_level }}</td>
-                                        <td class="px-6 py-4">
-                                            <div class="flex justify-center gap-2">
-                                                <a href="{{ route('products.show', $product) }}" class="text-[#2563EB] hover:text-blue-400 p-2 hover:bg-[#1A2438] rounded transition" title="Ver Detalhes">
-                                                    <i class="fa-solid fa-eye"></i>
-                                                </a>
-                                                <a href="{{ route('products.edit', $product) }}" class="text-[#2563EB] hover:text-blue-400 p-2 hover:bg-[#1A2438] rounded transition" title="Editar">
-                                                    <i class="fa-solid fa-pencil"></i>
-                                                </a>
-                                                <form method="POST" action="{{ route('products.destroy', $product) }}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja deletar este produto?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded transition" title="Deletar">
-                                                        <i class="fa-solid fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    @else
-                        <div class="px-6 py-12 text-center bg-white dark:bg-slate-900">
-                            <i class="fa-solid fa-inbox text-6xl text-gray-300 dark:text-slate-700 mb-4"></i>
-                            <p class="text-gray-500 dark:text-gray-400 text-lg">Nenhum produto encontrado</p>
-                            <a href="{{ route('products.create') }}" class="mt-4 inline-block text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-semibold transition-colors">
-                                <i class="fa-solid fa-plus mr-2"></i>Cadastre um novo produto
-                            </a>
-                        </div>
-                    @endif
+                <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+                    <a href="{{ route('products.index') }}" class="btn btn-secondary">Limpar Filtros</a>
+                    <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
                 </div>
-
-                <!-- Paginação -->
-                <div class="mt-6">
-                    {{ $products->links() }}
-                </div>
-            </section>
-        </main>
+            </div>
+            </form>
+        </div>
     </div>
 
-    <script>
-        // Toggle para mostrar/ocultar filtro avançado
-        function toggleAdvancedFilter() {
-            const panel = document.getElementById('advancedFilterPanel');
-            if (panel) {
-                panel.classList.toggle('hidden');
-            }
+    {{-- Products Table --}}
+    <div class="card" style="border:none;">
+        @if($products->count() > 0)
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Identificação do Produto</th>
+                            <th>Código</th>
+                            <th style="text-align:center;">Estoque Atual</th>
+                            <th style="text-align:right;">Preço Unitário</th>
+                            <th style="text-align:center;">Nível Reabast.</th>
+                            <th style="text-align:center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($products as $product)
+                            <tr>
+                                <td>
+                                    <div style="font-family:'Outfit'; font-weight:700; font-size:1rem; color:var(--text-primary);">{{ $product->name }}</div>
+                                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.25rem;">{{ Str::limit($product->description, 60) }}</div>
+                                </td>
+                                <td>
+                                    <code style="background:var(--bg-hover); padding:0.25rem 0.5rem; border-radius:4px; font-size:0.85rem; color:var(--text-secondary);">{{ $product->barcode ?? 'N/A' }}</code>
+                                </td>
+                                <td style="text-align:center;">
+                                    @php
+                                        $qty = $product->quantity;
+                                        $lvl = $product->reorder_level;
+                                        $badgeClass = $qty <= $lvl ? 'badge-danger' : ($qty <= $lvl * 1.5 ? 'badge-warning' : 'badge-success');
+                                    @endphp
+                                    <span class="badge {{ $badgeClass }}" style="min-width:60px; text-align:center; display:inline-block;">
+                                        {{ $qty }} un
+                                    </span>
+                                </td>
+                                <td style="text-align:right; font-family:'Outfit'; font-weight:700; color:var(--text-primary);">
+                                    R$ {{ number_format($product->unit_price, 2, ',', '.') }}
+                                </td>
+                                <td style="text-align:center; color:var(--text-muted); font-weight:600;">
+                                    {{ $product->reorder_level }}
+                                </td>
+                                <td style="text-align:center;">
+                                    <div class="flex" style="justify-content:center; gap:0.5rem;">
+                                        <a href="{{ route('products.edit', $product) }}" class="icon-btn" title="Editar">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </a>
+                                        <form method="POST" action="{{ route('products.destroy', $product) }}" onsubmit="return confirm('Tem certeza que deseja excluir este produto?');">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="icon-btn" style="color:var(--red);" title="Excluir">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- Pagination --}}
+            <div style="padding:1.5rem; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                <div style="font-size:0.875rem; color:var(--text-muted); font-weight:500;">
+                    Exibindo <strong>{{ $products->count() }}</strong> de <strong>{{ $products->total() }}</strong> produtos
+                </div>
+                <div>
+                    {{ $products->links() }}
+                </div>
+            </div>
+        @else
+            <div class="empty-state" style="padding:6rem 2rem;">
+                <div style="width:100px; height:100px; background:var(--bg-hover); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 2rem;">
+                    <i class="fa-solid fa-boxes-stacked" style="font-size:3rem; color:var(--text-muted);"></i>
+                </div>
+                <h3 style="font-family:'Outfit'; font-size:1.5rem; margin-bottom:0.5rem;">Nenhum produto encontrado</h3>
+                <p style="color:var(--text-muted); max-width:400px; margin:0 auto 2rem;">Sua busca não retornou resultados ou o catálogo está vazio. Tente ajustar os filtros ou cadastrar um novo item.</p>
+                <a href="{{ route('products.create') }}" class="btn btn-primary" style="padding:1rem 2rem;">
+                    <i class="fa-solid fa-plus"></i> Cadastrar Primeiro Produto
+                </a>
+            </div>
+        @endif
+    </div>
+
+</div>
+@endsection
+
+@push('scripts')
+<script>
+    function toggleAdvancedFilter() {
+        const panel = document.getElementById('advancedFilterPanel');
+        panel.classList.toggle('hidden');
+        if (!panel.classList.contains('hidden')) {
+            panel.style.animation = 'entrance 0.4s ease-out';
         }
-
-        // Fechar filtro avançado ao pressionar ESC
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                const panel = document.getElementById('advancedFilterPanel');
-                if (panel && !panel.classList.contains('hidden')) {
-                    panel.classList.add('hidden');
-                }
-            }
-        });
-    </script>
-
-</body>
-</html>
+    }
+</script>
+@endpush

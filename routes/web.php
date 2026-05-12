@@ -2,9 +2,10 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ProductController;   // Adicione isso
-use App\Http\Controllers\InventoryController; // Adicione isso
-use App\Http\Controllers\SupplierController;  // Adicione isso
+use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\CustomerController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -17,16 +18,45 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout',    [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard',  [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/admin',      fn() => 'Área Admin')->middleware('role:admin')->name('admin');
-
-    // ADICIONE ESTAS LINHAS ABAIXO:
+    
+    // Product routes
+    // Product & Inventory routes
     Route::resource('products', ProductController::class);
-    // Rota para registrar entrada via modal/JS
-    Route::post('products/{product}/add-inventory', [ProductController::class, 'addInventory'])->name('products.addInventory');
-    // Rota para adicionar nova categoria via AJAX
+    Route::get('/inventory', [ProductController::class, 'inventories'])->name('inventory.index');
+    Route::get('/inventory/create', [ProductController::class, 'createInventory'])->name('inventory.create');
+    Route::post('/inventory', [ProductController::class, 'storeInventory'])->name('inventory.store');
+    
+    // Bulk Inventory from NF-e
+    Route::get('/inventory/bulk-create/{manifestation}', [App\Http\Controllers\ProductController::class, 'bulkCreate'])->name('inventory.bulkCreate');
+    Route::post('/inventory/bulk-store/{manifestation}', [App\Http\Controllers\ProductController::class, 'bulkStore'])->name('inventory.bulkStore');
+    Route::post('/products/{product}/add-inventory', [ProductController::class, 'addInventory'])->name('products.add-inventory');
     Route::post('products/store-category', [ProductController::class, 'storeCategory'])->name('products.store-category');
-    Route::resource('inventory', InventoryController::class);
+    Route::get('locations/search', [ProductController::class, 'searchLocations'])->name('locations.search');
+    
+    
+    // Supplier routes
     Route::resource('suppliers', SupplierController::class);
+    Route::get('/suppliers/list', [SupplierController::class, 'list'])->name('suppliers.list');
+
+    // Customer routes
+    Route::resource('customers', CustomerController::class);
+
+    // Invoices / Faturamento
+    Route::resource('invoices', InvoiceController::class);
+    Route::post('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
+    Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+
+    // Manifestação do Destinatário
+    Route::prefix('manifestations')->name('manifestations.')->group(function () {
+        Route::get('/', [App\Http\Controllers\ManifestationController::class, 'index'])->name('index');
+        Route::get('/generate-xml', [App\Http\Controllers\ManifestationController::class, 'generateXml'])->name('generateXml');
+        Route::post('/upload-xml', [App\Http\Controllers\ManifestationController::class, 'uploadXml'])->name('uploadXml');
+        Route::get('/{manifestation}', [App\Http\Controllers\ManifestationController::class, 'show'])->name('show');
+        Route::post('/{manifestation}/manifest', [App\Http\Controllers\ManifestationController::class, 'manifest'])->name('manifest');
+        Route::get('/{manifestation}/danfe', [App\Http\Controllers\ManifestationController::class, 'danfe'])->name('danfe');
+    });
+
+    Route::get('/admin', fn() => 'Área Admin')->middleware('role:admin')->name('admin');
 });
 
 Route::get('/', fn() => redirect()->route('login'));
