@@ -196,6 +196,12 @@
         <!-- Form Section -->
         <div class="login-form-side anim-entrance" style="animation-delay: 0.2s;">
             
+            <div style="position:absolute; top:2rem; left:2rem;">
+                <a href="{{ route('employees.index') }}" class="btn btn-secondary" style="padding:0.5rem 1rem; font-size:0.8rem;">
+                    <i class="fa-solid fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+
             <div style="position:absolute; top:2rem; right:2rem;">
                 <button class="icon-btn" data-theme-toggle title="Mudar Tema">
                     <i class="fa-solid fa-circle-half-stroke"></i>
@@ -208,6 +214,13 @@
                     <h2>Cadastro de Funcionário</h2>
                     <p>Preencha os dados abaixo para criar um novo  acesso ao sistema.</p>
                 </div>
+
+                @if(session('success'))
+                    <div class="alert badge-success" style="margin-bottom:1.5rem; font-size:0.875rem;">
+                        <i class="fa-solid fa-circle-check"></i>
+                        {{ session('success') }}
+                    </div>
+                @endif
 
                 @if($errors->any())
                     <div class="alert badge-danger" style="margin-bottom:1.5rem; font-size:0.875rem;">

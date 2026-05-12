@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Inventory;
 use App\Models\IncomingInvoice;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\Logger;
 
 class ProductController extends Controller
 {
@@ -271,6 +272,8 @@ class ProductController extends Controller
             ]);
         }
 
+        Logger::log('create_product', "O usuário cadastrou o produto: {$product->name} (#{$product->id})");
+
         return redirect()->route('products.index')
             ->with('success', 'Produto cadastrado com sucesso!');
     }
@@ -356,6 +359,8 @@ class ProductController extends Controller
                 ->update(['is_occupied' => true]);
         }
 
+        Logger::log('update_product', "O usuário alterou o produto: {$product->name} (#{$product->id})");
+
         return redirect()->route('products.show', $product)
             ->with('success', 'Produto atualizado com sucesso!');
     }
@@ -363,7 +368,11 @@ class ProductController extends Controller
     // Deletar produto
     public function destroy(Product $product)
     {
+        $prodName = $product->name;
+        $prodId = $product->id;
         $product->delete();
+
+        Logger::log('delete_product', "O usuário removeu o produto: {$prodName} (#{$prodId})");
 
         return redirect()->route('products.index')
             ->with('success', 'Produto deletado com sucesso!');
@@ -391,6 +400,8 @@ class ProductController extends Controller
 
         // Atualizar quantidade do produto
         $product->increment('quantity', $validated['quantity']);
+
+        Logger::log('inventory_entry', "O usuário registrou entrada de {$validated['quantity']} unidades para o produto: {$product->name} (#{$product->id})");
 
         return redirect()->route('products.show', $product)
             ->with('success', 'Entrada registrada com sucesso! Quantidade atualizada.');

@@ -12,9 +12,11 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('guest')->group(function () {
     Route::get('/login',     [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login',    [AuthController::class, 'login']);
-    Route::get('/register',  [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
 });
+
+// Registration can be accessed by guests OR by authenticated RH/Admin
+Route::get('/register',  [AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthController::class, 'register']);
 
 Route::middleware('auth')->group(function () {
     Route::post('/logout',    [AuthController::class, 'logout'])->name('logout');
@@ -60,6 +62,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/{manifestation}/manifest', [App\Http\Controllers\ManifestationController::class, 'manifest'])->name('manifest');
         Route::get('/{manifestation}/danfe', [App\Http\Controllers\ManifestationController::class, 'danfe'])->name('danfe');
     });
+
+    // Employee management
+    Route::resource('users', App\Http\Controllers\UserController::class)->names('employees');
+
+    // System Logs
+    Route::get('/logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('logs.index');
+
+    // Roles management
+    Route::resource('roles', App\Http\Controllers\RoleController::class)->except(['show', 'create', 'edit']);
 
     Route::get('/admin', fn() => 'Área Admin')->middleware('role:admin')->name('admin');
 });

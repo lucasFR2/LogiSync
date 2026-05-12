@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Helpers\Logger;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
@@ -43,7 +44,8 @@ class CustomerController extends Controller
             'zip_code' => 'nullable|string|max:15',
         ]);
 
-        Customer::create($validated);
+        $customer = Customer::create($validated);
+        Logger::log('create_customer_record', "O usuário cadastrou o cliente: {$customer->name} (#{$customer->id})");
 
         return redirect()->route('customers.index')->with('success', 'Cliente cadastrado com sucesso.');
     }
@@ -76,13 +78,18 @@ class CustomerController extends Controller
         ]);
 
         $customer->update($validated);
+        Logger::log('update_customer_record', "O usuário alterou o cliente: {$customer->name} (#{$customer->id})");
 
         return redirect()->route('customers.index')->with('success', 'Dados do cliente atualizados.');
     }
 
     public function destroy(Customer $customer)
     {
+        $custName = $customer->name;
+        $custId = $customer->id;
         $customer->delete();
+        Logger::log('delete_customer_record', "O usuário removeu o cliente: {$custName} (#{$custId})");
+
         return redirect()->route('customers.index')->with('success', 'Cliente removido com sucesso.');
     }
 }

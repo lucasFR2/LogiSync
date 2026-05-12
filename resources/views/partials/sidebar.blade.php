@@ -1,14 +1,24 @@
 @php
     $currentRoute = request()->route()->getName();
-    $navItems = [
+    $user = auth()->user();
+    
+    $allNavItems = [
         ['route' => 'dashboard',           'icon' => 'fa-chart-pie',               'label' => 'Dashboard'],
-        ['route' => 'products.index',      'icon' => 'fa-cubes',                   'label' => 'Produtos'],
-        ['route' => 'categories.index',    'icon' => 'fa-tags',                    'label' => 'Categorias'],
-        ['route' => 'inventory.index',     'icon' => 'fa-arrow-right-to-bracket',  'label' => 'Entradas'],
-        ['route' => 'manifestations.index','icon' => 'fa-file-invoice',            'label' => 'Manifestação (NF-e)'],
-        ['route' => 'suppliers.index',     'icon' => 'fa-address-book',            'label' => 'Fornecedores'],
-        ['route' => 'customers.index',     'icon' => 'fa-users',                   'label' => 'Clientes'],
+        ['route' => 'products.index',      'icon' => 'fa-cubes',                   'label' => 'Produtos',      'permission' => 'products.view'],
+        ['route' => 'categories.index',    'icon' => 'fa-tags',                    'label' => 'Categorias',    'permission' => 'categories.manage'],
+        ['route' => 'inventory.index',     'icon' => 'fa-arrow-right-to-bracket',  'label' => 'Entradas',      'permission' => 'inventory.view'],
+        ['route' => 'manifestations.index','icon' => 'fa-file-invoice',            'label' => 'Manifestação',  'permission' => 'manifests.manage'],
+        ['route' => 'suppliers.index',     'icon' => 'fa-address-book',            'label' => 'Fornecedores',  'permission' => 'suppliers.manage'],
+        ['route' => 'customers.index',     'icon' => 'fa-users',                   'label' => 'Clientes',      'permission' => 'customers.manage'],
+        ['route' => 'employees.index',     'icon' => 'fa-users-gear',              'label' => 'Gestão de Funcionários', 'permission' => 'users.manage'],
+        ['route' => 'logs.index',          'icon' => 'fa-list-check',              'label' => 'Logs do Sistema',       'permission' => 'logs.view'],
+        ['route' => 'roles.index',         'icon' => 'fa-id-card-clip',            'label' => 'Cargos e Funções',      'permission' => 'roles.manage'],
     ];
+
+    $navItems = array_filter($allNavItems, function($item) use ($user) {
+        if (!isset($item['permission'])) return true;
+        return $user->hasPermission($item['permission']);
+    });
 @endphp
 
 <aside class="sidebar" id="sidebar">

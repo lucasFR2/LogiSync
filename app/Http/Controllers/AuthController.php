@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
+use App\Helpers\Logger;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -42,6 +43,8 @@ class AuthController extends Controller
         if (!Auth::attempt($credentials, $request->boolean('remember'))) {
             return back()->withErrors(['email' => 'Credenciais inválidas.']);
         }
+
+        Logger::log('login', 'O usuário realizou login no sistema.');
 
         return redirect()->route('dashboard');
     }
@@ -101,13 +104,20 @@ class AuthController extends Controller
             'document_path'=> json_encode($documentPaths),
         ]);
 
+        if (Auth::check()) {
+            Logger::log('register_user', "O usuário cadastrou um novo funcionário: {$user->name} ({$user->role})");
+            return back()->with('success', 'Funcionário cadastrado com sucesso!');
+        }
+
         Auth::login($user);
+        Logger::log('self_register', 'O usuário realizou seu próprio cadastro e login.');
 
         return redirect()->route('dashboard');
     }
 
     public function logout(Request $request)
     {
+        Logger::log('logout', 'O usuário saiu do sistema.');
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

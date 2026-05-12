@@ -17,6 +17,7 @@ class RoleSeeder extends Seeder
             ['name' => 'Conferente', 'description' => 'Conferência de entrada e saída'],
             ['name' => 'Auxiliar de Almoxarifado', 'description' => 'Suporte operacional'],
             ['name' => 'Separador (Picker)', 'description' => 'Separação de pedidos'],
+            ['name' => 'Recursos Humanos (RH)', 'description' => 'Gestão de pessoal e cadastro de funcionários'],
             ['name' => 'Motorista', 'description' => 'Transporte e entrega'],
         ];
 
