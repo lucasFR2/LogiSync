@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,7 +28,8 @@ class AuthController extends Controller
 
     public function showRegister()
     {
-        return view('auth.register');
+        $roles = Role::orderBy('name')->get();
+        return view('auth.register', compact('roles'));
     }
 
     public function login(Request $request)
@@ -53,11 +55,19 @@ class AuthController extends Controller
         }
 
         $data = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users',
-            'role'     => 'required|string|max:255',
-            'cpf'      => ['required', 'string', 'regex:/^\d{3}\.\d{3}\.\d{3}-\d{2}$/', 'unique:users,cpf'],
-            'password' => 'required|min:8|confirmed',
+            'name'         => 'required|string|max:255',
+            'email'        => 'required|email|unique:users',
+            'role'         => 'required|string|max:255',
+            'cpf'          => ['required', 'string', 'regex:/^\d{3}\.\d{3}\.\d{3}-\d{2}$/', 'unique:users,cpf'],
+            'password'     => 'required|min:8|confirmed',
+            'phone'        => 'nullable|string|max:20',
+            'zip_code'     => 'nullable|string|max:10',
+            'address'      => 'nullable|string|max:255',
+            'number'       => 'nullable|string|max:20',
+            'neighborhood' => 'nullable|string|max:100',
+            'city'         => 'nullable|string|max:100',
+            'state'        => 'nullable|string|max:2',
+            'document'     => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
         $cpfDigits = preg_replace('/\D/', '', (string) $data['cpf']) ?? '';
@@ -65,12 +75,25 @@ class AuthController extends Controller
             return back()->withErrors(['cpf' => 'CPF inválido.'])->withInput();
         }
 
+        $documentPath = null;
+        if ($request->hasFile('document')) {
+            $documentPath = $request->file('document')->store('documents/users', 'public');
+        }
+
         $user = User::create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
-            'password' => Hash::make($data['password']),
-            'role'     => $data['role'],
-            'cpf'      => $this->formatCpf($cpfDigits),
+            'name'         => $data['name'],
+            'email'        => $data['email'],
+            'password'     => Hash::make($data['password']),
+            'role'         => $data['role'],
+            'cpf'          => $this->formatCpf($cpfDigits),
+            'phone'        => $data['phone'] ?? null,
+            'zip_code'     => $data['zip_code'] ?? null,
+            'address'      => $data['address'] ?? null,
+            'number'       => $data['number'] ?? null,
+            'neighborhood' => $data['neighborhood'] ?? null,
+            'city'         => $data['city'] ?? null,
+            'state'        => $data['state'] ?? null,
+            'document_path'=> $documentPath,
         ]);
 
         Auth::login($user);
