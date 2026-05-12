@@ -45,9 +45,6 @@ class Product extends Model
     ];
 
     /**
-<<<<<<< Updated upstream
-     * Relationship: Um produto tem muitas entradas/movimentações de estoque
-=======
      * Relação: produto pertence a uma localização no armazém
      */
     public function location(): BelongsTo
@@ -56,8 +53,7 @@ class Product extends Model
     }
 
     /**
-     * Relação: produto possui muitas entradas (inventories)
->>>>>>> Stashed changes
+     * Relationship: Um produto tem muitas entradas/movimentações de estoque
      */
     public function inventories(): HasMany
     {

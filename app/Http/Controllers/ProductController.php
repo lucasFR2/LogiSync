@@ -9,20 +9,117 @@ use App\Models\Inventory;
 class ProductController extends Controller
 {
     // Listar todos os produtos
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::paginate(15);
-        return view('products.index', compact('products'));
+        $search = $request->query('search');
+        $filterBy = $request->query('filter', 'all');
+        $status = $request->query('status_filter');
+        $priceMin = $request->query('price_min');
+        $priceMax = $request->query('price_max');
+        $stockFilter = $request->query('stock_filter');
+
+        $query = Product::query();
+
+        // Basic Search
+        if ($search) {
+            if ($filterBy === 'all') {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('barcode', 'like', "%{$search}%")
+                      ->orWhere('category', 'like', "%{$search}%");
+                });
+            } else {
+                $query->where($filterBy, 'like', "%{$search}%");
+            }
+        }
+
+        // Status Filter
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        // Price Range
+        if ($priceMin !== null && $priceMin !== '') {
+            $query->where('unit_price', '>=', $priceMin);
+        }
+        if ($priceMax !== null && $priceMax !== '') {
+            $query->where('unit_price', '<=', $priceMax);
+        }
+
+        // Stock Filter
+        if ($stockFilter) {
+            if ($stockFilter === 'low') {
+                // quantity <= reorder_level
+                $query->whereColumn('quantity', '<=', 'reorder_level');
+            } elseif ($stockFilter === 'medium') {
+                // reorder_level < quantity <= max_stock
+                $query->whereColumn('quantity', '>', 'reorder_level')
+                      ->whereColumn('quantity', '<=', 'max_stock');
+            } elseif ($stockFilter === 'high') {
+                // quantity > max_stock
+                $query->whereColumn('quantity', '>', 'max_stock');
+            }
+        }
+
+        // Preserve all query parameters for pagination
+        $products = $query->paginate(15)->withQueryString();
+
+        return view('products.index', compact('products', 'search', 'filterBy', 'status', 'priceMin', 'priceMax', 'stockFilter'));
     }
     
 
     public function inventories()
     {
-        $inventories = Inventory::with('product')
+        $inventories = Inventory::with(['product.supplier', 'supplier'])
             ->latest()
-            ->paginate(10);
+            ->paginate(15);
 
-        return view('inventory.index', compact('inventories'));
+        $totalEntries   = Inventory::count();
+        $monthEntries   = Inventory::where('created_at', '>=', now()->startOfMonth())->count();
+        $todayEntries   = Inventory::where('created_at', '>=', now()->startOfDay())->count();
+        $activeSKUs     = Inventory::distinct('product_id')->count('product_id');
+
+        return view('inventory.index', compact('inventories', 'totalEntries', 'monthEntries', 'todayEntries', 'activeSKUs'));
+    }
+
+    public function createInventory()
+    {
+        $products  = Product::with('supplier')->orderBy('name')->get();
+        $suppliers = Supplier::orderBy('name')->get();
+        return view('inventory.create', compact('products', 'suppliers'));
+    }
+
+    public function storeInventory(Request $request)
+    {
+        $validated = $request->validate([
+            'product_id'  => 'required|exists:products,id',
+            'quantity'    => 'required|integer|min:1',
+            'notes'       => 'nullable|string|max:500',
+            'entry_date'  => 'nullable|date',
+            'lot_number'  => 'nullable|string|max:100',
+            'expiry_date' => 'nullable|date',
+            'supplier_id' => 'nullable|exists:suppliers,id',
+        ]);
+
+        $product = Product::findOrFail($validated['product_id']);
+
+        Inventory::create([
+            'product_id'  => $product->id,
+            'quantity'    => $validated['quantity'],
+            'notes'       => $validated['notes'],
+            'entry_date'  => $validated['entry_date'] ?? now(),
+            'lot_number'  => $validated['lot_number'] ?? null,
+            'expiry_date' => $validated['expiry_date'] ?? null,
+            'supplier_id' => $validated['supplier_id'] ?? null,
+            'user_id'     => auth()->id(),
+            'type'        => 'entrada',
+            'status'      => 'confirmada',
+        ]);
+
+        $product->increment('quantity', $validated['quantity']);
+
+        return redirect()->route('inventory.index')
+            ->with('success', 'Entrada de estoque registrada com sucesso!');
     }
 
     // Mostrar formulário de criação
@@ -66,8 +163,25 @@ class ProductController extends Controller
             'supplier_id.exists' => 'Fornecedor inválido',
         ]);
 
+        // Verificar conflito de localização exclusiva
+        if (!empty($validated['warehouse_location_id'])) {
+            $location = \App\Models\WarehouseLocation::find($validated['warehouse_location_id']);
+            if ($location && $location->is_occupied) {
+                $occupant = Product::where('warehouse_location_id', $location->id)->first();
+                return back()->withErrors([
+                    'warehouse_location_id' => 'Esta posição (' . $location->full_code . ') já está ocupada pelo produto "' . ($occupant->name ?? '?') . '". Não é permitido dois produtos no mesmo endereço.',
+                ])->withInput();
+            }
+        }
+
         // Criar o produto
         $product = Product::create($validated);
+
+        // Marcar localização como ocupada
+        if ($product->warehouse_location_id) {
+            \App\Models\WarehouseLocation::where('id', $product->warehouse_location_id)
+                ->update(['is_occupied' => true]);
+        }
 
         // Registrar entrada inicial de estoque se quantidade > 0
         if ($validated['quantity'] > 0) {
@@ -131,20 +245,36 @@ class ProductController extends Controller
             'supplier_id.exists' => 'Fornecedor inválido',
         ]);
 
-        // Atualizar o produto
-        $product->update($validated);
+        // Verificar conflito de localização exclusiva
+        $newLocId = $validated['warehouse_location_id'] ?? null;
+        $oldLocId = $product->warehouse_location_id;
 
-        function store(Request $request)
-        {
-            $request->validate([
-                'max_stock' => 'required|integer|min:1',
-            ], [
-                'max_stock.min' => 'Mensagem',
-            ]);
+        if ($newLocId && $newLocId != $oldLocId) {
+            $location = \App\Models\WarehouseLocation::find($newLocId);
+            if ($location && $location->is_occupied) {
+                $occupant = Product::where('warehouse_location_id', $location->id)->where('id', '!=', $product->id)->first();
+                if ($occupant) {
+                    return back()->withErrors([
+                        'warehouse_location_id' => 'Esta posição (' . $location->full_code . ') já está ocupada pelo produto "' . $occupant->name . '". Não é permitido dois produtos no mesmo endereço.',
+                    ])->withInput();
+                }
+            }
+        }
+
+        // Liberar localização antiga
+        if ($oldLocId && $oldLocId != $newLocId) {
+            \App\Models\WarehouseLocation::where('id', $oldLocId)
+                ->update(['is_occupied' => false]);
         }
 
         // Atualizar o produto
         $product->update($validated);
+
+        // Marcar nova localização como ocupada
+        if ($newLocId && $newLocId != $oldLocId) {
+            \App\Models\WarehouseLocation::where('id', $newLocId)
+                ->update(['is_occupied' => true]);
+        }
 
         return redirect()->route('products.show', $product)
             ->with('success', 'Produto atualizado com sucesso!');
@@ -185,9 +315,6 @@ class ProductController extends Controller
         return redirect()->route('products.show', $product)
             ->with('success', 'Entrada registrada com sucesso! Quantidade atualizada.');
     }
-<<<<<<< Updated upstream
-=======
-
     // Adicionar nova categoria (via AJAX)
     public function storeCategory(Request $request)
     {
@@ -202,7 +329,7 @@ class ProductController extends Controller
         ]);
 
         // Salvar categoria no banco de dados
-        $category = Category::create($validated);
+        $category = \App\Models\Category::create($validated);
 
         return response()->json([
             'success' => true,
@@ -213,22 +340,41 @@ class ProductController extends Controller
         ]);
     }
 
-    // Buscar localizações (AJAX)
+    // Buscar localizações (AJAX) — returns occupied status + occupant
     public function searchLocations(Request $request)
     {
-        $search = $request->query('q', '');
-        
-        $query = \App\Models\WarehouseLocation::query();
+        $search   = $request->query('q', '');
+        $aisle    = $request->query('aisle', '');
+        $freeOnly = $request->query('free_only', '0');
+
+        $query = \App\Models\WarehouseLocation::with('products:id,name,warehouse_location_id');
 
         if (!empty($search)) {
             $query->where('full_code', 'like', "%{$search}%");
         }
+        if (!empty($aisle)) {
+            $query->where('aisle', $aisle);
+        }
+        if ($freeOnly === '1') {
+            $query->where('is_occupied', false);
+        }
 
-        $locations = $query->where('is_occupied', false)
-            ->limit(20)
-            ->get(['id', 'full_code', 'aisle', 'column', 'level']);
+        $locations = $query->orderBy('full_code')
+            ->limit(50)
+            ->get()
+            ->map(function ($loc) {
+                $occupant = $loc->products->first();
+                return [
+                    'id'            => $loc->id,
+                    'full_code'     => $loc->full_code,
+                    'aisle'         => $loc->aisle,
+                    'column'        => $loc->column,
+                    'level'         => $loc->level,
+                    'is_occupied'   => $loc->is_occupied,
+                    'occupant_name' => $occupant?->name,
+                ];
+            });
 
         return response()->json($locations);
     }
->>>>>>> Stashed changes
 }

@@ -15,6 +15,7 @@ class Inventory extends Model
         'notes',
         'status',
         'user_id',
+        'supplier_id',
         'entry_date',
         'lot_number',
         'expiry_date',
@@ -42,6 +43,14 @@ class Inventory extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Relationship: Uma entrada pode ter um fornecedor associado
+     */
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
     }
 
     /**

@@ -9,24 +9,18 @@ class Supplier extends Model
 {
     protected $fillable = [
         'name',
-<<<<<<< Updated upstream
-        'contact',
-        'phone',
-        'address',
-        'email',
-=======
         'cnpj',
         'state_registration',
         'email',
         'phone',
+        'contact',
         'street',
         'number',
         'neighborhood',
-        'zip_code',
->>>>>>> Stashed changes
         'city',
         'state',
-        'cnpj',
+        'zip_code',
+        'address',
     ];
 
     /**

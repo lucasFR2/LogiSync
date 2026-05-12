@@ -17,7 +17,7 @@ class CustomerController extends Controller
             $query->where('name', 'like', "%{$search}%")
                   ->orWhere('document', 'like', "%{$search}%");
         }
-        $customers = $query->orderBy('name')->paginate(15);
+        $customers = $query->orderBy('name')->paginate(15)->withQueryString();
         return view('customers.index', compact('customers'));
     }
 

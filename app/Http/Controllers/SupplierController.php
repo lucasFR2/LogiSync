@@ -8,10 +8,20 @@ use Illuminate\Http\Request;
 class SupplierController extends Controller
 {
     // Listar todos os fornecedores
-    public function index()
+    public function index(Request $request)
     {
-        $suppliers = Supplier::paginate(15);
-        return view('suppliers.index', compact('suppliers'));
+        $search = $request->query('search');
+
+        $query = Supplier::query();
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('cnpj', 'like', "%{$search}%");
+        }
+
+        $suppliers = $query->paginate(15)->appends(['search' => $search]);
+
+        return view('suppliers.index', compact('suppliers', 'search'));
     }
 
     // Mostrar formulário de criação
@@ -25,23 +35,16 @@ class SupplierController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-<<<<<<< Updated upstream
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:255',
-=======
-            'cnpj' => 'nullable|string|max:30|unique:suppliers,cnpj',
-            'state_registration' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:30',
             'street' => 'nullable|string|max:255',
             'number' => 'nullable|string|max:20',
             'neighborhood' => 'nullable|string|max:255',
             'zip_code' => 'nullable|string|max:20',
->>>>>>> Stashed changes
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:2',
-            'cnpj' => 'nullable|string|unique:suppliers,cnpj',
+            'cnpj' => 'nullable|string|max:30|unique:suppliers,cnpj',
+            'state_registration' => 'nullable|string|max:30',
         ]);
 
         $supplier = Supplier::create($validated);
@@ -76,23 +79,16 @@ class SupplierController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-<<<<<<< Updated upstream
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:255',
-=======
-            'cnpj' => 'nullable|string|max:30',
-            'state_registration' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:30',
             'street' => 'nullable|string|max:255',
             'number' => 'nullable|string|max:20',
             'neighborhood' => 'nullable|string|max:255',
             'zip_code' => 'nullable|string|max:20',
->>>>>>> Stashed changes
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:2',
-            'cnpj' => 'nullable|string|unique:suppliers,cnpj,' . $supplier->id,
+            'cnpj' => 'nullable|string|max:30|unique:suppliers,cnpj,' . $supplier->id,
+            'state_registration' => 'nullable|string|max:30',
         ]);
 
         $supplier->update($validated);
