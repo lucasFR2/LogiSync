@@ -206,7 +206,7 @@
                 <div class="login-header">
                     <div style="width:48px; height:48px; background:var(--accent); color:var(--accent-fg); border-radius:14px; display:flex; align-items:center; justify-content:center; font-weight:800; font-family:'Outfit'; font-size:1.5rem; margin-bottom:1.5rem;">LS</div>
                     <h2>Cadastro de Funcionário</h2>
-                    <p>Preencha os dados abaixo para criar seu acesso ao sistema.</p>
+                    <p>Preencha os dados abaixo para criar um novo  acesso ao sistema.</p>
                 </div>
 
                 @if($errors->any())
@@ -230,7 +230,7 @@
                     <div class="grid grid-2">
                         <div class="form-group" style="grid-column: 1/-1;">
                             <label class="form-label">Nome Completo <span style="color:var(--red);">*</span></label>
-                            <input type="text" name="name" value="{{ old('name') }}" required class="form-input" placeholder="Seu nome completo">
+                            <input type="text" name="name" value="{{ old('name') }}" required class="form-input" placeholder="Nome completo do funcionário">
                         </div>
 
                         <div class="form-group">
@@ -250,14 +250,19 @@
                             <input type="text" name="cpf" id="cpf" value="{{ old('cpf') }}" required class="form-input" placeholder="000.000.000-00" maxlength="14">
                         </div>
 
+                        <div class="form-group">
+                            <label class="form-label">RG <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="rg" id="rg" value="{{ old('rg') }}" required class="form-input" placeholder="00.000.000-0" maxlength="12">
+                        </div>
+
                         <div class="form-group" style="grid-column: 1/-1;">
                             <label class="form-label">E-mail Corporativo <span style="color:var(--red);">*</span></label>
-                            <input type="email" name="email" value="{{ old('email') }}" required class="form-input" placeholder="seu@email.com">
+                            <input type="email" name="email" value="{{ old('email') }}" required class="form-input" placeholder="email@logisync.com">
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Telefone / Celular</label>
-                            <input type="tel" name="phone" id="phone" value="{{ old('phone') }}" class="form-input" placeholder="(00) 00000-0000">
+                            <label class="form-label">Telefone / Celular <span style="color:var(--red);">*</span></label>
+                            <input type="tel" name="phone" id="phone" value="{{ old('phone') }}" required class="form-input" placeholder="(00) 00000-0000">
                         </div>
                     </div>
 
@@ -267,33 +272,33 @@
 
                     <div class="grid grid-2">
                         <div class="form-group">
-                            <label class="form-label">CEP</label>
-                            <input type="text" name="zip_code" id="zip_code" value="{{ old('zip_code') }}" class="form-input" placeholder="00000-000" maxlength="9">
+                            <label class="form-label">CEP <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="zip_code" id="zip_code" value="{{ old('zip_code') }}" required class="form-input" placeholder="00000-000" maxlength="9">
                         </div>
 
                         <div class="form-group" style="grid-column: 1/-1;">
-                            <label class="form-label">Logradouro</label>
-                            <input type="text" name="address" value="{{ old('address') }}" class="form-input" placeholder="Rua, Avenida, etc.">
+                            <label class="form-label">Logradouro <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="address" value="{{ old('address') }}" required class="form-input" placeholder="Rua, Avenida, etc.">
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Número</label>
-                            <input type="text" name="number" value="{{ old('number') }}" class="form-input" placeholder="123">
+                            <label class="form-label">Número <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="number" value="{{ old('number') }}" required class="form-input" placeholder="123">
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Bairro</label>
-                            <input type="text" name="neighborhood" value="{{ old('neighborhood') }}" class="form-input" placeholder="Ex: Centro">
+                            <label class="form-label">Bairro <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="neighborhood" value="{{ old('neighborhood') }}" required class="form-input" placeholder="Ex: Centro">
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Cidade</label>
-                            <input type="text" name="city" value="{{ old('city') }}" class="form-input" placeholder="Cidade">
+                            <label class="form-label">Cidade <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="city" value="{{ old('city') }}" required class="form-input" placeholder="Cidade">
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Estado (UF)</label>
-                            <input type="text" name="state" value="{{ old('state') }}" class="form-input" placeholder="SP" maxlength="2">
+                            <label class="form-label">Estado (UF) <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="state" value="{{ old('state') }}" required class="form-input" placeholder="SP" maxlength="2">
                         </div>
                     </div>
 
@@ -301,14 +306,14 @@
                         <i class="fa-solid fa-file-pdf"></i> Documentação
                     </div>
                     
-                    <div class="form-group">
-                        <label class="form-label">Anexar Documentos (PDF, Imagem)</label>
+                    <div class="form-group" style="grid-column: 1/-1;">
+                        <label class="form-label">Anexar Documentos (PDF, Imagem) <span style="color:var(--red);">*</span></label>
                         <div style="position:relative; background:var(--bg-base); border:2px dashed var(--border); border-radius:var(--r-md); padding:1.5rem; text-align:center; transition:all 0.3s;" id="drop-zone">
                             <i class="fa-solid fa-cloud-arrow-up" style="font-size:2rem; color:var(--text-muted); margin-bottom:1rem;"></i>
                             <div style="font-size:0.875rem; color:var(--text-secondary);">
                                 Clique para selecionar ou arraste o arquivo aqui
                             </div>
-                            <input type="file" name="document" class="form-input" style="position:absolute; inset:0; opacity:0; cursor:pointer;" onchange="updateFileName(this)">
+                            <input type="file" name="documents[]" class="form-input" style="position:absolute; inset:0; opacity:0; cursor:pointer;" onchange="updateFileName(this)" multiple>
                             <div id="file-name" style="margin-top:0.5rem; font-size:0.8rem; font-weight:700; color:var(--accent);"></div>
                         </div>
                     </div>
@@ -336,7 +341,6 @@
                 </form>
 
                 <div class="auth-footer">
-                    <br>
                     &copy; {{ date('Y') }} LogiSync Global.
                 </div>
             </div>
@@ -348,7 +352,8 @@
             const fileNameDisplay = document.getElementById('file-name');
             const dropZone = document.getElementById('drop-zone');
             if (input.files && input.files.length > 0) {
-                fileNameDisplay.textContent = 'Arquivo selecionado: ' + input.files[0].name;
+                const names = Array.from(input.files).map(f => f.name).join(' | ');
+                fileNameDisplay.textContent = input.files.length + ' arquivo(s) selecionado(s): ' + names;
                 dropZone.style.borderColor = 'var(--accent)';
                 dropZone.style.background = 'var(--accent-subtle)';
             } else {
@@ -365,6 +370,15 @@
             if (v.length > 9) v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
             else if (v.length > 6) v = v.replace(/^(\d{3})(\d{3})(\d{0,3})$/, "$1.$2.$3");
             else if (v.length > 3) v = v.replace(/^(\d{3})(\d{0,3})$/, "$1.$2");
+            e.target.value = v;
+        });
+
+        document.getElementById('rg').addEventListener('input', function (e) {
+            let v = e.target.value.replace(/\D/g, '');
+            if (v.length > 9) v = v.slice(0, 9);
+            if (v.length > 8) v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{1})$/, "$1.$2.$3-$4");
+            else if (v.length > 5) v = v.replace(/^(\d{2})(\d{3})(\d{0,3})$/, "$1.$2.$3");
+            else if (v.length > 2) v = v.replace(/^(\d{2})(\d{0,3})$/, "$1.$2");
             e.target.value = v;
         });
 

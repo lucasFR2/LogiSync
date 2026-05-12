@@ -65,9 +65,11 @@ class AuthController extends Controller
             'address'      => 'nullable|string|max:255',
             'number'       => 'nullable|string|max:20',
             'neighborhood' => 'nullable|string|max:100',
-            'city'         => 'nullable|string|max:100',
-            'state'        => 'nullable|string|max:2',
-            'document'     => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'city'         => 'required|string|max:100',
+            'state'        => 'required|string|max:2',
+            'documents'    => 'required|array',
+            'documents.*'  => 'file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'rg'           => 'required|string|max:20',
         ]);
 
         $cpfDigits = preg_replace('/\D/', '', (string) $data['cpf']) ?? '';
@@ -75,9 +77,11 @@ class AuthController extends Controller
             return back()->withErrors(['cpf' => 'CPF inválido.'])->withInput();
         }
 
-        $documentPath = null;
-        if ($request->hasFile('document')) {
-            $documentPath = $request->file('document')->store('documents/users', 'public');
+        $documentPaths = [];
+        if ($request->hasFile('documents')) {
+            foreach ($request->file('documents') as $file) {
+                $documentPaths[] = $file->store('documents/users', 'public');
+            }
         }
 
         $user = User::create([
@@ -86,14 +90,15 @@ class AuthController extends Controller
             'password'     => Hash::make($data['password']),
             'role'         => $data['role'],
             'cpf'          => $this->formatCpf($cpfDigits),
-            'phone'        => $data['phone'] ?? null,
-            'zip_code'     => $data['zip_code'] ?? null,
-            'address'      => $data['address'] ?? null,
-            'number'       => $data['number'] ?? null,
-            'neighborhood' => $data['neighborhood'] ?? null,
-            'city'         => $data['city'] ?? null,
-            'state'        => $data['state'] ?? null,
-            'document_path'=> $documentPath,
+            'rg'           => $data['rg'],
+            'phone'        => $data['phone'],
+            'zip_code'     => $data['zip_code'],
+            'address'      => $data['address'],
+            'number'       => $data['number'],
+            'neighborhood' => $data['neighborhood'],
+            'city'         => $data['city'],
+            'state'        => $data['state'],
+            'document_path'=> json_encode($documentPaths),
         ]);
 
         Auth::login($user);
