@@ -13,14 +13,25 @@ class User extends Authenticatable
     ];
     protected $hidden = ['password', 'remember_token'];
 
+    private function normalizeRole(?string $role): string
+    {
+        $role = trim(mb_strtolower($role ?? ''));
+
+        return match ($role) {
+            'administrador', 'admin' => 'admin',
+            'recursos humanos (rh)', 'recursos humanos', 'rh' => 'rh',
+            default => $role,
+        };
+    }
+
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->hasRole('admin');
     }
 
     public function hasRole(string $role): bool
     {
-        return $this->role === $role;
+        return $this->normalizeRole($this->role) === $this->normalizeRole($role);
     }
 
     public function permissions()
@@ -28,12 +39,19 @@ class User extends Authenticatable
         return $this->belongsToMany(Permission::class);
     }
 
+    protected $permissionsCache = null;
+
     public function hasPermission(string $permission): bool
     {
         // Admin has all permissions
-        if ($this->role === 'Administrador') {
+        if ($this->hasRole('admin')) {
             return true;
         }
-        return $this->permissions()->where('name', $permission)->exists();
+
+        if ($this->permissionsCache === null) {
+            $this->permissionsCache = $this->permissions()->pluck('name')->toArray();
+        }
+
+        return in_array($permission, $this->permissionsCache);
     }
 }

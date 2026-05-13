@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            //
+            // No-op: migração efetiva para supplier_id está em
+            // 2026_05_06_000001_add_supplier_id_to_products_table.php e/ou no create_products_table.
         });
     }
 
@@ -22,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            //
+            // No-op
         });
     }
 };

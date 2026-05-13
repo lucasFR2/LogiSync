@@ -58,7 +58,7 @@
                                 <td style="padding: 1.25rem 1.5rem; text-align:right;">
                                     <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
                                         <button class="icon-btn" style="background:var(--bg-base); border:1px solid var(--border);" title="Editar" 
-                                                onclick="editRole({{ $role->id }}, '{{ $role->name }}', '{{ $role->description }}', {{ json_encode($role->permissions->pluck('id')) }})">
+                                                onclick="editRole({{ $role->id }}, @json($role->name), @json($role->description ?? ''), @json($role->permissions->pluck('id')))">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
                                         @if($role->name !== 'Administrador')

@@ -11,10 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('inventory', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+        // No-op: a tabela correta é `inventories`, criada em
+        // 2026_05_06_000000_create_inventories_table.php.
+        // Mantida por histórico do repositório para não quebrar ambientes.
     }
 
     /**
@@ -22,6 +21,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('inventory');
+        // No-op
     }
 };

@@ -29,7 +29,11 @@ class AuthController extends Controller
 
     public function showRegister()
     {
-        $roles = Role::orderBy('name')->get();
+        $roles = \Illuminate\Support\Facades\Cache::remember('roles_list', 300, function () {
+            return Role::select('id', 'name', 'description')
+                ->orderBy('name')
+                ->get();
+        });
         return view('auth.register', compact('roles'));
     }
 
@@ -60,7 +64,7 @@ class AuthController extends Controller
         $data = $request->validate([
             'name'         => 'required|string|max:255',
             'email'        => 'required|email|unique:users',
-            'role'         => 'required|string|max:255',
+            'role'         => 'required|string|max:255|exists:roles,name',
             'cpf'          => ['required', 'string', 'regex:/^\d{3}\.\d{3}\.\d{3}-\d{2}$/', 'unique:users,cpf'],
             'password'     => 'required|min:8|confirmed',
             'phone'        => 'nullable|string|max:20',

@@ -61,7 +61,7 @@
                                     @if($emp->document_path)
                                         @php $docs = json_decode($emp->document_path, true) ?? []; @endphp
                                         <button class="icon-btn" title="Ver Documentos" style="color:var(--blue); background: var(--bg-base); border: 1px solid var(--border);" 
-                                                onclick="showDocModal({{ $emp->id }}, '{{ $emp->name }}', {{ json_encode($docs) }})">
+                                                onclick="showDocModal({{ $emp->id }}, @json($emp->name), @json($docs))">
                                             <i class="fa-solid fa-file-invoice"></i>
                                         </button>
                                     @endif

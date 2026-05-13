@@ -36,7 +36,11 @@ return new class extends Migration
         Schema::table('products', function (Blueprint $table) {
             // Remover coluna supplier_id
             if (Schema::hasColumn('products', 'supplier_id')) {
-                $table->dropForeignKeyIfExists(['supplier_id']);
+                try {
+                    $table->dropForeign(['supplier_id']);
+                } catch (\Throwable $e) {
+                    // Silently skip if FK doesn't exist
+                }
                 $table->dropColumn('supplier_id');
             }
 

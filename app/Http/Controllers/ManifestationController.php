@@ -83,7 +83,9 @@ class ManifestationController extends Controller
 
         try {
             $xmlString = file_get_contents($request->file('xml_file')->getRealPath());
-            $xml = simplexml_load_string($xmlString);
+            libxml_use_internal_errors(true);
+            $xml = simplexml_load_string($xmlString, 'SimpleXMLElement', LIBXML_NONET);
+            libxml_clear_errors();
 
             if ($xml === false) {
                 return redirect()->back()->with('error', 'Arquivo XML inválido.');
@@ -155,7 +157,7 @@ class ManifestationController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Erro ao processar XML: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erro ao processar XML.');
         }
     }
 

@@ -14,7 +14,9 @@ class UserController extends Controller
 {
     public function index()
     {
-        $employees = User::orderBy('name')->get();
+        $employees = User::select('id', 'name', 'role', 'email', 'cpf', 'document_path')
+            ->orderBy('name')
+            ->get();
         return view('users.index', compact('employees'));
     }
 
@@ -25,8 +27,19 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $roles = Role::orderBy('name')->get();
-        $permissions = Permission::orderBy('group')->get()->groupBy('group');
+        $roles = \Illuminate\Support\Facades\Cache::remember('roles_list', 300, function () {
+            return Role::select('id', 'name', 'description')
+                ->orderBy('name')
+                ->get();
+        });
+
+        $permissions = \Illuminate\Support\Facades\Cache::remember('permissions_by_group', 300, function () {
+            return Permission::select('id', 'name', 'label', 'group')
+                ->orderBy('group')
+                ->orderBy('label')
+                ->get()
+                ->groupBy('group');
+        });
         $userPermissions = $user->permissions->pluck('id')->toArray();
         
         return view('users.edit', compact('user', 'roles', 'permissions', 'userPermissions'));
@@ -37,7 +50,7 @@ class UserController extends Controller
         $data = $request->validate([
             'name'         => 'required|string|max:255',
             'email'        => 'required|email|unique:users,email,' . $user->id,
-            'role'         => 'required|string|max:255',
+            'role'         => 'required|string|max:255|exists:roles,name',
             'cpf'          => 'required|string|max:14|unique:users,cpf,' . $user->id,
             'rg'           => 'required|string|max:12',
             'phone'        => 'required|string|max:20',

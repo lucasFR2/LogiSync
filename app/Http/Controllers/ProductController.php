@@ -9,36 +9,70 @@ use App\Models\Inventory;
 use App\Models\IncomingInvoice;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\Logger;
+use Illuminate\Validation\ValidationException;
 
-    protected $productService;
-
-    public function __construct(\App\Services\ProductService $productService)
-    {
-        $this->productService = $productService;
-    }
-
+class ProductController extends Controller
+{
     // Listar todos os produtos
     public function index(Request $request)
     {
-        $products = Product::query()
-            ->when($request->search, function($query, $search) use ($request) {
-                $filterBy = $request->query('filter', 'all');
-                if ($filterBy === 'all') {
-                    $query->where(fn($q) => $q->where('name', 'like', "%$search%")->orWhere('barcode', 'like', "%$search%")->orWhere('category', 'like', "%$search%"));
-                } else {
-                    $query->where($filterBy, 'like', "%$search%");
-                }
-            })
-            ->when($request->status_filter, fn($q, $v) => $q->where('status', $v))
-            ->when($request->price_min, fn($q, $v) => $q->where('unit_price', '>=', $v))
-            ->when($request->price_max, fn($q, $v) => $q->where('unit_price', '<=', $v))
-            ->when($request->stock_filter, function($query, $stockFilter) {
-                if ($stockFilter === 'low') $query->whereColumn('quantity', '<=', 'reorder_level');
-                elseif ($stockFilter === 'medium') $query->whereColumn('quantity', '>', 'reorder_level')->whereColumn('quantity', '<=', 'max_stock');
-                elseif ($stockFilter === 'high') $query->whereColumn('quantity', '>', 'max_stock');
-            })
-            ->paginate(15)
-            ->withQueryString();
+        $search = $request->query('search');
+        $filterBy = $request->query('filter', 'all');
+        $status = $request->query('status_filter');
+        $priceMin = $request->query('price_min');
+        $priceMax = $request->query('price_max');
+        $stockFilter = $request->query('stock_filter');
+
+        $query = Product::query();
+
+        $allowedFilterColumns = ['all', 'name', 'barcode', 'category'];
+        if (!in_array($filterBy, $allowedFilterColumns, true)) {
+            $filterBy = 'all';
+        }
+
+        // Basic Search
+        if ($search) {
+            if ($filterBy === 'all') {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('barcode', 'like', "%{$search}%")
+                      ->orWhere('category', 'like', "%{$search}%");
+                });
+            } else {
+                $query->where($filterBy, 'like', "%{$search}%");
+            }
+        }
+
+        // Status Filter
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        // Price Range
+        if ($priceMin !== null && $priceMin !== '') {
+            $query->where('unit_price', '>=', $priceMin);
+        }
+        if ($priceMax !== null && $priceMax !== '') {
+            $query->where('unit_price', '<=', $priceMax);
+        }
+
+        // Stock Filter
+        if ($stockFilter) {
+            if ($stockFilter === 'low') {
+                // quantity <= reorder_level
+                $query->whereColumn('quantity', '<=', 'reorder_level');
+            } elseif ($stockFilter === 'medium') {
+                // reorder_level < quantity <= max_stock
+                $query->whereColumn('quantity', '>', 'reorder_level')
+                      ->whereColumn('quantity', '<=', 'max_stock');
+            } elseif ($stockFilter === 'high') {
+                // quantity > max_stock
+                $query->whereColumn('quantity', '>', 'max_stock');
+            }
+        }
+
+        // Preserve all query parameters for pagination
+        $products = $query->paginate(15)->withQueryString();
 
         return view('products.index', array_merge($request->all(), compact('products')));
     }
@@ -50,18 +84,28 @@ use App\Helpers\Logger;
             ->latest()
             ->paginate(15);
 
-        $totalEntries   = Inventory::count();
-        $monthEntries   = Inventory::where('created_at', '>=', now()->startOfMonth())->count();
-        $todayEntries   = Inventory::where('created_at', '>=', now()->startOfDay())->count();
-        $activeSKUs     = Inventory::distinct('product_id')->count('product_id');
+        $stats = \Illuminate\Support\Facades\Cache::remember('inventory_stats', 600, function() {
+            return [
+                'totalEntries' => Inventory::count(),
+                'monthEntries' => Inventory::where('created_at', '>=', now()->startOfMonth())->count(),
+                'todayEntries' => Inventory::where('created_at', '>=', now()->startOfDay())->count(),
+                'activeSKUs'   => Inventory::distinct('product_id')->count('product_id'),
+            ];
+        });
+
+        $totalEntries = $stats['totalEntries'];
+        $monthEntries = $stats['monthEntries'];
+        $todayEntries = $stats['todayEntries'];
+        $activeSKUs   = $stats['activeSKUs'];
 
         return view('inventory.index', compact('inventories', 'totalEntries', 'monthEntries', 'todayEntries', 'activeSKUs'));
     }
 
     public function createInventory()
     {
-        $products  = Product::orderBy('name')->get(['id', 'name', 'supplier_id']);
-        $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
+        // Select only necessary columns to reduce memory footprint
+        $products  = Product::select('id', 'name', 'supplier_id')->with('supplier:id,name')->orderBy('name')->get();
+        $suppliers = Supplier::select('id', 'name')->orderBy('name')->get();
         return view('inventory.create', compact('products', 'suppliers'));
     }
 
@@ -98,8 +142,7 @@ use App\Helpers\Logger;
         }
 
         $manifestation->load('items');
-        $products = Product::orderBy('name')->get(['id', 'name']);
-        $categories = \App\Models\Category::orderBy('name')->get(['id', 'name']);
+        $products = Product::select('id', 'name', 'barcode')->orderBy('name')->get();
 
         return view('inventory.bulk_import', compact('manifestation', 'products', 'categories'));
     }
@@ -110,28 +153,84 @@ use App\Helpers\Logger;
             return redirect()->route('manifestations.show', $manifestation)->with('error', 'Esta Nota Fiscal já foi importada.');
         }
 
-        $request->validate(['items' => 'required|array', 'items.*.product_id' => 'required', 'items.*.quantity' => 'required|numeric|min:0.001']);
+        $request->validate([
+            'items' => 'required|array',
+            'items.*.product_id' => 'required|string', // Can be numeric ID or 'new'
+            'items.*.quantity' => 'required|numeric|min:0.001',
+        ]);
 
-        try {
-            DB::transaction(function () use ($request, $manifestation) {
-                foreach ($request->items as $itemId => $data) {
-                    $qty = (float) $data['quantity'];
-                    if ($data['product_id'] === 'new') {
-                        $xmlItem = $manifestation->items()->find($itemId);
-                        $product = Product::create([
-                            'name' => $data['new_name'] ?? $xmlItem->description,
-                            'barcode' => $data['new_barcode'] ?? $xmlItem->barcode,
-                            'unit_price' => $xmlItem->unit_price,
-                            'quantity' => 0,
-                            'reorder_level' => 10,
-                            'unit' => $xmlItem->unit,
-                            'category' => $data['new_category'] ?? 'Importado Automático',
-                            'supplier_id' => $manifestation->supplier_id,
-                            'status' => 'ativo'
-                        ]);
-                    } else {
-                        $product = Product::findOrFail($data['product_id']);
+        $items = $request->input('items', []);
+        $errors = [];
+
+        foreach ($items as $itemId => $data) {
+            $productId = (string) ($data['product_id'] ?? '');
+            $quantity = $data['quantity'] ?? null;
+
+            if ($productId === 'new') {
+                $validator = validator($data, [
+                    'new_name' => 'nullable|string|max:255',
+                    'new_barcode' => 'nullable|string|max:20|regex:/^[0-9]{1,20}$/',
+                    'new_category' => 'nullable|string|max:100',
+                    'quantity' => 'required|numeric|min:0.001',
+                ], [
+                    'new_barcode.regex' => 'Código de barras deve conter apenas números',
+                ]);
+
+                if ($validator->fails()) {
+                    foreach ($validator->errors()->toArray() as $field => $messages) {
+                        foreach ($messages as $message) {
+                            $errors["items.$itemId.$field"][] = $message;
+                        }
                     }
+                }
+            } else {
+                if ($productId === '' || !ctype_digit($productId) || !Product::whereKey((int) $productId)->exists()) {
+                    $errors["items.$itemId.product_id"][] = 'Produto inválido.';
+                }
+
+                if ($quantity === null) {
+                    $errors["items.$itemId.quantity"][] = 'Quantidade é obrigatória.';
+                }
+            }
+
+            if (!$manifestation->items()->whereKey($itemId)->exists()) {
+                $errors["items.$itemId"][] = 'Item da NF-e inválido.';
+            }
+        }
+
+        if (!empty($errors)) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        DB::transaction(function () use ($request, $manifestation) {
+            foreach ($request->items as $itemId => $data) {
+                $qty = (float) $data['quantity'];
+                
+                if ($data['product_id'] === 'new') {
+                    // Automagic creation of product based on XML item and user inputs
+                    $xmlItem = $manifestation->items()->find($itemId);
+                    if (!$xmlItem) {
+                        throw ValidationException::withMessages([
+                            "items.$itemId" => ['Item da NF-e inválido.'],
+                        ]);
+                    }
+                    $product = Product::create([
+                        'name' => $data['new_name'] ?? $xmlItem->description,
+                        'barcode' => $data['new_barcode'] ?? $xmlItem->barcode,
+                        'description' => 'Produto importado via NF-e ' . $manifestation->number,
+                        'unit_price' => $xmlItem->unit_price,
+                        'purchase_price' => $xmlItem->unit_price,
+                        'cost_price' => $xmlItem->unit_price,
+                        'quantity' => 0, // will be incremented
+                        'reorder_level' => 10,
+                        'unit' => $xmlItem->unit,
+                        'category' => $data['new_category'] ?? 'Importado Automático',
+                        'supplier_id' => $manifestation->supplier_id,
+                        'status' => 'ativo'
+                    ]);
+                } else {
+                    $product = Product::findOrFail($data['product_id']);
+                }
 
                     Inventory::create([
                         'product_id' => $product->id,
@@ -157,8 +256,8 @@ use App\Helpers\Logger;
     // Mostrar formulário de criação
     public function create()
     {
-        $suppliers  = Supplier::orderBy('name')->get(['id', 'name']);
-        $categories = \App\Models\Category::orderBy('name')->get(['id', 'name']);
+        $suppliers  = Supplier::select('id', 'name')->orderBy('name')->get();
+        $categories = Category::select('id', 'name')->orderBy('name')->get();
         return view('products.create', compact('suppliers', 'categories'));
     }
 
@@ -195,8 +294,8 @@ use App\Helpers\Logger;
     // Mostrar formulário de edição
     public function edit(Product $product)
     {
-        $suppliers  = Supplier::orderBy('name')->get(['id', 'name']);
-        $categories = \App\Models\Category::orderBy('name')->get(['id', 'name']);
+        $suppliers  = Supplier::select('id', 'name')->orderBy('name')->get();
+        $categories = Category::select('id', 'name')->orderBy('name')->get();
         return view('products.edit', compact('product', 'suppliers', 'categories'));
     }
 

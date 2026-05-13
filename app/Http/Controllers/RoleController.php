@@ -11,8 +11,18 @@ class RoleController extends Controller
 {
     public function index()
     {
-        $roles = Role::with('permissions')->orderBy('name')->get();
-        $permissions = Permission::orderBy('group')->get()->groupBy('group');
+        $roles = Role::select('id', 'name', 'description')
+            ->with(['permissions:id,label,group'])
+            ->orderBy('name')
+            ->get();
+
+        $permissions = \Illuminate\Support\Facades\Cache::remember('permissions_by_group', 300, function () {
+            return Permission::select('id', 'name', 'label', 'group')
+                ->orderBy('group')
+                ->orderBy('label')
+                ->get()
+                ->groupBy('group');
+        });
         return view('roles.index', compact('roles', 'permissions'));
     }
 

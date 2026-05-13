@@ -247,7 +247,7 @@
                                     </a>
                                     <form method="POST" action="{{ route('categories.destroy', $category) }}" 
                                           style="display:inline;"
-                                          onsubmit="return confirm('Excluir a categoria \'{{ addslashes($category->name) }}\'?');">
+                                                                                    onsubmit="return confirm('Excluir a categoria ' + @json($category->name) + '?');">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="action-btn delete" title="Excluir">
                                             <i class="fa-solid fa-trash"></i>

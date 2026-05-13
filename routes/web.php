@@ -14,13 +14,17 @@ Route::middleware('guest')->group(function () {
     Route::post('/login',    [AuthController::class, 'login']);
 });
 
-// Registration can be accessed by guests OR by authenticated RH/Admin
-Route::get('/register',  [AuthController::class, 'showRegister'])->name('register');
-Route::post('/register', [AuthController::class, 'register']);
-
 Route::middleware('auth')->group(function () {
     Route::post('/logout',    [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard',  [DashboardController::class, 'index'])->name('dashboard');
+
+    // Employee management (restricted)
+    Route::middleware('role:admin,rh')->group(function () {
+        Route::get('/register',  [AuthController::class, 'showRegister'])->name('register');
+        Route::post('/register', [AuthController::class, 'register']);
+
+        Route::resource('users', App\Http\Controllers\UserController::class)->names('employees');
+    });
     
     // Product routes
     // Product & Inventory routes
@@ -63,16 +67,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/{manifestation}/danfe', [App\Http\Controllers\ManifestationController::class, 'danfe'])->name('danfe');
     });
 
-    // Employee management
-    Route::resource('users', App\Http\Controllers\UserController::class)->names('employees');
+    // Admin-only
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('logs.index');
 
-    // System Logs
-    Route::get('/logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('logs.index');
+        // Roles management
+        Route::resource('roles', App\Http\Controllers\RoleController::class)->except(['show', 'create', 'edit']);
 
-    // Roles management
-    Route::resource('roles', App\Http\Controllers\RoleController::class)->except(['show', 'create', 'edit']);
-
-    Route::get('/admin', fn() => 'Área Admin')->middleware('role:admin')->name('admin');
+        Route::get('/admin', fn() => 'Área Admin')->name('admin');
+    });
 });
 
 Route::get('/', fn() => redirect()->route('login'));

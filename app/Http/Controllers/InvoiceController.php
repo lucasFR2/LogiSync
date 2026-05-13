@@ -24,18 +24,26 @@ use App\Helpers\Logger;
      */
     public function index(Request $request)
     {
-        $invoices = Invoice::with('user:id,name')
-            ->when($request->search, function($q, $s) {
-                $q->where(function ($query) use ($s) {
-                    $query->where('number', 'like', "%$s%")
-                          ->orWhere('recipient_name', 'like', "%$s%");
-                });
-            })
-            ->when($request->status, fn($q, $v) => $q->where('status', $v))
-            ->when($request->type, fn($q, $v) => $q->where('type', $v))
-            ->orderByDesc('created_at')
-            ->paginate(15)
-            ->withQueryString();
+        $query = Invoice::with('user:id,name')
+            ->orderByDesc('created_at');
+
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(function ($q) use ($s) {
+                $q->where('number', 'like', "%$s%")
+                  ->orWhere('recipient_name', 'like', "%$s%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        $invoices = $query->paginate(15)->withQueryString();
 
         return view('invoices.index', compact('invoices'));
     }
@@ -46,9 +54,12 @@ use App\Helpers\Logger;
     public function create()
     {
         $number    = Invoice::nextNumber();
-        $products  = Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode', 'quantity']);
-        $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
-        $customers = \App\Models\Customer::orderBy('name')->get(['id', 'name', 'document', 'email', 'phone', 'address', 'city', 'state', 'zip_code']);
+        $products  = \Illuminate\Support\Facades\Cache::remember('invoice_form_products', 300, function () {
+            return Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode']);
+        });
+        $suppliers = \Illuminate\Support\Facades\Cache::remember('invoice_form_suppliers', 300, function () {
+            return Supplier::orderBy('name')->get(['id', 'name']);
+        });
 
         return view('invoices.create', compact('number', 'products', 'suppliers', 'customers'));
     }
@@ -77,7 +88,21 @@ use App\Helpers\Logger;
      */
     public function show(Invoice $invoice)
     {
-        $invoice->load(['items.product', 'user:id,name', 'supplier:id,name']);
+        $invoice->load([
+            'user:id,name',
+            'items' => function ($query) {
+                $query->select([
+                    'id',
+                    'invoice_id',
+                    'description',
+                    'unit',
+                    'quantity',
+                    'unit_price',
+                    'discount',
+                    'total',
+                ])->orderBy('id');
+            },
+        ]);
         return view('invoices.show', compact('invoice'));
     }
 
@@ -92,9 +117,12 @@ use App\Helpers\Logger;
         }
 
         $invoice->load('items.product', 'supplier');
-        $products  = Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode']);
-        $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
-        $customers = \App\Models\Customer::orderBy('name')->get(['id', 'name', 'document', 'email', 'phone', 'address', 'city', 'state', 'zip_code']);
+        $products  = \Illuminate\Support\Facades\Cache::remember('invoice_form_products', 300, function () {
+            return Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode']);
+        });
+        $suppliers = \Illuminate\Support\Facades\Cache::remember('invoice_form_suppliers', 300, function () {
+            return Supplier::orderBy('name')->get(['id', 'name']);
+        });
 
         return view('invoices.create', compact('invoice', 'products', 'suppliers', 'customers'));
     }

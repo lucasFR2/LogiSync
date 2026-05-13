@@ -12,6 +12,28 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        
+        // Cache dashboard data for 5 minutes to reduce DB load
+        $data = \Illuminate\Support\Facades\Cache::remember("dashboard_data_{$user->id}", 300, function () use ($user) {
+            $dashboardData = ['user' => $user];
+
+            if ($user->hasRole('admin') || $user->hasRole('rh')) {
+                // Select only necessary columns for the employee list
+                $dashboardData['employees'] = User::select('id', 'name', 'role')
+                    ->orderBy('name')
+                    ->get();
+            }
+
+            if ($user->hasRole('admin')) {
+                // Eager load user and select specific columns
+                $dashboardData['recentLogs'] = ActivityLog::with(['user:id,name'])
+                    ->latest()
+                    ->take(5)
+                    ->get();
+            }
+            
+            return $dashboardData;
+        });
         $data = ['user' => $user];
 
         // Logistics Stats (for Logistics and Admin)

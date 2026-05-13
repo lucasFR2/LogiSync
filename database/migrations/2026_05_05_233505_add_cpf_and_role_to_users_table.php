@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
+            // No-op: migração efetiva está em 2026_05_05_233942_add_cpf_and_role_to_users_table.php.
+            // Mantida por histórico do repositório.
         });
     }
 
@@ -22,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
+            // No-op
         });
     }
 };

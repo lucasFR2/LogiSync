@@ -13,7 +13,12 @@ class InventoryController extends Controller
      */
     public function index()
     {
-        $inventories = Inventory::with('product')
+        $inventories = Inventory::select('id', 'product_id', 'supplier_id', 'quantity', 'notes', 'entry_date', 'created_at')
+            ->with([
+                'product:id,name,barcode,supplier_id',
+                'product.supplier:id,name',
+                'supplier:id,name',
+            ])
             ->latest()
             ->paginate(10);
 
@@ -25,7 +30,9 @@ class InventoryController extends Controller
      */
     public function create()
     {
-        $products = \App\Models\Product::orderBy('name')->get();
+        $products = \App\Models\Product::select('id', 'name', 'barcode', 'quantity')
+            ->orderBy('name')
+            ->get();
         return view('inventory.create', compact('products'));
     }
 
@@ -82,7 +89,9 @@ class InventoryController extends Controller
      */
     public function edit(Inventory $inventory)
     {
-        $products = \App\Models\Product::orderBy('name')->get();
+        $products = \App\Models\Product::select('id', 'name', 'barcode', 'quantity')
+            ->orderBy('name')
+            ->get();
         return view('inventory.edit', compact('inventory', 'products'));
     }
 
