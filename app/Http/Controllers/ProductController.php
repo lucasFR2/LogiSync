@@ -13,6 +13,13 @@ use Illuminate\Validation\ValidationException;
 
 class ProductController extends Controller
 {
+    protected $productService;
+    
+    public function __construct(\App\Services\ProductService $productService)
+    {
+        $this->productService = $productService;
+    }
+
     // Listar todos os produtos
     public function index(Request $request)
     {
@@ -143,6 +150,7 @@ class ProductController extends Controller
 
         $manifestation->load('items');
         $products = Product::select('id', 'name', 'barcode')->orderBy('name')->get();
+        $categories = \App\Models\Category::orderBy('name')->get();
 
         return view('inventory.bulk_import', compact('manifestation', 'products', 'categories'));
     }
@@ -202,7 +210,8 @@ class ProductController extends Controller
             throw ValidationException::withMessages($errors);
         }
 
-        DB::transaction(function () use ($request, $manifestation) {
+        try {
+            DB::transaction(function () use ($request, $manifestation) {
             foreach ($request->items as $itemId => $data) {
                 $qty = (float) $data['quantity'];
                 

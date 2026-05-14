@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Product;
@@ -11,7 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\Logger;
-
+class InvoiceController extends Controller
+{
     protected $invoiceService;
 
     public function __construct(\App\Services\InvoiceService $invoiceService)
@@ -54,12 +56,9 @@ use App\Helpers\Logger;
     public function create()
     {
         $number    = Invoice::nextNumber();
-        $products  = \Illuminate\Support\Facades\Cache::remember('invoice_form_products', 300, function () {
-            return Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode']);
-        });
-        $suppliers = \Illuminate\Support\Facades\Cache::remember('invoice_form_suppliers', 300, function () {
-            return Supplier::orderBy('name')->get(['id', 'name']);
-        });
+        $products  = Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode']);
+        $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
+        $customers = Customer::orderBy('name')->get(['id', 'name', 'document', 'email', 'phone', 'address', 'city', 'state', 'zip_code']);
 
         return view('invoices.create', compact('number', 'products', 'suppliers', 'customers'));
     }
@@ -122,6 +121,9 @@ use App\Helpers\Logger;
         });
         $suppliers = \Illuminate\Support\Facades\Cache::remember('invoice_form_suppliers', 300, function () {
             return Supplier::orderBy('name')->get(['id', 'name']);
+        });
+        $customers = \Illuminate\Support\Facades\Cache::remember('invoice_form_customers', 300, function () {
+            return \App\Models\Customer::orderBy('name')->get(['id', 'name', 'document', 'email', 'phone', 'address', 'city', 'state', 'zip_code']);
         });
 
         return view('invoices.create', compact('invoice', 'products', 'suppliers', 'customers'));

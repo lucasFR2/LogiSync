@@ -39,6 +39,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/products/{product}/add-inventory', [ProductController::class, 'addInventory'])->name('products.add-inventory');
     Route::post('products/store-category', [ProductController::class, 'storeCategory'])->name('products.store-category');
     Route::get('locations/search', [ProductController::class, 'searchLocations'])->name('locations.search');
+    Route::get('locations', [App\Http\Controllers\WarehouseLocationController::class, 'index'])->name('locations.index');
+    Route::post('locations', [App\Http\Controllers\WarehouseLocationController::class, 'store'])->name('locations.store');
+    Route::delete('locations/{location}', [App\Http\Controllers\WarehouseLocationController::class, 'destroy'])->name('locations.destroy');
+    Route::post('locations/generate', [App\Http\Controllers\WarehouseLocationController::class, 'generate'])->name('locations.generate');
 
     // Category routes (quick-store MUST come before the resource to avoid {category} collision)
     Route::post('categories/quick-store', [CategoryController::class, 'storeQuick'])->name('categories.quick-store');
