@@ -18,11 +18,24 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         
-        // General user info
-        $data = ['user' => $user];
-
-        // Logistics Stats (for Logistics and Admin)
-        if ($user->role !== 'Recursos Humanos (RH)') {
+        // Initialize with default values
+        $data = [
+            'user' => $user,
+            'totalStock' => 0,
+            'pendingOrders' => 0,
+            'lowStockCount' => 0,
+            'occupancyRate' => 0,
+            'totalLocations' => 0,
+            'occupiedLocations' => 0,
+            'categoriesStats' => collect(),
+            'entriesData' => array_fill(0, 7, 0),
+            'exitsData' => array_fill(0, 7, 0),
+            'chartLabels' => [],
+            'recentLogs' => collect()
+        ];
+        
+        // Populate stats for appropriate roles
+        if (!$user->hasRole('rh')) {
             // Stats
             $data['totalStock'] = Product::sum('quantity');
             $data['pendingOrders'] = Invoice::where('status', 'rascunho')->count();
@@ -51,13 +64,19 @@ class DashboardController extends Controller
                 $label = now()->subDays($i)->translatedFormat('D');
                 
                 $data['chartLabels'][] = $label;
-                $data['entriesData'][] = Product::whereDate('created_at', $date)->count();
-                $data['exitsData'][] = Invoice::whereDate('created_at', $date)->count();
+                
+                // Count from Inventory movements
+                $data['entriesData'][] = \App\Models\Inventory::where('type', 'entrada')
+                    ->whereDate('created_at', $date)
+                    ->count();
+                    
+                $data['exitsData'][] = \App\Models\Inventory::where('type', 'saida')
+                    ->whereDate('created_at', $date)
+                    ->count();
             }
         }
 
-        // Recent Logs (for everyone, but filtered if needed)
-        // Admin sees everything, others might see their own or relevant ones
+        // Recent Logs
         $data['recentLogs'] = ActivityLog::with('user:id,name,role')
             ->latest()
             ->take(10)

@@ -28,6 +28,8 @@ Route::middleware('auth')->group(function () {
     
     // Product routes
     // Product & Inventory routes
+    Route::get('/products/labels/select', [ProductController::class, 'labelSelection'])->name('products.labels.select');
+    Route::get('/products/labels', [ProductController::class, 'printLabels'])->name('products.labels');
     Route::resource('products', ProductController::class);
     Route::get('/inventory', [ProductController::class, 'inventories'])->name('inventory.index');
     Route::get('/inventory/create', [ProductController::class, 'createInventory'])->name('inventory.create');

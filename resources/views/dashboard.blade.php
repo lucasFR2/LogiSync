@@ -17,10 +17,10 @@
                     O centro logístico está operando com <strong>85% de eficiência</strong> hoje. Você tem <strong>{{ $pendingOrders ?? 3 }}</strong> novas remessas aguardando triagem.
                 </p>
                 <div style="display:flex; gap:1rem; margin-top:1.5rem;">
-                    <a href="{{ route('inventory.index') }}" class="btn" style="background:white; color:var(--accent); border:none; font-weight:700;">
+                    <a href="{{ route('inventory.index') }}" class="btn btn-primary" style="padding: 0.75rem 1.5rem; font-weight: 700;">
                         <i class="fa-solid fa-plus"></i> Nova Entrada
                     </a>
-                    <a href="{{ route('invoices.create') }}" class="btn" style="background:rgba(255,255,255,0.15); color:white; border:1px solid rgba(255,255,255,0.2); backdrop-filter:blur(10px);">
+                    <a href="{{ route('invoices.create') }}" class="btn" style="background:rgba(255,255,255,0.1); color:var(--text-primary); border:1px solid var(--border); backdrop-filter:blur(10px);">
                         <i class="fa-solid fa-file-invoice"></i> Emitir NF-e
                     </a>
                 </div>
@@ -125,9 +125,9 @@
             <div class="card p-6" style="background:var(--bg-elevated);">
                 <h3 style="font-family:'Outfit'; font-size:1rem; margin-bottom:1.25rem;">Ações Inteligentes</h3>
                 <div style="display:flex; flex-direction:column; gap:0.75rem;">
-                    <button class="btn btn-secondary" style="width:100%; justify-content:flex-start; gap:0.75rem; border-color:var(--border);">
+                    <a href="{{ route('products.labels.select') }}" class="btn btn-secondary" style="width:100%; justify-content:flex-start; gap:0.75rem; border-color:var(--border);">
                         <i class="fa-solid fa-barcode" style="color:var(--blue);"></i> Gerar Etiquetas em Lote
-                    </button>
+                    </a>
                     <button class="btn btn-secondary" style="width:100%; justify-content:flex-start; gap:0.75rem; border-color:var(--border);">
                         <i class="fa-solid fa-boxes-packing" style="color:var(--orange);"></i> Otimizar Picking
                     </button>

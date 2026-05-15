@@ -416,4 +416,54 @@ class ProductController extends Controller
 
         return response()->json($locations);
     }
+
+    /**
+     * Tela de seleção de produtos para etiquetas
+     */
+    public function labelSelection(Request $request)
+    {
+        $search = $request->query('search');
+        $query = Product::where('status', 'ativo');
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('barcode', 'like', "%{$search}%");
+        }
+
+        $products = $query->orderBy('name')->get();
+
+        return view('products.labels_select', compact('products'));
+    }
+
+    /**
+     * Gerar etiquetas em lote (PDF)
+     */
+    public function printLabels(Request $request)
+    {
+        $ids = $request->input('product_ids');
+
+        $query = Product::where('status', 'ativo');
+
+        if ($ids && is_array($ids)) {
+            $query->whereIn('id', $ids);
+        } else {
+            // Se nenhum for selecionado e vier da seleção, volta com erro
+            if ($request->has('from_selection')) {
+                return redirect()->back()->with('error', 'Por favor, selecione ao menos um produto.');
+            }
+            // Comportamento padrão: todos com estoque (se acessado diretamente)
+            $query->where('quantity', '>', 0);
+        }
+
+        $products = $query->orderBy('name')->get();
+
+        if ($products->isEmpty()) {
+            return redirect()->back()->with('error', 'Nenhum produto encontrado para gerar etiquetas.');
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('products.labels', compact('products'));
+        $pdf->setPaper('A4', 'portrait');
+
+        return $pdf->stream('etiquetas_logisync_' . now()->format('Ymd_His') . '.pdf');
+    }
 }
