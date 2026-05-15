@@ -121,43 +121,86 @@
 </div>
 
 <!-- Modal Upload XML -->
-<div id="xmlModal" class="modal">
-    <div class="modal-content" style="max-width:500px;">
+<div id="xmlModal" class="modal" style="display: none;">
+    <div class="modal-content">
         <div class="modal-header">
-            <h3 style="margin:0;"><i class="fa-solid fa-file-code" style="color:var(--accent);"></i> Importar XML (Simulação)</h3>
-            <button class="btn btn-secondary btn-sm" onclick="closeXmlModal()" style="border:none; background:transparent;">
+            <h3 style="margin:0;"><i class="fa-solid fa-file-code" style="color:var(--accent);"></i> Importar XML</h3>
+            <button type="button" onclick="closeXmlModal()" style="border:none; background:transparent; cursor:pointer; font-size:1.2rem; color:var(--text-muted);">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
-        <form action="{{ route('manifestations.uploadXml') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('manifestations.uploadXml') }}" method="POST" enctype="multipart/form-data" style="display:flex; flex-direction:column;">
             @csrf
-            <div class="modal-body" style="padding:1.5rem;">
+            <div class="modal-body">
                 <p style="color:var(--text-secondary); margin-bottom:1.5rem; font-size:0.9rem;">
                     Selecione um arquivo XML de NF-e. O sistema processará os dados e simulará o recebimento do documento.
                 </p>
                 <div class="form-group">
-                    <input type="file" name="xml_file" required accept=".xml,.txt" class="form-input" style="padding:0.75rem;">
+                    <label class="form-label">Arquivo XML</label>
+                    <input type="file" name="xml_file" required accept=".xml,.txt" class="form-input" style="padding:0.75rem; cursor:pointer;">
                 </div>
             </div>
-            <div class="modal-footer" style="padding:1.5rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:1rem;">
+            <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeXmlModal()">Cancelar</button>
-                <button type="submit" class="btn btn-primary">Processar XML</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-upload"></i> Processar XML
+                </button>
             </div>
         </form>
     </div>
 </div>
 
+<style>
+    #xmlModal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+    }
+    
+    #xmlModal.show {
+        display: flex;
+    }
+</style>
+
 <script>
     function openXmlModal() {
-        document.getElementById('xmlModal').style.display = 'flex';
-    }
-    function closeXmlModal() {
-        document.getElementById('xmlModal').style.display = 'none';
-    }
-    window.onclick = function(event) {
-        if (event.target == document.getElementById('xmlModal')) {
-            closeXmlModal();
+        const modal = document.getElementById('xmlModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.add('show');
         }
     }
+    
+    function closeXmlModal() {
+        const modal = document.getElementById('xmlModal');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+        }
+    }
+    
+    // Close modal when clicking outside of it
+    document.addEventListener('click', function(event) {
+        const modal = document.getElementById('xmlModal');
+        if (modal && event.target === modal) {
+            closeXmlModal();
+        }
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeXmlModal();
+        }
+    });
 </script>
 @endsection

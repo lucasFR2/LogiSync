@@ -13,7 +13,7 @@ class SupplierController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:suppliers.manage'),
+            new Middleware('permission:fornecedores.gerenciar'),
         ];
     }
 

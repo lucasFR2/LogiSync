@@ -14,21 +14,23 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::select('id', 'name', 'role', 'email', 'cpf', 'document_path');
+        $query = User::select('id', 'name', 'role_id', 'email', 'cpf', 'document_path')
+            ->with('role:id,name');
         
         // General search
         if ($search = $request->get('search')) {
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('cpf', 'like', "%{$search}%")
-                  ->orWhere('role', 'like', "%{$search}%");
+                  ->orWhere('cpf', 'like', "%{$search}%");
             });
         }
 
         // Specific Role Filter
         if ($roleFilter = $request->get('role_filter')) {
-            $query->where('role', $roleFilter);
+            $query->whereHas('role', function($q) use ($roleFilter) {
+                $q->where('id', $roleFilter);
+            });
         }
 
         $employees = $query->orderBy('name')->paginate(15)->withQueryString();
@@ -65,7 +67,7 @@ class UserController extends Controller
         $data = $request->validate([
             'name'         => 'required|string|max:255',
             'email'        => 'required|email|unique:users,email,' . $user->id,
-            'role'         => 'required|string|max:255|exists:roles,name',
+            'role_id'      => 'required|integer|exists:roles,id',
             'cpf'          => 'required|string|max:14|unique:users,cpf,' . $user->id,
             'rg'           => 'required|string|max:12',
             'phone'        => 'required|string|max:20',

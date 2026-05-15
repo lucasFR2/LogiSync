@@ -77,7 +77,7 @@ class DashboardController extends Controller
         }
 
         // Recent Logs
-        $data['recentLogs'] = ActivityLog::with('user:id,name,role')
+        $data['recentLogs'] = ActivityLog::with('user:id,name,role_id', 'user.role:id,name')
             ->latest()
             ->take(10)
             ->get();

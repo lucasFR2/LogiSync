@@ -7,7 +7,6 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Product;
 use App\Models\Supplier;
-use App\Models\Customer;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,9 +19,9 @@ class InvoiceController extends Controller
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:invoices.view', only: ['index', 'show', 'pdf']),
-            new Middleware('permission:invoices.create', only: ['create', 'store']),
-            new Middleware('permission:invoices.edit', only: ['edit', 'update', 'cancel', 'destroy']),
+            new Middleware('permission:notas_fiscais.visualizar', only: ['index', 'show', 'pdf']),
+            new Middleware('permission:notas_fiscais.emitir', only: ['create', 'store']),
+            new Middleware('permission:notas_fiscais.editar', only: ['edit', 'update', 'cancel', 'destroy']),
         ];
     }
 
@@ -128,15 +127,9 @@ class InvoiceController extends Controller
         }
 
         $invoice->load('items.product', 'supplier');
-        $products  = \Illuminate\Support\Facades\Cache::remember('invoice_form_products', 300, function () {
-            return Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode']);
-        });
-        $suppliers = \Illuminate\Support\Facades\Cache::remember('invoice_form_suppliers', 300, function () {
-            return Supplier::orderBy('name')->get(['id', 'name']);
-        });
-        $customers = \Illuminate\Support\Facades\Cache::remember('invoice_form_customers', 300, function () {
-            return \App\Models\Customer::orderBy('name')->get(['id', 'name', 'document', 'email', 'phone', 'address', 'city', 'state', 'zip_code']);
-        });
+        $products  = Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode']);
+        $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
+        $customers = Customer::orderBy('name')->get(['id', 'name', 'document', 'email', 'phone', 'address', 'city', 'state', 'zip_code']);
 
         return view('invoices.create', compact('invoice', 'products', 'suppliers', 'customers'));
     }

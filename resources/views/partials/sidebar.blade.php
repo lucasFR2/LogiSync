@@ -4,17 +4,17 @@
     
     $allNavItems = [
         ['route' => 'dashboard',           'icon' => 'fa-chart-pie',               'label' => 'Dashboard'],
-        ['route' => 'products.index',      'icon' => 'fa-cubes',                   'label' => 'Produtos',      'permission' => 'products.view'],
-        ['route' => 'categories.index',    'icon' => 'fa-tags',                    'label' => 'Categorias',    'permission' => 'categories.manage'],
-        ['route' => 'inventory.index',     'icon' => 'fa-arrow-right-to-bracket',  'label' => 'Entradas',      'permission' => 'inventory.view'],
-        ['route' => 'invoices.index',      'icon' => 'fa-file-invoice-dollar',     'label' => 'Emissão NF-e',  'permission' => 'invoices.view'],
-        ['route' => 'manifestations.index','icon' => 'fa-file-invoice',            'label' => 'Manifestação',  'permission' => 'manifests.manage'],
-        ['route' => 'suppliers.index',     'icon' => 'fa-address-book',            'label' => 'Fornecedores',  'permission' => 'suppliers.manage'],
-        ['route' => 'customers.index',     'icon' => 'fa-users',                   'label' => 'Clientes',      'permission' => 'customers.manage'],
-        ['route' => 'employees.index',     'icon' => 'fa-users-gear',              'label' => 'Gestão de Funcionários', 'permission' => 'users.manage'],
-        ['route' => 'logs.index',          'icon' => 'fa-list-check',              'label' => 'Logs do Sistema',       'permission' => 'logs.view'],
-        ['route' => 'roles.index',         'icon' => 'fa-id-card-clip',            'label' => 'Cargos e Funções',      'permission' => 'roles.manage'],
-        ['route' => 'locations.index',     'icon' => 'fa-map-location-dot',        'label' => 'Localizações',          'permission' => 'products.view'],
+        ['route' => 'products.index',      'icon' => 'fa-cubes',                   'label' => 'Produtos',      'permission' => 'produtos.visualizar'],
+        ['route' => 'categories.index',    'icon' => 'fa-tags',                    'label' => 'Categorias',    'permission' => 'categorias.gerenciar'],
+        ['route' => 'inventory.index',     'icon' => 'fa-arrow-right-to-bracket',  'label' => 'Entradas',      'permission' => 'estoque.visualizar'],
+        ['route' => 'invoices.index',      'icon' => 'fa-file-invoice-dollar',     'label' => 'Emissão NF-e',  'permission' => 'notas_fiscais.visualizar'],
+        ['route' => 'manifestations.index','icon' => 'fa-file-invoice',            'label' => 'Manifestação',  'permission' => 'manifestacoes.gerenciar'],
+        ['route' => 'suppliers.index',     'icon' => 'fa-address-book',            'label' => 'Fornecedores',  'permission' => 'fornecedores.gerenciar'],
+        ['route' => 'customers.index',     'icon' => 'fa-users',                   'label' => 'Clientes',      'permission' => 'clientes.gerenciar'],
+        ['route' => 'employees.index',     'icon' => 'fa-users-gear',              'label' => 'Gestão de Funcionários', 'permission' => 'usuarios.gerenciar'],
+        ['route' => 'logs.index',          'icon' => 'fa-list-check',              'label' => 'Logs do Sistema',       'permission' => 'logs.visualizar'],
+        ['route' => 'roles.index',         'icon' => 'fa-id-card-clip',            'label' => 'Cargos e Funções',      'permission' => 'cargos.gerenciar'],
+        ['route' => 'locations.index',     'icon' => 'fa-map-location-dot',        'label' => 'Localizações',          'permission' => 'localizacao.visualizar'],
     ];
 
     $navItems = array_filter($allNavItems, function($item) use ($user) {
@@ -60,7 +60,7 @@
             </div>
             <div style="min-width:0;">
                 <div class="sidebar-user-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ auth()->user()->name }}</div>
-                <div class="sidebar-user-role">{{ auth()->user()->role }}</div>
+                <div class="sidebar-user-role">{{ auth()->user()->role ? auth()->user()->role->name : 'N/A' }}</div>
             </div>
         </div>
         <form method="POST" action="{{ route('logout') }}">

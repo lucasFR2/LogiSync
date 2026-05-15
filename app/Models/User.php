@@ -13,11 +13,19 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'password', 'role', 'cpf', 
+        'name', 'email', 'password', 'role_id', 'cpf', 
         'phone', 'zip_code', 'address', 'number', 'neighborhood', 'city', 'state',
         'document_path', 'rg'
     ];
     protected $hidden = ['password', 'remember_token'];
+
+    /**
+     * Relacionamento com Role
+     */
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
 
     private function normalizeRole(?string $role): string
     {
@@ -37,7 +45,11 @@ class User extends Authenticatable
 
     public function hasRole(string $role): bool
     {
-        return $this->normalizeRole($this->role) === $this->normalizeRole($role);
+        if (!$this->role) {
+            return false;
+        }
+        
+        return $this->normalizeRole($this->role->name) === $this->normalizeRole($role);
     }
 
     public function permissions()
@@ -50,7 +62,7 @@ class User extends Authenticatable
     public function hasPermission(string $permission): bool
     {
         // Admin has all permissions
-        if ($this->hasRole('admin')) {
+        if ($this->isAdmin()) {
             return true;
         }
 
@@ -60,9 +72,8 @@ class User extends Authenticatable
             
             // Role permissions
             $rolePerms = [];
-            $roleRecord = Role::where('name', $this->role)->first();
-            if ($roleRecord) {
-                $rolePerms = $roleRecord->permissions()->pluck('name')->toArray();
+            if ($this->role) {
+                $rolePerms = $this->role->permissions()->pluck('name')->toArray();
             }
             
             $this->permissionsCache = array_unique(array_merge($userPerms, $rolePerms));

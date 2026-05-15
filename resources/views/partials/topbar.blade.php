@@ -32,7 +32,7 @@
             </div>
             <div style="display:none;" class="d-md-block">
                 <div style="font-size:0.875rem; font-weight:700; color:var(--text-primary);">{{ auth()->user()->name }}</div>
-                <div style="font-size:0.7rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">{{ auth()->user()->role }}</div>
+                <div style="font-size:0.7rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">{{ auth()->user()->role->name ?? auth()->user()->role->NAME ?? '' }}</div>
             </div>
         </div>
     </div>

@@ -19,7 +19,7 @@ class ManifestationController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:manifests.manage'),
+            new Middleware('permission:manifestacoes.gerenciar'),
         ];
     }
 

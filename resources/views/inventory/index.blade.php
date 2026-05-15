@@ -47,15 +47,18 @@
     </div>
 
     {{-- Main Table --}}
+    @can('view_entries')
     <div class="card">
         <div class="card-header">
             <div style="display:flex; align-items:center; gap:0.75rem;">
                 <div style="width:10px; height:24px; background:var(--accent); border-radius:4px;"></div>
                 <h3 style="margin:0;">Histórico Operacional</h3>
             </div>
+            @can('create_entries')
             <a href="{{ route('inventory.create') }}" class="btn btn-primary">
                 <i class="fa-solid fa-plus"></i> Registrar Entrada
             </a>
+            @endcan
         </div>
 
         <div class="table-wrap" style="border:none; box-shadow:none;">
@@ -124,12 +127,15 @@
                     </div>
                     <h3 style="font-family:'Outfit'; font-size:1.5rem;">Nenhuma entrada registrada</h3>
                     <p style="color:var(--text-muted); margin-bottom:2rem;">Comece movimentando seu estoque registrando a primeira entrada.</p>
+                    @can('create_entries')
                     <a href="{{ route('inventory.create') }}" class="btn btn-primary" style="padding:1rem 2rem;">
                         <i class="fa-solid fa-plus"></i> Registrar Primeira Entrada
                     </a>
+                    @endcan
                 </div>
             @endif
         </div>
     </div>
+    @endcan
 </div>
 @endsection

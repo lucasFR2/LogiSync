@@ -43,9 +43,11 @@
                     <button type="button" onclick="toggleAdvancedFilter()" class="btn btn-secondary flex-1 md:flex-none">
                         <i class="fa-solid fa-sliders"></i> <span class="hidden md:inline">Filtros</span>
                     </button>
+                    @can('produtos.cadastrar')
                     <a href="{{ route('products.create') }}" class="btn btn-primary flex-1 md:flex-none">
                         <i class="fa-solid fa-plus"></i> <span class="hidden md:inline">Novo</span>
                     </a>
+                    @endcan
                 </div>
             </div>
 
@@ -125,15 +127,24 @@
                                 </td>
                                 <td data-label="Ações" style="text-align:center;">
                                     <div class="flex justify-center sm:justify-end gap-2">
+                                        @can('produtos.visualizar')
+                                        <a href="{{ route('products.show', $product) }}" class="icon-btn" title="Visualizar" style="color:var(--blue);">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                        @endcan
+                                        @can('produtos.editar')
                                         <a href="{{ route('products.edit', $product) }}" class="icon-btn" title="Editar">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </a>
+                                        @endcan
+                                        @can('produtos.excluir')
                                         <form method="POST" action="{{ route('products.destroy', $product) }}" onsubmit="return confirm('Excluir este produto?');">
                                             @csrf @method('DELETE')
                                             <button type="submit" class="icon-btn" style="color:var(--red);" title="Excluir">
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </form>
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>
@@ -158,9 +169,11 @@
                 </div>
                 <h3 class="text-xl mb-2">Nenhum produto encontrado</h3>
                 <p class="text-sm mb-6" style="color:var(--text-muted); max-width:320px; margin-left:auto; margin-right:auto;">Tente ajustar sua busca ou filtros.</p>
+                @can('produtos.cadastrar')
                 <a href="{{ route('products.create') }}" class="btn btn-primary">
                     <i class="fa-solid fa-plus"></i> Cadastrar Produto
                 </a>
+                @endcan
             </div>
         @endif
     </div>

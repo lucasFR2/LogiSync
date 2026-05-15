@@ -10,22 +10,24 @@
     {{-- Top Section: Welcome & Global Stats --}}
     <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.5rem;" class="flex-mobile-col">
         {{-- Welcome Banner --}}
-        <div class="card" style="background: linear-gradient(135deg, var(--accent), #1E293B); color: white; border: none; position: relative; overflow: hidden; display:flex; flex-direction:column; justify-content:center; padding:2rem;">
+        <div class="card" style="background: var(--card-background); color: var(--card-text-color); border: none; position: relative; overflow: hidden; display:flex; flex-direction:column; justify-content:center; padding:2rem;">
             <div style="position: relative; z-index: 2;">
-                <h2 style="font-family:'Outfit'; font-size:1.75rem; margin-bottom:0.5rem;">Bem-vindo, {{ explode(' ', Auth::user()->name)[0] }}!</h2>
-                <p style="opacity: 0.8; font-size:1rem; max-width: 500px; line-height:1.6;">
-                    O centro logístico está operando com <strong>85% de eficiência</strong> hoje. Você tem <strong>{{ $pendingOrders ?? 3 }}</strong> novas remessas aguardando triagem.
+                <h2 style="font-family:'Outfit'; font-size:1.75rem; margin-bottom:0.5rem; color: var(--card-title-color);">Bem-vindo, {{ explode(' ', Auth::user()->name)[0] }}!</h2>
+                <p style="opacity: 0.8; font-size:1rem; max-width: 500px; line-height:1.6; color: var(--card-text-color);">
+                    O centro logístico está operando com <strong style="color: var(--card-highlight-color);">85% de eficiência</strong> hoje. Você tem <strong style="color: var(--card-highlight-color);">{{ $pendingOrders ?? 3 }}</strong> novas remessas aguardando triagem.
                 </p>
                 <div style="display:flex; gap:1rem; margin-top:1.5rem;">
                     <a href="{{ route('inventory.index') }}" class="btn btn-primary" style="padding: 0.75rem 1.5rem; font-weight: 700;">
                         <i class="fa-solid fa-plus"></i> Nova Entrada
                     </a>
-                    <a href="{{ route('invoices.create') }}" class="btn" style="background:rgba(255,255,255,0.1); color:var(--text-primary); border:1px solid var(--border); backdrop-filter:blur(10px);">
+                    @can('notas_fiscais.emitir')
+                    <a href="{{ route('invoices.create') }}" class="btn" style="background:var(--button-background); color:var(--button-text-color); border:1px solid var(--button-border-color); backdrop-filter:blur(10px);">
                         <i class="fa-solid fa-file-invoice"></i> Emitir NF-e
                     </a>
+                    @endcan
                 </div>
             </div>
-            <div style="position: absolute; right: -20px; top: -20px; font-size: 12rem; opacity: 0.05; pointer-events: none;">
+            <div style="position: absolute; right: -20px; top: -20px; font-size: 12rem; opacity: 0.05; pointer-events: none; color: var(--icon-color);">
                 <i class="fa-solid fa-warehouse"></i>
             </div>
         </div>
@@ -80,45 +82,16 @@
     {{-- Bottom Grid: Activity & Shortcuts --}}
     <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.5rem;" class="flex-mobile-col">
         {{-- Recent Activity --}}
-        <div class="card overflow-hidden">
-            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; padding:1.25rem 1.5rem;">
-                <h3 style="font-family:'Outfit'; font-size:1.1rem; margin:0;">Atividade Recente</h3>
-                <a href="{{ route('logs.index') }}" style="font-size:0.8rem; font-weight:700; color:var(--blue); text-decoration:none;">Ver Tudo</a>
-            </div>
-            <div class="table-wrap" style="border:none;">
-                <table class="table-stack">
-                    <thead>
-                        <tr>
-                            <th>Evento</th>
-                            <th>Usuário</th>
-                            <th>Horário</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($recentLogs ?? [] as $log)
-                        <tr>
-                            <td>
-                                <div style="display:flex; align-items:center; gap:0.75rem;">
-                                    <div style="width:32px; height:32px; background:var(--accent-subtle); color:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.8rem;">
-                                        <i class="fa-solid fa-clock-rotate-left"></i>
-                                    </div>
-                                    <div style="font-weight:600; text-transform:capitalize;">{{ str_replace('_', ' ', $log->action) }}</div>
-                                </div>
-                            </td>
-                            <td style="font-size:0.85rem; color:var(--text-secondary);">{{ $log->user->name ?? 'Sistema' }}</td>
-                            <td style="font-size:0.85rem; color:var(--text-muted);">{{ $log->created_at->diffForHumans() }}</td>
-                            <td><span class="badge badge-info">Sincronizado</span></td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="4" class="text-center p-8 text-muted">Nenhuma atividade recente encontrada.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+        @can('view_logs')
+        <div class="card p-6" style="display:flex; flex-direction:column; justify-content:space-between;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Atividade Recente</span>
+                    <div style="font-size:1.75rem; font-weight:800; font-family:'Outfit'; color:var(--accent); margin-top:0.25rem;">{{ $recentActivity }}</div>
+                </div>
             </div>
         </div>
+        @endcan
 
         {{-- Quick Controls --}}
         <div style="display:flex; flex-direction:column; gap:1.5rem;">

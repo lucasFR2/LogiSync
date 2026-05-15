@@ -62,7 +62,7 @@ class AuthController extends Controller
         $data = $request->validate([
             'name'         => 'required|string|max:255',
             'email'        => 'required|email|unique:users',
-            'role'         => 'required|string|max:255|exists:roles,name',
+            'role_id'      => 'required|integer|exists:roles,id',
             'cpf'          => ['required', 'string', 'regex:/^\d{3}\.\d{3}\.\d{3}-\d{2}$/', 'unique:users,cpf'],
             'password'     => 'required|min:8|confirmed',
             'phone'        => 'nullable|string|max:20',
@@ -93,7 +93,7 @@ class AuthController extends Controller
             'name'         => $data['name'],
             'email'        => $data['email'],
             'password'     => Hash::make($data['password']),
-            'role'         => $data['role'],
+            'role_id'      => $data['role_id'],
             'cpf'          => $this->formatCpf($cpfDigits),
             'rg'           => $data['rg'],
             'phone'        => $data['phone'],
@@ -107,7 +107,8 @@ class AuthController extends Controller
         ]);
 
         if (Auth::check()) {
-            Logger::log('register_user', "O usuário cadastrou um novo funcionário: {$user->name} ({$user->role})");
+            $roleName = $user->role ? $user->role->name : 'N/A';
+            Logger::log('register_user', "O usuário cadastrou um novo funcionário: {$user->name} ({$roleName})");
             return back()->with('success', 'Funcionário cadastrado com sucesso!');
         }
 

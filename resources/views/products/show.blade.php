@@ -29,9 +29,12 @@
                     <i class="fa-solid fa-box"></i> {{ $product->name }}
                 </span>
                 <div style="display:flex;gap:.5rem;">
+                    @can('produtos.editar')
                     <a href="{{ route('products.edit', $product) }}" class="btn btn-secondary btn-sm">
                         <i class="fa-solid fa-pencil"></i> Editar
                     </a>
+                    @endcan
+                    @can('produtos.excluir')
                     <form method="POST" action="{{ route('products.destroy', $product) }}" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja deletar este produto?');">
                         @csrf
                         @method('DELETE')
@@ -39,6 +42,7 @@
                             <i class="fa-solid fa-trash"></i> Deletar
                         </button>
                     </form>
+                    @endcan
                 </div>
             </div>
 

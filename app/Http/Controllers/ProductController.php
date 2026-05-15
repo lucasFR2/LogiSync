@@ -19,7 +19,7 @@ class ProductController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:products.manage'),
+            new Middleware('permission:produtos.visualizar'),
         ];
     }
 
@@ -306,6 +306,7 @@ class ProductController extends Controller implements HasMiddleware
     // Mostrar um produto
     public function show(Product $product)
     {
+        $product->load('supplier', 'location', 'auditLogs.user');
         $inventories = $product->inventories()->with('user:id,name')->latest()->paginate(10);
         return view('products.show', compact('product', 'inventories'));
     }

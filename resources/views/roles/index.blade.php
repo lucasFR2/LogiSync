@@ -57,8 +57,11 @@
                                 </td>
                                 <td style="padding: 1.25rem 1.5rem; text-align:right;">
                                     <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
-                                        <button class="icon-btn" style="background:var(--bg-base); border:1px solid var(--border);" title="Editar" 
-                                                onclick="editRole({{ $role->id }}, @json($role->name), @json($role->description ?? ''), @json($role->permissions->pluck('id')))">
+                                        <button class="icon-btn edit-role-btn" style="background:var(--bg-base); border:1px solid var(--border);" title="Editar" 
+                                                data-role-id="{{ $role->id }}"
+                                                data-role-name="{{ $role->name }}"
+                                                data-role-description="{{ $role->description ?? '' }}"
+                                                data-role-permissions="{{ json_encode($role->permissions->pluck('id')->toArray()) }}">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
                                         @if($role->name !== 'Administrador')
@@ -151,6 +154,20 @@
 </style>
 
 <script>
+    // Event listener for edit buttons
+    document.querySelectorAll('.edit-role-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const id = this.getAttribute('data-role-id');
+            const name = this.getAttribute('data-role-name');
+            const description = this.getAttribute('data-role-description');
+            const permissionsStr = this.getAttribute('data-role-permissions');
+            const permissions = JSON.parse(permissionsStr);
+            
+            editRole(id, name, description, permissions);
+        });
+    });
+
     function editRole(id, name, description, perms) {
         document.getElementById('form-title').innerText = 'Editar Cargo';
         document.getElementById('form-subtitle').innerText = 'Alterando o cargo: ' + name;
@@ -166,7 +183,7 @@
         });
 
         document.getElementById('role-name').focus();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.querySelector('.card:last-child').scrollIntoView({ behavior: 'smooth' });
     }
 
     function resetForm() {

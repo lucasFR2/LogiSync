@@ -45,9 +45,9 @@
 
                     <div class="form-group">
                         <label class="form-label">Cargo <span style="color:var(--red);">*</span></label>
-                        <select name="role" required class="form-select">
+                        <select name="role_id" required class="form-select">
                             @foreach($roles as $role)
-                                <option value="{{ $role->name }}" {{ old('role', $user->role) == $role->name ? 'selected' : '' }}>
+                                <option value="{{ $role->id }}" {{ old('role_id', $user->role_id) == $role->id ? 'selected' : '' }}>
                                     {{ $role->name }}
                                 </option>
                             @endforeach

@@ -268,7 +268,27 @@ function fmtBR(val) {
 function parseVal(val) {
     if (typeof val === 'object') val = val.value;
     if (!val) return 0;
-    return parseFloat(String(val).replace(/[R$\s%._]/g, '').replace(',', '.')) || 0;
+    
+    // Convert to string and normalize
+    let str = String(val).trim();
+    
+    // Remove currency symbols and whitespace
+    str = str.replace(/[R$\s%]/g, '');
+    
+    // Handle decimal separator: if there's a comma, it's the decimal in Brazilian format
+    // If there's only dots, the last one is the decimal (or none if it's an integer)
+    if (str.includes(',')) {
+        // Brazilian format: 1.234,56 -> remove dot, replace comma with dot
+        str = str.replace(/\./g, '').replace(',', '.');
+    } else {
+        // May be international format (36.38) or just integer
+        // Keep as is if there's a dot, otherwise it's an integer
+        // The regex should only remove dots used as thousand separators
+        // For now, if it has a dot, assume it's a decimal point
+        str = str.replace(/\._/g, ''); // Remove only underscores and other chars, not dots
+    }
+    
+    return parseFloat(str) || 0;
 }
 
 function calcTotals() {
