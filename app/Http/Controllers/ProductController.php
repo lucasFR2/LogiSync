@@ -16,6 +16,13 @@ use Illuminate\Routing\Controllers\Middleware;
 
 class ProductController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:products.manage'),
+        ];
+    }
+
     protected $productService;
     
     public function __construct(\App\Services\ProductService $productService)
@@ -160,8 +167,7 @@ class ProductController extends Controller implements HasMiddleware
 
     public function bulkStore(Request $request, \App\Models\IncomingInvoice $manifestation)
     {
-        try {
-            if ($manifestation->entry_status === 'imported') {
+        if ($manifestation->entry_status === 'imported') {
             return redirect()->route('manifestations.show', $manifestation)->with('error', 'Esta Nota Fiscal já foi importada.');
         }
 

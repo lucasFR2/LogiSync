@@ -134,7 +134,6 @@
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </form>
-                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -162,7 +161,6 @@
                 <a href="{{ route('products.create') }}" class="btn btn-primary">
                     <i class="fa-solid fa-plus"></i> Cadastrar Produto
                 </a>
-                @endif
             </div>
         @endif
     </div>
