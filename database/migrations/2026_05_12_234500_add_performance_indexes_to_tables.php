@@ -12,15 +12,41 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Indexes for products, activity_logs, suppliers and customers are already handled 
-        // in 2026_05_12_215012_add_optimization_indexes_to_tables.php
+        try {
+            Schema::table('products', function (Blueprint $table) {
+                $table->index('name');
+                $table->index('category');
+                $table->index('status');
+            });
+        } catch (\Exception $e) {}
 
-        Schema::table('invoices', function (Blueprint $table) {
-            $table->index('status');
-            $table->index('type');
-            $table->index('recipient_name');
-            $table->index('issued_at');
-        });
+        try {
+            Schema::table('invoices', function (Blueprint $table) {
+                $table->index('status');
+                $table->index('type');
+                $table->index('recipient_name');
+                $table->index('issued_at');
+            });
+        } catch (\Exception $e) {}
+
+        try {
+            Schema::table('activity_logs', function (Blueprint $table) {
+                $table->index('action');
+                $table->index('created_at');
+            });
+        } catch (\Exception $e) {}
+
+        try {
+            Schema::table('suppliers', function (Blueprint $table) {
+                $table->index('name');
+            });
+        } catch (\Exception $e) {}
+
+        try {
+            Schema::table('customers', function (Blueprint $table) {
+                $table->index('name');
+            });
+        } catch (\Exception $e) {}
     }
 
     /**
