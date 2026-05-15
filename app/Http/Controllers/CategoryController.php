@@ -6,8 +6,18 @@ use App\Models\Category;
 use App\Helpers\Logger;
 use Illuminate\Http\Request;
 
-class CategoryController extends Controller
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+
+class CategoryController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:categories.manage'),
+        ];
+    }
+
     public function index(Request $request)
     {
         $query = Category::query();

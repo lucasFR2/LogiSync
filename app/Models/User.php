@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Models\Role;
 
 class User extends Authenticatable
 {
@@ -49,7 +50,17 @@ class User extends Authenticatable
         }
 
         if ($this->permissionsCache === null) {
-            $this->permissionsCache = $this->permissions()->pluck('name')->toArray();
+            // Direct user permissions
+            $userPerms = $this->permissions()->pluck('name')->toArray();
+            
+            // Role permissions
+            $rolePerms = [];
+            $roleRecord = Role::where('name', $this->role)->first();
+            if ($roleRecord) {
+                $rolePerms = $roleRecord->permissions()->pluck('name')->toArray();
+            }
+            
+            $this->permissionsCache = array_unique(array_merge($userPerms, $rolePerms));
         }
 
         return in_array($permission, $this->permissionsCache);

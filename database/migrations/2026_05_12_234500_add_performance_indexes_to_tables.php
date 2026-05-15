@@ -12,30 +12,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->index('name');
-            $table->index('category');
-            $table->index('status');
-        });
+        // Indexes for products, activity_logs, suppliers and customers are already handled 
+        // in 2026_05_12_215012_add_optimization_indexes_to_tables.php
 
         Schema::table('invoices', function (Blueprint $table) {
             $table->index('status');
             $table->index('type');
             $table->index('recipient_name');
             $table->index('issued_at');
-        });
-
-        Schema::table('activity_logs', function (Blueprint $table) {
-            $table->index('action');
-            $table->index('created_at');
-        });
-
-        Schema::table('suppliers', function (Blueprint $table) {
-            $table->index('name');
-        });
-
-        Schema::table('customers', function (Blueprint $table) {
-            $table->index('name');
         });
     }
 
@@ -44,24 +28,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->dropIndex(['name', 'category', 'status']);
-        });
-
         Schema::table('invoices', function (Blueprint $table) {
             $table->dropIndex(['status', 'type', 'recipient_name', 'issued_at']);
-        });
-
-        Schema::table('activity_logs', function (Blueprint $table) {
-            $table->dropIndex(['action', 'created_at']);
-        });
-
-        Schema::table('suppliers', function (Blueprint $table) {
-            $table->dropIndex(['name']);
-        });
-
-        Schema::table('customers', function (Blueprint $table) {
-            $table->dropIndex(['name']);
         });
     }
 };

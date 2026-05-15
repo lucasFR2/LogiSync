@@ -36,20 +36,20 @@
                 @csrf
 
                 {{-- Basic Info --}}
-                <div class="grid grid-2">
+                <div class="form-grid">
                     <div style="grid-column: 1/-1;">
-                        <h4 style="font-family:'Outfit'; font-size:1.1rem; margin-bottom:1rem; color:var(--text-primary); display:flex; align-items:center; gap:0.5rem;">
+                        <h4 style="font-family:'Outfit'; font-size:1.1rem; margin-bottom:0.5rem; color:var(--text-primary); display:flex; align-items:center; gap:0.5rem;">
                             <i class="fa-solid fa-user-tag" style="color:var(--accent);"></i> Informações de Identificação
                         </h4>
                     </div>
                     
                     <div class="form-group" style="grid-column: 1/-1;">
-                        <label class="form-label">Nome Completo / Razão Social <span style="color:var(--red);">*</span></label>
+                        <label class="form-label">Nome Completo / Razão Social <span class="required-mark">*</span></label>
                         <input type="text" name="name" value="{{ old('name') }}" required class="form-input" placeholder="Ex: João da Silva ou Empresa LTDA">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Tipo de Pessoa <span style="color:var(--red);">*</span></label>
+                        <label class="form-label">Tipo de Pessoa <span class="required-mark">*</span></label>
                         <select name="type" required class="form-select">
                             <option value="individual" {{ old('type') == 'individual' ? 'selected' : '' }}>Pessoa Física</option>
                             <option value="company" {{ old('type') == 'company' ? 'selected' : '' }}>Pessoa Jurídica</option>
@@ -57,8 +57,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">CPF / CNPJ <span style="color:var(--red);">*</span></label>
-                        <input type="text" name="document" value="{{ old('document') }}" required placeholder="Somente números" class="form-input">
+                        <label class="form-label">CPF / CNPJ <span class="required-mark">*</span></label>
+                        <input type="text" name="document" value="{{ old('document') }}" required data-mask="cpf" placeholder="000.000.000-00" class="form-input">
                     </div>
 
                     <div class="form-group">
@@ -67,32 +67,32 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">E-mail</label>
+                        <label class="form-label">E-mail Corporativo</label>
                         <input type="email" name="email" value="{{ old('email') }}" placeholder="cliente@email.com" class="form-input">
                     </div>
                 </div>
 
                 {{-- Contact & Address --}}
-                <div class="grid grid-2">
+                <div class="form-grid">
                     <div style="grid-column: 1/-1;">
-                        <h4 style="font-family:'Outfit'; font-size:1.1rem; margin-bottom:1rem; color:var(--text-primary); display:flex; align-items:center; gap:0.5rem;">
+                        <h4 style="font-family:'Outfit'; font-size:1.1rem; margin-bottom:0.5rem; color:var(--text-primary); display:flex; align-items:center; gap:0.5rem;">
                             <i class="fa-solid fa-map-location-dot" style="color:var(--accent);"></i> Contato e Endereço
                         </h4>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Telefone / Celular</label>
-                        <input type="tel" name="phone" value="{{ old('phone') }}" placeholder="(00) 00000-0000" class="form-input">
+                        <input type="tel" name="phone" value="{{ old('phone') }}" data-mask="phone" placeholder="(00) 00000-0000" class="form-input">
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">CEP</label>
-                        <input type="text" name="zip_code" value="{{ old('zip_code') }}" placeholder="00000-000" class="form-input">
+                        <input type="text" name="zip_code" value="{{ old('zip_code') }}" data-mask="cep" placeholder="00000-000" class="form-input">
                     </div>
 
                     <div class="form-group" style="grid-column: 1/-1;">
                         <label class="form-label">Logradouro (Rua, Avenida)</label>
-                        <input type="text" name="address" value="{{ old('address') }}" placeholder="Ex: Rua das Flores" class="form-input">
+                        <input type="text" name="address" value="{{ old('address') }}" placeholder="Ex: Rua das Flores, 123" class="form-input">
                     </div>
 
                     <div class="form-group">
@@ -116,7 +116,7 @@
                     </div>
                 </div>
 
-                <div style="display:flex; gap:1rem; justify-content:flex-end; padding-top:1.5rem; border-top:1px solid var(--border);">
+                <div style="display:flex; gap:1rem; justify-content:flex-end; padding-top:2rem; border-top:1px solid var(--border);">
                     <a href="{{ route('customers.index') }}" class="btn btn-secondary">Cancelar</a>
                     <button type="submit" class="btn btn-primary" style="padding-left:2.5rem; padding-right:2.5rem;">
                         <i class="fa-solid fa-save"></i> Salvar Cadastro

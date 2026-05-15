@@ -36,21 +36,21 @@
                 @csrf
 
                 {{-- Basic Info --}}
-                <div class="grid grid-2">
+                <div class="form-grid">
                     <div style="grid-column: 1/-1;">
-                        <h4 style="font-family:'Outfit'; font-size:1.1rem; margin-bottom:1rem; color:var(--text-primary); display:flex; align-items:center; gap:0.5rem;">
+                        <h4 style="font-family:'Outfit'; font-size:1.1rem; margin-bottom:0.5rem; color:var(--text-primary); display:flex; align-items:center; gap:0.5rem;">
                             <i class="fa-solid fa-info-circle" style="color:var(--accent);"></i> Informações Básicas
                         </h4>
                     </div>
                     
                     <div class="form-group" style="grid-column: 1/-1;">
-                        <label class="form-label">Nome / Razão Social <span style="color:var(--red);">*</span></label>
+                        <label class="form-label">Nome / Razão Social <span class="required-mark">*</span></label>
                         <input type="text" name="name" value="{{ old('name') }}" required class="form-input" placeholder="Ex: Logística S.A.">
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">CNPJ / Documento</label>
-                        <input type="text" name="cnpj" value="{{ old('cnpj') }}" placeholder="00.000.000/0000-00" class="form-input">
+                        <input type="text" name="cnpj" value="{{ old('cnpj') }}" data-mask="cnpj" placeholder="00.000.000/0000-00" class="form-input">
                     </div>
 
                     <div class="form-group">
@@ -60,31 +60,31 @@
 
                     <div class="form-group">
                         <label class="form-label">Telefone de Contato</label>
-                        <input type="tel" name="phone" value="{{ old('phone') }}" placeholder="(11) 99999-9999" class="form-input">
+                        <input type="tel" name="phone" value="{{ old('phone') }}" data-mask="phone" placeholder="(11) 99999-9999" class="form-input">
                     </div>
 
-                    <div class="form-group" style="grid-column: 1/-1;">
+                    <div class="form-group">
                         <label class="form-label">E-mail Corporativo</label>
                         <input type="email" name="email" value="{{ old('email') }}" placeholder="contato@empresa.com" class="form-input">
                     </div>
                 </div>
 
                 {{-- Address Info --}}
-                <div class="grid grid-2">
+                <div class="form-grid">
                     <div style="grid-column: 1/-1;">
-                        <h4 style="font-family:'Outfit'; font-size:1.1rem; margin-bottom:1rem; color:var(--text-primary); display:flex; align-items:center; gap:0.5rem;">
-                            <i class="fa-solid fa-map-location-dot" style="color:var(--accent);"></i> Endereço
+                        <h4 style="font-family:'Outfit'; font-size:1.1rem; margin-bottom:0.5rem; color:var(--text-primary); display:flex; align-items:center; gap:0.5rem;">
+                            <i class="fa-solid fa-map-location-dot" style="color:var(--accent);"></i> Endereço Comercial
                         </h4>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">CEP</label>
-                        <input type="text" name="zip_code" value="{{ old('zip_code') }}" placeholder="00000-000" class="form-input">
+                        <input type="text" name="zip_code" value="{{ old('zip_code') }}" data-mask="cep" placeholder="00000-000" class="form-input">
                     </div>
 
                     <div class="form-group" style="grid-column: 1/-1;">
                         <label class="form-label">Logradouro (Rua, Avenida)</label>
-                        <input type="text" name="street" value="{{ old('street') }}" placeholder="Ex: Rua das Flores" class="form-input">
+                        <input type="text" name="street" value="{{ old('street') }}" placeholder="Ex: Rua das Flores, 123" class="form-input">
                     </div>
 
                     <div class="form-group">
@@ -108,10 +108,10 @@
                     </div>
                 </div>
 
-                <div style="display:flex; gap:1rem; justify-content:flex-end; padding-top:1.5rem; border-top:1px solid var(--border);">
+                <div style="display:flex; gap:1rem; justify-content:flex-end; padding-top:2rem; border-top:1px solid var(--border);">
                     <a href="{{ route('suppliers.index') }}" class="btn btn-secondary">Cancelar</a>
                     <button type="submit" class="btn btn-primary" style="padding-left:2.5rem; padding-right:2.5rem;">
-                        <i class="fa-solid fa-plus"></i> Criar Fornecedor
+                        <i class="fa-solid fa-save"></i> Criar Fornecedor
                     </button>
                 </div>
             </form>

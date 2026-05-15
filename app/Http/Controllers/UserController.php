@@ -12,12 +12,31 @@ use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $employees = User::select('id', 'name', 'role', 'email', 'cpf', 'document_path')
-            ->orderBy('name')
-            ->get();
-        return view('users.index', compact('employees'));
+        $query = User::select('id', 'name', 'role', 'email', 'cpf', 'document_path');
+        
+        // General search
+        if ($search = $request->get('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('cpf', 'like', "%{$search}%")
+                  ->orWhere('role', 'like', "%{$search}%");
+            });
+        }
+
+        // Specific Role Filter
+        if ($roleFilter = $request->get('role_filter')) {
+            $query->where('role', $roleFilter);
+        }
+
+        $employees = $query->orderBy('name')->paginate(15)->withQueryString();
+        
+        // Fetch roles for the filter dropdown
+        $roles = Role::orderBy('name')->get();
+        
+        return view('users.index', compact('employees', 'roles'));
     }
 
     public function create()
@@ -27,19 +46,15 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $roles = \Illuminate\Support\Facades\Cache::remember('roles_list', 300, function () {
-            return Role::select('id', 'name', 'description')
-                ->orderBy('name')
-                ->get();
-        });
+        $roles = Role::select('id', 'name', 'description')
+            ->orderBy('name')
+            ->get();
 
-        $permissions = \Illuminate\Support\Facades\Cache::remember('permissions_by_group', 300, function () {
-            return Permission::select('id', 'name', 'label', 'group')
-                ->orderBy('group')
-                ->orderBy('label')
-                ->get()
-                ->groupBy('group');
-        });
+        $permissions = Permission::select('id', 'name', 'label', 'group')
+            ->orderBy('group')
+            ->orderBy('label')
+            ->get()
+            ->groupBy('group');
         $userPermissions = $user->permissions->pluck('id')->toArray();
         
         return view('users.edit', compact('user', 'roles', 'permissions', 'userPermissions'));

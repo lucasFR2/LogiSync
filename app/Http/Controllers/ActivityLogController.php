@@ -30,9 +30,7 @@ class ActivityLogController extends Controller
         $users = User::select('id', 'name')->orderBy('name')->get();
         
         // Optimize fetching unique actions
-        $actions = \Illuminate\Support\Facades\Cache::remember('activity_log_actions', 3600, function () {
-            return ActivityLog::distinct('action')->pluck('action');
-        });
+        $actions = ActivityLog::distinct()->pluck('action');
 
         return view('logs.index', compact('logs', 'users', 'actions'));
     }

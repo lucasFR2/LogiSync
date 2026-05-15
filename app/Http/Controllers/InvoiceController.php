@@ -6,13 +6,28 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Product;
 use App\Models\Supplier;
+use App\Models\Customer;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\Logger;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+
+class InvoiceController extends Controller implements HasMiddleware
+{
     protected $invoiceService;
+
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:invoices.view', only: ['index', 'show', 'pdf']),
+            new Middleware('permission:invoices.create', only: ['create', 'store']),
+            new Middleware('permission:invoices.edit', only: ['edit', 'update', 'cancel', 'destroy']),
+        ];
+    }
 
     public function __construct(\App\Services\InvoiceService $invoiceService)
     {
@@ -54,14 +69,13 @@ use App\Helpers\Logger;
     public function create()
     {
         $number    = Invoice::nextNumber();
-        $products  = \Illuminate\Support\Facades\Cache::remember('invoice_form_products', 300, function () {
-            return Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode']);
-        });
-        $suppliers = \Illuminate\Support\Facades\Cache::remember('invoice_form_suppliers', 300, function () {
-            return Supplier::orderBy('name')->get(['id', 'name']);
-        });
+        $products  = Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode', 'quantity']);
+        $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
+        $customers = Customer::orderBy('name')->get(['id', 'name', 'document', 'email', 'phone', 'address', 'city', 'state', 'zip_code']);
 
-        return view('invoices.create', compact('number', 'products', 'suppliers', 'customers'));
+        $invoice = null; // Garante que a variável existe na view
+
+        return view('invoices.create', compact('number', 'products', 'suppliers', 'customers', 'invoice'));
     }
 
     /**
@@ -117,12 +131,10 @@ use App\Helpers\Logger;
         }
 
         $invoice->load('items.product', 'supplier');
-        $products  = \Illuminate\Support\Facades\Cache::remember('invoice_form_products', 300, function () {
-            return Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode']);
-        });
-        $suppliers = \Illuminate\Support\Facades\Cache::remember('invoice_form_suppliers', 300, function () {
-            return Supplier::orderBy('name')->get(['id', 'name']);
-        });
+        
+        $products  = Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode', 'quantity']);
+        $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
+        $customers = Customer::orderBy('name')->get(['id', 'name', 'document', 'email', 'phone', 'address', 'city', 'state', 'zip_code']);
 
         return view('invoices.create', compact('invoice', 'products', 'suppliers', 'customers'));
     }

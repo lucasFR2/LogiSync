@@ -215,15 +215,15 @@
 
                     <div class="form-group">
                         <label class="form-label">E-mail Corporativo</label>
-                        <input type="email" name="email" value="{{ old('email') }}" placeholder="nome@empresa.com" required class="form-input">
+                        <input type="email" name="email" value="{{ old('email') }}" placeholder="exemplo@logisync.com" required class="form-input">
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Senha de Acesso</label>
-                        <div style="position:relative;">
+                        <div class="password-wrapper">
                             <input type="password" name="password" id="password-field" placeholder="••••••••" required class="form-input" style="padding-right:3.5rem;">
-                            <button type="button" onclick="togglePassword()" class="password-toggle">
-                                <i class="fa-solid fa-eye" id="eye-icon"></i>
+                            <button type="button" class="password-toggle">
+                                <i class="fa-solid fa-eye"></i>
                             </button>
                         </div>
                     </div>
@@ -238,7 +238,7 @@
                         @endif
                     </div>
 
-                    <button type="submit" class="btn btn-primary" style="padding:1rem; margin-top:1rem; font-size:1rem;">
+                    <button type="submit" class="btn btn-primary" style="padding:1rem; margin-top:1rem; font-size:1rem; width:100%;">
                         <i class="fa-solid fa-right-to-bracket"></i>
                         Acessar Sistema
                     </button>
@@ -252,17 +252,18 @@
     </div>
 
     <script>
-        function togglePassword() {
-            const field = document.getElementById('password-field');
-            const icon  = document.getElementById('eye-icon');
-            if (field.type === 'password') {
-                field.type = 'text';
-                icon.className = 'fa-solid fa-eye-slash';
+        // Standardized Password Toggle for Login
+        document.querySelector('.password-toggle').addEventListener('click', function() {
+            const input = document.getElementById('password-field');
+            const icon = this.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
             } else {
-                field.type = 'password';
-                icon.className = 'fa-solid fa-eye';
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
             }
-        }
+        });
     </script>
 </body>
 </html>

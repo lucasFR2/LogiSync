@@ -29,6 +29,7 @@ class PermissionSeeder extends Seeder
             // Fiscal
             ['name' => 'invoices.view',    'label' => 'Visualizar Notas Fiscais', 'group' => 'Fiscal'],
             ['name' => 'invoices.create',  'label' => 'Emitir Notas Fiscais',     'group' => 'Fiscal'],
+            ['name' => 'invoices.edit',    'label' => 'Editar Notas Fiscais',     'group' => 'Fiscal'],
             ['name' => 'manifests.manage', 'label' => 'Gerenciar Manifestações',  'group' => 'Fiscal'],
             
             // Administrativo

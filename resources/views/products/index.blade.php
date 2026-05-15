@@ -45,9 +45,11 @@
                         <button type="button" onclick="toggleAdvancedFilter()" class="btn btn-secondary">
                             <i class="fa-solid fa-sliders"></i> <span>Filtros</span>
                         </button>
+                        @if(auth()->user()->hasPermission('products.create'))
                         <a href="{{ route('products.create') }}" class="btn btn-primary">
                             <i class="fa-solid fa-plus"></i> <span>Novo Produto</span>
                         </a>
+                        @endif
                     </div>
                 </div>
         </div>
@@ -133,15 +135,19 @@
                                 </td>
                                 <td style="text-align:center;">
                                     <div class="flex" style="justify-content:center; gap:0.5rem;">
+                                        @if(auth()->user()->hasPermission('products.edit'))
                                         <a href="{{ route('products.edit', $product) }}" class="icon-btn" title="Editar">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </a>
+                                        @endif
+                                        @if(auth()->user()->hasPermission('products.delete'))
                                         <form method="POST" action="{{ route('products.destroy', $product) }}" onsubmit="return confirm('Tem certeza que deseja excluir este produto?');">
                                             @csrf @method('DELETE')
                                             <button type="submit" class="icon-btn" style="color:var(--red);" title="Excluir">
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -166,9 +172,11 @@
                 </div>
                 <h3 style="font-family:'Outfit'; font-size:1.5rem; margin-bottom:0.5rem;">Nenhum produto encontrado</h3>
                 <p style="color:var(--text-muted); max-width:400px; margin:0 auto 2rem;">Sua busca não retornou resultados ou o catálogo está vazio. Tente ajustar os filtros ou cadastrar um novo item.</p>
+                @if(auth()->user()->hasPermission('products.create'))
                 <a href="{{ route('products.create') }}" class="btn btn-primary" style="padding:1rem 2rem;">
                     <i class="fa-solid fa-plus"></i> Cadastrar Primeiro Produto
                 </a>
+                @endif
             </div>
         @endif
     </div>

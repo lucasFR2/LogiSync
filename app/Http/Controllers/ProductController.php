@@ -11,8 +11,28 @@ use Illuminate\Support\Facades\DB;
 use App\Helpers\Logger;
 use Illuminate\Validation\ValidationException;
 
-class ProductController extends Controller
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+
+class ProductController extends Controller implements HasMiddleware
 {
+    protected $productService;
+
+    public function __construct(\App\Services\ProductService $productService)
+    {
+        $this->productService = $productService;
+    }
+
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:products.view', only: ['index', 'show', 'searchLocations']),
+            new Middleware('permission:products.create', only: ['create', 'store', 'storeCategory', 'bulkCreate', 'bulkStore']),
+            new Middleware('permission:products.edit', only: ['edit', 'update', 'addInventory', 'inventories', 'createInventory', 'storeInventory']),
+            new Middleware('permission:products.delete', only: ['destroy']),
+        ];
+    }
+
     // Listar todos os produtos
     public function index(Request $request)
     {
@@ -149,7 +169,8 @@ class ProductController extends Controller
 
     public function bulkStore(Request $request, \App\Models\IncomingInvoice $manifestation)
     {
-        if ($manifestation->entry_status === 'imported') {
+        try {
+            if ($manifestation->entry_status === 'imported') {
             return redirect()->route('manifestations.show', $manifestation)->with('error', 'Esta Nota Fiscal já foi importada.');
         }
 

@@ -94,41 +94,38 @@
                 </div>
             </div>
             <div class="card-body">
-                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                <div class="form-grid">
                     <div class="form-group">
-                        <label class="form-label">Nome / Razão Social <span style="color:var(--red);">*</span></label>
-                        <input type="text" name="recipient_name" id="recipient_name" value="{{ $invoice->recipient_name ?? '' }}" required class="form-control" placeholder="Nome do cliente">
+                        <label class="form-label">Nome / Razão Social <span class="required-mark">*</span></label>
+                        <input type="text" name="recipient_name" id="recipient_name" value="{{ $invoice->recipient_name ?? '' }}" required class="form-input" placeholder="Nome do cliente">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">CPF / CNPJ <span style="color:var(--red);">*</span></label>
-                        <input type="text" name="recipient_document" id="recipient_document" value="{{ $invoice->recipient_document ?? '' }}" required class="form-control" placeholder="000.000.000-00">
+                        <label class="form-label">CPF / CNPJ <span class="required-mark">*</span></label>
+                        <input type="text" name="recipient_document" id="recipient_document" value="{{ $invoice->recipient_document ?? '' }}" required data-mask="cpf" class="form-input" placeholder="000.000.000-00">
                     </div>
                     <div class="form-group">
                         <label class="form-label">E-mail</label>
-                        <input type="email" name="recipient_email" id="recipient_email" value="{{ $invoice->recipient_email ?? '' }}" class="form-control" placeholder="cliente@email.com">
+                        <input type="email" name="recipient_email" id="recipient_email" value="{{ $invoice->recipient_email ?? '' }}" class="form-input" placeholder="cliente@email.com">
                     </div>
-                </div>
-
-                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
                     <div class="form-group">
                         <label class="form-label">Telefone</label>
-                        <input type="text" name="recipient_phone" id="recipient_phone" value="{{ $invoice->recipient_phone ?? '' }}" class="form-control" placeholder="(00) 00000-0000">
+                        <input type="text" name="recipient_phone" id="recipient_phone" value="{{ $invoice->recipient_phone ?? '' }}" data-mask="phone" class="form-input" placeholder="(00) 00000-0000">
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Endereço</label>
-                        <input type="text" name="recipient_address" id="recipient_address" value="{{ $invoice->recipient_address ?? '' }}" class="form-control" placeholder="Rua, Número, Bairro">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Cidade</label>
-                        <input type="text" name="recipient_city" id="recipient_city" value="{{ $invoice->recipient_city ?? '' }}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Estado (UF)</label>
-                        <input type="text" name="recipient_state" id="recipient_state" value="{{ $invoice->recipient_state ?? '' }}" maxlength="2" class="form-control text-center" placeholder="UF">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label">Endereço Completo</label>
+                        <input type="text" name="recipient_address" id="recipient_address" value="{{ $invoice->recipient_address ?? '' }}" class="form-input" placeholder="Rua, Número, Bairro">
                     </div>
                     <div class="form-group">
                         <label class="form-label">CEP</label>
-                        <input type="text" name="recipient_zip" id="recipient_zip" value="{{ $invoice->recipient_zip ?? '' }}" class="form-control" placeholder="00000-000">
+                        <input type="text" name="recipient_zip" id="recipient_zip" value="{{ $invoice->recipient_zip ?? '' }}" data-mask="cep" class="form-input" placeholder="00000-000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cidade</label>
+                        <input type="text" name="recipient_city" id="recipient_city" value="{{ $invoice->recipient_city ?? '' }}" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">UF</label>
+                        <input type="text" name="recipient_state" id="recipient_state" value="{{ $invoice->recipient_state ?? '' }}" maxlength="2" class="form-input text-center" placeholder="UF">
                     </div>
                 </div>
             </div>
@@ -170,23 +167,23 @@
             </div>
 
             {{-- Footer Summary --}}
-            <div style="padding: 2rem; background: var(--bg-hover); display: flex; justify-content: flex-end; border-top: 1px solid var(--border);">
-                <div style="width: 350px; display: flex; flex-direction: column; gap: 1rem;">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.95rem;">
+            <div style="padding: 2.5rem; background: var(--bg-hover); display: flex; justify-content: flex-end; border-top: 1px solid var(--border);">
+                <div style="width: 400px; display: flex; flex-direction: column; gap: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.95rem; font-weight: 500;">
                         <span style="color: var(--text-secondary);">Subtotal Produtos:</span>
                         <span id="subtotal-display" style="color: var(--text-primary); font-weight: 700;">R$ 0,00</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: var(--text-secondary);">Desconto Total (R$):</span>
-                        <input type="number" name="discount" id="discount-input" step="0.01" class="form-control" style="width: 120px; text-align: right; height: 36px; padding: 0.5rem;" oninput="calcTotals()" value="0">
+                    <div class="form-group" style="flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0;">
+                        <label class="form-label" style="margin-bottom: 0;">Desconto Total</label>
+                        <input type="text" name="discount" id="discount-input" data-mask="currency" class="form-input" style="width: 160px; text-align: right;" oninput="calcTotals()" value="0">
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: var(--text-secondary);">Frete / Seguro (R$):</span>
-                        <input type="number" name="shipping" id="shipping-input" step="0.01" class="form-control" style="width: 120px; text-align: right; height: 36px; padding: 0.5rem;" oninput="calcTotals()" value="0">
+                    <div class="form-group" style="flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0;">
+                        <label class="form-label" style="margin-bottom: 0;">Frete / Seguro</label>
+                        <input type="text" name="shipping" id="shipping-input" data-mask="currency" class="form-input" style="width: 160px; text-align: right;" oninput="calcTotals()" value="0">
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; padding-top: 1.5rem; border-top: 2px dashed var(--border-strong); align-items: center;">
-                        <span style="font-family: 'Outfit'; font-weight: 800; font-size: 1.25rem;">VALOR TOTAL:</span>
-                        <span id="total-display" style="font-family: 'Outfit'; font-weight: 800; font-size: 1.75rem; color: var(--blue);">R$ 0,00</span>
+                    <div style="margin-top: 0.5rem; padding-top: 1.5rem; border-top: 2px dashed var(--border-strong); display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-family: 'Outfit'; font-weight: 800; font-size: 1.35rem; letter-spacing: -0.02em;">VALOR TOTAL:</span>
+                        <span id="total-display" style="font-family: 'Outfit'; font-weight: 800; font-size: 2rem; color: var(--accent);">R$ 0,00</span>
                     </div>
                 </div>
             </div>
@@ -238,19 +235,25 @@ function fmtBR(val) {
     return 'R$ ' + parseFloat(val || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 
+function parseVal(val) {
+    if (typeof val === 'object') val = val.value;
+    if (!val) return 0;
+    return parseFloat(String(val).replace(/[R$\s%._]/g, '').replace(',', '.')) || 0;
+}
+
 function calcTotals() {
     let subtotal = 0;
     document.querySelectorAll('.item-row').forEach(row => {
-        const qty   = parseFloat(row.querySelector('.qty-input').value) || 0;
-        const price = parseFloat(row.querySelector('.price-input').value) || 0;
-        const disc  = parseFloat(row.querySelector('.disc-input').value) || 0;
+        const qty   = parseVal(row.querySelector('.qty-input'));
+        const price = parseVal(row.querySelector('.price-input'));
+        const disc  = parseVal(row.querySelector('.disc-input'));
         const total = qty * price * (1 - disc / 100);
         row.querySelector('.total-display').textContent = fmtBR(total);
         subtotal += total;
     });
     
-    const discountTotal = parseFloat(document.getElementById('discount-input').value) || 0;
-    const shippingTotal = parseFloat(document.getElementById('shipping-input').value) || 0;
+    const discountTotal = parseVal(document.getElementById('discount-input'));
+    const shippingTotal = parseVal(document.getElementById('shipping-input'));
     const grandTotal    = subtotal - discountTotal + shippingTotal;
     
     document.getElementById('subtotal-display').textContent = fmtBR(subtotal);
@@ -344,6 +347,12 @@ function addItem(data = {}) {
     // Bind product select
     const sel = row.querySelector('select');
     if (sel) sel.addEventListener('change', function() { fillProductData(this); });
+
+    // Initialize masks for the new row
+    if (window.initMasks) {
+        window.initMasks(row);
+        window.initMasks(taxRow);
+    }
 
     calcTotals();
 }

@@ -19,7 +19,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard',  [DashboardController::class, 'index'])->name('dashboard');
 
     // Employee management (restricted)
-    Route::middleware('role:admin,rh')->group(function () {
+    Route::middleware('permission:users.manage')->group(function () {
         Route::get('/register',  [AuthController::class, 'showRegister'])->name('register');
         Route::post('/register', [AuthController::class, 'register']);
 
@@ -67,10 +67,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/{manifestation}/danfe', [App\Http\Controllers\ManifestationController::class, 'danfe'])->name('danfe');
     });
 
-    // Admin-only
-    Route::middleware('role:admin')->group(function () {
+    // Admin-only / Special Logs
+    Route::middleware('permission:logs.view')->group(function () {
         Route::get('/logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('logs.index');
+    });
 
+    Route::middleware('permission:roles.manage')->group(function () {
         // Roles management
         Route::resource('roles', App\Http\Controllers\RoleController::class)->except(['show', 'create', 'edit']);
 

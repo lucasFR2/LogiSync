@@ -5,8 +5,18 @@ use App\Models\Supplier;
 use App\Helpers\Logger;
 use Illuminate\Http\Request;
 
-class SupplierController extends Controller
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+
+class SupplierController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:suppliers.manage'),
+        ];
+    }
+
     // Listar todos os fornecedores
     public function index(Request $request)
     {

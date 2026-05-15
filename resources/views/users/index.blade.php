@@ -14,15 +14,52 @@
         </div>
     @endif
 
+    {{-- Barra de Controle Superior --}}
+    <div class="card" style="margin-bottom:2rem; padding:1.25rem;">
+        <div style="display:flex; flex-wrap:wrap; gap:1.25rem; align-items:center; justify-content:space-between;">
+            
+            {{-- Formulário de Filtro --}}
+            <form action="{{ route('employees.index') }}" method="GET" style="display:flex; flex:1; gap:0.75rem; min-width:320px;">
+                <div style="flex:1; position:relative;">
+                    <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:1.25rem; top:50%; transform:translateY(-50%); color:var(--text-muted); pointer-events:none;"></i>
+                    <input type="text" name="search" value="{{ request('search') }}" class="form-input" placeholder="Pesquisar por nome, e-mail ou CPF..." style="padding-left:3rem; border-radius:12px;">
+                </div>
+                
+                <select name="role_filter" class="form-select" style="width:200px; border-radius:12px;" onchange="this.form.submit()">
+                    <option value="">Todos os Cargos</option>
+                    @foreach($roles as $role)
+                        <option value="{{ $role->name }}" {{ request('role_filter') == $role->name ? 'selected' : '' }}>
+                            {{ $role->name }}
+                        </option>
+                    @endforeach
+                </select>
+
+                <button type="submit" class="btn btn-primary" style="padding:0 1.25rem;">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+                
+                @if(request()->hasAny(['search', 'role_filter']))
+                    <a href="{{ route('employees.index') }}" class="btn btn-secondary" title="Limpar Filtros" style="padding:0 1rem; display:flex; align-items:center;">
+                        <i class="fa-solid fa-xmark"></i>
+                    </a>
+                @endif
+            </form>
+
+            {{-- Ações --}}
+            <div style="display:flex; gap:0.75rem;">
+                <a href="{{ route('register') }}" class="btn btn-primary" style="box-shadow: 0 10px 20px -5px var(--accent-glow);">
+                    <i class="fa-solid fa-user-plus"></i> Novo Funcionário
+                </a>
+            </div>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-header">
             <div style="display:flex; align-items:center; gap:0.75rem;">
                 <div style="width:10px; height:24px; background:var(--accent); border-radius:4px;"></div>
                 <h3 style="margin:0;">Funcionários Cadastrados</h3>
             </div>
-            <a href="{{ route('register') }}" class="btn btn-primary">
-                <i class="fa-solid fa-user-plus"></i> Novo Cadastro
-            </a>
         </div>
         <div class="table-wrap">
             <table>
@@ -36,7 +73,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($employees as $emp)
+                    @forelse($employees as $emp)
                         <tr>
                             <td>
                                 <div style="display:flex; align-items:center; gap:0.75rem;">
@@ -65,7 +102,7 @@
                                             <i class="fa-solid fa-file-invoice"></i>
                                         </button>
                                     @endif
-
+ 
                                     @if($emp->id !== auth()->id())
                                         <form action="{{ route('employees.destroy', $emp->id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja remover este funcionário?')">
                                             @csrf
@@ -78,10 +115,22 @@
                                 </div>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="5" style="text-align:center; padding:3rem; color:var(--text-muted);">
+                                <i class="fa-solid fa-user-slash" style="font-size:2rem; display:block; margin-bottom:1rem; opacity:0.3;"></i>
+                                Nenhum funcionário encontrado para esta busca.
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
+        @if($employees->hasPages())
+            <div style="padding:1.25rem; border-top:1px solid var(--border); display:flex; justify-content:center;">
+                {{ $employees->links() }}
+            </div>
+        @endif
     </div>
 </div>
 

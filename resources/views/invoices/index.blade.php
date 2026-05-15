@@ -16,9 +16,11 @@
                     Emita novas notas fiscais de saída ou entrada, gerencie rascunhos e acompanhe o status de processamento fiscal em tempo real.
                 </p>
             </div>
+            @if(auth()->user()->hasPermission('invoices.create'))
             <a href="{{ route('invoices.create') }}" class="btn btn-primary" style="padding: 1rem 2rem; font-size: 1.1rem; box-shadow: 0 15px 30px -10px var(--accent-glow);">
                 <i class="fa-solid fa-plus-circle mr-2"></i> Emitir Nova NF-e
             </a>
+            @endif
         </div>
         <div class="anim-float" style="position: absolute; right: 5%; top: -30px; font-size: 12rem; opacity: 0.07; pointer-events: none;">
             <i class="fa-solid fa-file-invoice-dollar"></i>
@@ -130,7 +132,7 @@
                                         </a>
                                     @endif
 
-                                    @if($invoice->status === 'rascunho')
+                                    @if($invoice->status === 'rascunho' && auth()->user()->hasPermission('invoices.edit'))
                                         <a href="{{ route('invoices.edit', $invoice) }}" class="icon-btn" style="color: var(--orange);" title="Editar Rascunho">
                                             <i class="fa-solid fa-pen-to-square" style="font-size: 0.9rem;"></i>
                                         </a>
@@ -147,9 +149,11 @@
                                     </div>
                                     <h3 style="font-family:'Outfit'; font-size:1.5rem; margin-bottom: 0.75rem;">Nenhuma nota encontrada</h3>
                                     <p style="color:var(--text-muted); font-size: 1rem; margin-bottom: 2rem;">Ainda não há documentos fiscais registrados com estes critérios.</p>
+                                    @if(auth()->user()->hasPermission('invoices.create'))
                                     <a href="{{ route('invoices.create') }}" class="btn btn-primary" style="padding: 0.875rem 2rem;">
                                         <i class="fa-solid fa-plus-circle mr-2"></i> Emitir Primeira Nota
                                     </a>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

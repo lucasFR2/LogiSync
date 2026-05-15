@@ -29,11 +29,9 @@ class AuthController extends Controller
 
     public function showRegister()
     {
-        $roles = \Illuminate\Support\Facades\Cache::remember('roles_list', 300, function () {
-            return Role::select('id', 'name', 'description')
-                ->orderBy('name')
-                ->get();
-        });
+        $roles = Role::select('id', 'name', 'description')
+            ->orderBy('name')
+            ->get();
         return view('auth.register', compact('roles'));
     }
 

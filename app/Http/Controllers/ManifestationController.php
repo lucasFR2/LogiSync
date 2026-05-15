@@ -11,8 +11,18 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Helpers\Logger;
 
-class ManifestationController extends Controller
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+
+class ManifestationController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:manifests.manage'),
+        ];
+    }
+
     public function index(Request $request)
     {
         $search = $request->query('search');

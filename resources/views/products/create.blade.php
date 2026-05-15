@@ -62,50 +62,50 @@
                     </h3>
                 </div>
 
-                <div class="card" style="background:var(--bg-hover); border:1px dashed var(--border); padding:1.5rem;">
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:1.25rem;">
+                <div class="card" style="background:var(--bg-hover); border:1px dashed var(--border); padding:1.5rem; border-radius: var(--r-md);">
+                    <div class="form-grid">
                         <div class="form-group">
-                            <label class="form-label">Preço de Compra (R$)</label>
-                            <input type="number" name="purchase_price" id="purchase_price" value="{{ old('purchase_price', 0) }}" step="0.01" min="0" class="form-input price-calc">
+                            <label class="form-label">Preço de Compra</label>
+                            <input type="text" name="purchase_price" id="purchase_price" value="{{ old('purchase_price', 0) }}" data-mask="currency" class="form-input price-calc">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Frete / Encargos (R$)</label>
-                            <input type="number" name="shipping_cost" id="shipping_cost" value="{{ old('shipping_cost', 0) }}" step="0.01" min="0" class="form-input price-calc">
+                            <label class="form-label">Frete / Encargos</label>
+                            <input type="text" name="shipping_cost" id="shipping_cost" value="{{ old('shipping_cost', 0) }}" data-mask="currency" class="form-input price-calc">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Impostos (%)</label>
-                            <input type="number" name="tax_percent" id="tax_percent" value="{{ old('tax_percent', 0) }}" step="0.01" min="0" class="form-input price-calc">
+                            <input type="text" name="tax_percent" id="tax_percent" value="{{ old('tax_percent', 0) }}" data-mask="percentage" class="form-input price-calc">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Margem de Lucro (%)</label>
-                            <input type="number" name="margin_percent" id="margin_percent" value="{{ old('margin_percent', 0) }}" step="0.01" min="0" class="form-input price-calc">
+                            <input type="text" name="margin_percent" id="margin_percent" value="{{ old('margin_percent', 0) }}" data-mask="percentage" class="form-input price-calc">
                         </div>
                     </div>
                     <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-weight:600; color:var(--text-secondary);">Preço Final Calculado:</span>
+                        <span style="font-weight:600; color:var(--text-secondary);">Preço Final Sugerido:</span>
                         <span id="calculated_price_display" style="font-size:1.5rem; font-weight:800; color:var(--accent); font-family:'Outfit';">R$ 0,00</span>
                     </div>
                 </div>
 
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div class="form-grid">
                     <div class="form-group">
-                        <label class="form-label">Preço de Venda Final (R$) <span style="color:var(--red);">*</span></label>
-                        <input type="number" name="unit_price" id="unit_price" value="{{ old('unit_price') }}"
-                               placeholder="0.00" step="0.01" min="0" required class="form-input">
-                        <small style="color:var(--text-muted);">Este é o preço que será usado no sistema.</small>
+                        <label class="form-label">Preço de Venda Final <span class="required-mark">*</span></label>
+                        <input type="text" name="unit_price" id="unit_price" value="{{ old('unit_price') }}"
+                               data-mask="currency" required class="form-input">
+                        <small style="color:var(--text-muted);">Preço oficial para faturamento.</small>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Preço Especial / Promoção (R$)</label>
-                        <input type="number" name="selling_price" value="{{ old('selling_price') }}"
-                               placeholder="0.00" step="0.01" min="0" class="form-input">
+                        <label class="form-label">Preço Especial / Promoção</label>
+                        <input type="text" name="selling_price" value="{{ old('selling_price') }}"
+                               data-mask="currency" class="form-input">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Quantidade Inicial em Estoque</label>
+                        <label class="form-label">Qtd Inicial em Estoque <span class="required-mark">*</span></label>
                         <input type="number" name="quantity" value="{{ old('quantity', 0) }}"
                                placeholder="0" step="1" min="0" required class="form-input">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Nível de Ressuprimento <span style="color:var(--red);">*</span></label>
+                        <label class="form-label">Nível de Ressuprimento <span class="required-mark">*</span></label>
                         <input type="number" name="reorder_level" value="{{ old('reorder_level', 0) }}"
                                placeholder="0" step="1" min="0" required class="form-input">
                     </div>
@@ -254,7 +254,6 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Price Calculation Logic
-        const inputs = document.querySelectorAll('.price-calc');
         const purchaseInput = document.getElementById('purchase_price');
         const shippingInput = document.getElementById('shipping_cost');
         const taxInput = document.getElementById('tax_percent');
@@ -262,25 +261,29 @@
         const finalInput = document.getElementById('unit_price');
         const display = document.getElementById('calculated_price_display');
 
+        function parseVal(el) {
+            let val = el.value || '0';
+            // Remove R$, %, dots (thousands) and replace comma with dot
+            val = val.replace(/[R$\s%._]/g, '').replace(',', '.');
+            return parseFloat(val) || 0;
+        }
+
         function calculate() {
-            const purchase = parseFloat(purchaseInput.value) || 0;
-            const shipping = parseFloat(shippingInput.value) || 0;
-            const tax = parseFloat(taxInput.value) || 0;
-            const margin = parseFloat(marginInput.value) || 0;
+            const purchase = parseVal(purchaseInput);
+            const shipping = parseVal(shippingInput);
+            const tax = parseVal(taxInput);
+            const margin = parseVal(marginInput);
 
             const baseCost = purchase + shipping;
             const withTax = baseCost * (1 + (tax / 100));
             const finalPrice = withTax * (1 + (margin / 100));
 
             display.innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(finalPrice);
-            
-            if (finalPrice > 0) {
-                finalInput.value = finalPrice.toFixed(2);
-            }
         }
 
-        inputs.forEach(input => {
-            input.addEventListener('input', calculate);
+        [purchaseInput, shippingInput, taxInput, marginInput].forEach(input => {
+            input.addEventListener('accept', calculate); // IMask uses 'accept' event
+            input.addEventListener('input', calculate); 
         });
 
         calculate();

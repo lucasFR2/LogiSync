@@ -6,8 +6,18 @@ use App\Models\Customer;
 use App\Helpers\Logger;
 use Illuminate\Http\Request;
 
-class CustomerController extends Controller
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+
+class CustomerController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:customers.manage'),
+        ];
+    }
+
     /**
      * Display a listing of the resource.
      */

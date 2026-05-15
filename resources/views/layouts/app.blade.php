@@ -52,6 +52,45 @@
         </div>
     </div>
 
+    {{-- Scripts --}}
+    <script src="https://unpkg.com/imask"></script>
+    <script>
+        window.initMasks = function(container = document) {
+            const maskMap = {
+                'phone': { mask: [ { mask: '(00) 0000-0000' }, { mask: '(00) 00000-0000' } ] },
+                'cpf': { mask: '000.000.000-00' },
+                'cnpj': { mask: '00.999.999/0000-00' },
+                'cep': { mask: '00000-000' },
+                'date': { mask: Date, pattern: 'DD/MM/YYYY', blocks: { DD: { mask: IMask.MaskedRange, from: 1, to: 31 }, MM: { mask: IMask.MaskedRange, from: 1, to: 12 }, YYYY: { mask: IMask.MaskedRange, from: 1900, to: 9999 } }, format: function (date) { let day = date.getDate(); let month = date.getMonth() + 1; let year = date.getFullYear(); if (day < 10) day = '0' + day; if (month < 10) month = '0' + month; return [day, month, year].join('/'); }, parse: function (str) { let yearMonthDay = str.split('/'); return new Date(yearMonthDay[2], yearMonthDay[1] - 1, yearMonthDay[0]); } },
+                'currency': { mask: 'R$ num', blocks: { num: { mask: Number, thousandsSeparator: '.', padFractionalZeros: true, fractionalZerosCount: 2, radix: ',', mapToRadix: ['.'] } } },
+                'percentage': { mask: 'num%', blocks: { num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, fractionalZerosCount: 2, radix: ',', mapToRadix: ['.'], min: 0, max: 100 } } }
+            };
+
+            container.querySelectorAll('[data-mask]').forEach(el => {
+                if (el.mask) el.mask.destroy(); // Avoid duplicates
+                el.mask = IMask(el, maskMap[el.getAttribute('data-mask')]);
+            });
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            window.initMasks();
+
+            // Password toggle logic
+            document.querySelectorAll('.password-toggle').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const input = this.parentElement.querySelector('input');
+                    const icon = this.querySelector('i');
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.replace('fa-eye', 'fa-eye-slash');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.replace('fa-eye-slash', 'fa-eye');
+                    }
+                });
+            });
+        });
+    </script>
     @stack('scripts')
 </body>
 </html>
