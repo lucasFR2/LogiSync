@@ -124,7 +124,7 @@
                     <div class="grid grid-2">
                         <div class="form-group">
                             <label class="form-label">Data e Hora <span style="color:var(--red);">*</span></label>
-                            <input type="datetime-local" name="entry_date" value="{{ old('entry_date', now()->format('Y-m-d\TH:i')) }}" class="form-input">
+                            <input type="datetime-local" name="entry_date" id="entry_date_input" value="{{ old('entry_date', now()->format('Y-m-d\TH:i')) }}" class="form-input">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Quantidade <span style="color:var(--red);">*</span></label>
@@ -167,17 +167,26 @@
 document.addEventListener('DOMContentLoaded', function() {
     const sel  = document.getElementById('productSelect');
     const card = document.getElementById('productInfoCard');
+    const dateInput = document.getElementById('entry_date_input');
+    
     if (!sel || !card) return;
+
+    // Atualiza a hora para o momento exato do clique/abertura se não houver valor antigo
+    if (dateInput && !dateInput.defaultValue) {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        dateInput.value = now.toISOString().slice(0, 16);
+    }
 
     sel.addEventListener('change', function() {
         const opt = this.options[this.selectedIndex];
         if (!opt.value) { card.style.display = 'none'; return; }
 
-        document.getElementById('pi_stock').textContent    = opt.dataset.stock + ' ' + opt.dataset.unit;
-        document.getElementById('pi_price').textContent    = 'R$ ' + opt.dataset.price;
-        document.getElementById('pi_category').textContent = opt.dataset.category;
-        document.getElementById('pi_supplier').textContent = opt.dataset.supplier;
-        document.getElementById('pi_location').textContent = opt.dataset.location;
+        document.getElementById('pi_stock').textContent    = (opt.dataset.stock || '0') + ' ' + (opt.dataset.unit || 'un');
+        document.getElementById('pi_price').textContent    = 'R$ ' + (opt.dataset.price || '0,00');
+        document.getElementById('pi_category').textContent = opt.dataset.category || '—';
+        document.getElementById('pi_supplier').textContent = opt.dataset.supplier || '—';
+        document.getElementById('pi_location').textContent = opt.dataset.location || '—';
         card.style.display = 'block';
     });
 

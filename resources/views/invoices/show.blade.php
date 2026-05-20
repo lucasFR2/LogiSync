@@ -40,7 +40,7 @@
 
             @if($invoice->status !== 'cancelada')
                 <form action="{{ route('invoices.cancel', $invoice) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja cancelar esta nota?')">
-                    @csrf @method('PATCH')
+                    @csrf
                     <button type="submit" class="btn btn-secondary" style="color: var(--red); border-color: var(--red-bg);">
                         <i class="fa-solid fa-ban mr-2"></i> Cancelar Nota
                     </button>

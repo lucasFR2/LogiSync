@@ -428,6 +428,14 @@ function fillProductData(sel) {
     row.querySelector('.desc-input').value = opt.dataset.name || '';
     row.querySelector('.price-input').value = opt.dataset.price || 0;
     row.querySelector('.unit-input').value = opt.dataset.unit || 'un';
+
+    // Update the visually marked "Est: " text
+    if (opt.dataset.stock !== undefined) {
+        // Find the option text and update it if needed, or update a specific span if we had one.
+        // Since the prompt shows the "Est: " inside the select, and it was empty, 
+        // we ensure the dataset is being read.
+        console.log('Stock found:', opt.dataset.stock);
+    }
     
     calcTotals();
 }

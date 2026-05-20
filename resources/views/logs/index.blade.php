@@ -77,7 +77,7 @@
                                     </div>
                                     <div>
                                         <div style="font-weight:600;">{{ $log->user->name ?? 'Sistema' }}</div>
-                                        <div style="font-size:0.75rem; color:var(--text-muted);">{{ $log->user->role ?? 'Processo Automático' }}</div>
+                                        <div style="font-size:0.75rem; color:var(--text-muted);">{{ $log->user->role->name ?? ($log->user_id ? 'Sem Cargo' : 'Processo Automático') }}</div>
                                     </div>
                                 </div>
                             </td>

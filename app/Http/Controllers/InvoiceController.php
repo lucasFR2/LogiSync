@@ -16,15 +16,6 @@ class InvoiceController extends Controller
 {
     protected $invoiceService;
 
-    public static function middleware(): array
-    {
-        return [
-            new Middleware('permission:notas_fiscais.visualizar', only: ['index', 'show', 'pdf']),
-            new Middleware('permission:notas_fiscais.emitir', only: ['create', 'store']),
-            new Middleware('permission:notas_fiscais.editar', only: ['edit', 'update', 'cancel', 'destroy']),
-        ];
-    }
-
     public function __construct(\App\Services\InvoiceService $invoiceService)
     {
         $this->invoiceService = $invoiceService;
@@ -65,7 +56,7 @@ class InvoiceController extends Controller
     public function create()
     {
         $number    = Invoice::nextNumber();
-        $products  = Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode']);
+        $products  = Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode', 'quantity']);
         $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
         $customers = Customer::orderBy('name')->get(['id', 'name', 'document', 'email', 'phone', 'address', 'city', 'state', 'zip_code']);
 

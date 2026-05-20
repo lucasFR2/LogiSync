@@ -23,7 +23,7 @@ class Inventory extends Model
 
     protected $casts = [
         'quantity' => 'integer',
-        'entry_date' => 'date',
+        'entry_date' => 'datetime',
         'expiry_date' => 'date',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',

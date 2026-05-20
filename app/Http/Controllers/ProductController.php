@@ -97,18 +97,17 @@ class ProductController extends Controller implements HasMiddleware
 
     public function inventories()
     {
-        $inventories = Inventory::with(['product:id,name,supplier_id', 'product.supplier:id,name', 'supplier:id,name'])
+        $inventories = Inventory::with(['product:id,name,supplier_id,barcode', 'product.supplier:id,name', 'supplier:id,name'])
             ->latest()
             ->paginate(15);
 
-        $stats = \Illuminate\Support\Facades\Cache::remember('inventory_stats', 600, function() {
-            return [
-                'totalEntries' => Inventory::count(),
-                'monthEntries' => Inventory::where('created_at', '>=', now()->startOfMonth())->count(),
-                'todayEntries' => Inventory::where('created_at', '>=', now()->startOfDay())->count(),
-                'activeSKUs'   => Inventory::distinct('product_id')->count('product_id'),
-            ];
-        });
+        // Don't cache during development or if precision is needed for recent entries
+        $stats = [
+            'totalEntries' => Inventory::count(),
+            'monthEntries' => Inventory::where('created_at', '>=', now()->startOfMonth())->count(),
+            'todayEntries' => Inventory::where('created_at', '>=', now()->startOfDay())->count(),
+            'activeSKUs'   => Inventory::distinct('product_id')->count('product_id'),
+        ];
 
         $totalEntries = $stats['totalEntries'];
         $monthEntries = $stats['monthEntries'];
@@ -120,8 +119,12 @@ class ProductController extends Controller implements HasMiddleware
 
     public function createInventory()
     {
-        // Select only necessary columns to reduce memory footprint
-        $products  = Product::select('id', 'name', 'supplier_id')->with('supplier:id,name')->orderBy('name')->get();
+        // Fetch products with all necessary fields for the UI attributes
+        $products = Product::select('id', 'name', 'supplier_id', 'quantity', 'unit', 'unit_price', 'category', 'warehouse_location', 'barcode')
+            ->with('supplier:id,name')
+            ->orderBy('name')
+            ->get();
+            
         $suppliers = Supplier::select('id', 'name')->orderBy('name')->get();
         return view('inventory.create', compact('products', 'suppliers'));
     }
@@ -140,8 +143,17 @@ class ProductController extends Controller implements HasMiddleware
 
         DB::transaction(function() use ($validated) {
             $product = Product::findOrFail($validated['product_id']);
+            
+            // Forçamos a conversão para Carbon e garantimos que a hora seja preservada
+            // Se vier nulo, usa o agora. Se vier string, converte.
+            try {
+                $entryDate = $validated['entry_date'] ? \Carbon\Carbon::parse($validated['entry_date']) : now();
+            } catch (\Exception $e) {
+                $entryDate = now();
+            }
+
             Inventory::create(array_merge($validated, [
-                'entry_date' => $validated['entry_date'] ?? now(),
+                'entry_date' => $entryDate,
                 'user_id'    => auth()->id(),
                 'type'       => 'entrada',
                 'status'     => 'confirmada',

@@ -28,7 +28,7 @@
                 <select name="role_filter" class="form-select" style="width:200px; border-radius:12px;" onchange="this.form.submit()">
                     <option value="">Todos os Cargos</option>
                     @foreach($roles as $role)
-                        <option value="{{ $role->name }}" {{ request('role_filter') == $role->name ? 'selected' : '' }}>
+                        <option value="{{ $role->id }}" {{ request('role_filter') == $role->id ? 'selected' : '' }}>
                             {{ $role->name }}
                         </option>
                     @endforeach
@@ -86,7 +86,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td><span class="badge" style="background:var(--bg-hover); color:var(--text-primary); font-weight:700; font-size:0.7rem; text-transform:uppercase;">{{ $emp->role }}</span></td>
+                            <td><span class="badge" style="background:var(--bg-hover); color:var(--text-primary); font-weight:700; font-size:0.7rem; text-transform:uppercase;">{{ $emp->role->name ?? 'Sem Cargo' }}</span></td>
                             <td>{{ $emp->email }}</td>
                             <td>{{ $emp->cpf }}</td>
                             <td style="text-align:right;">

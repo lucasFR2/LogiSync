@@ -29,6 +29,9 @@
                     <i class="fa-solid fa-box"></i> {{ $product->name }}
                 </span>
                 <div style="display:flex;gap:.5rem;">
+                    <a href="{{ route('products.labels', ['products' => [$product->id], 'quantity' => 1]) }}" class="btn btn-secondary btn-sm" target="_blank">
+                        <i class="fa-solid fa-barcode"></i> Gerar Etiqueta
+                    </a>
                     @can('produtos.editar')
                     <a href="{{ route('products.edit', $product) }}" class="btn btn-secondary btn-sm">
                         <i class="fa-solid fa-pencil"></i> Editar
