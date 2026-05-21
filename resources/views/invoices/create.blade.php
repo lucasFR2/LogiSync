@@ -359,7 +359,7 @@ function addItem(data = {}) {
         </td>
         <td style="padding: 1rem; text-align: right; font-weight: 700; font-size: 1rem; color: var(--text-primary);" class="total-display">R$ 0,00</td>
         <td style="padding: 1rem; text-align: center;">
-            <button type="button" onclick="removeItem(this)" style="color: var(--red); border: none; background: none; cursor: pointer; font-size: 1.1rem; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+            <button type="button" onclick="removeItem(this)" style="color: var(--red); border: none; background: none; cursor: pointer; font-size: 1.1rem;">
                 <i class="fa-solid fa-trash-can"></i>
             </button>
         </td>

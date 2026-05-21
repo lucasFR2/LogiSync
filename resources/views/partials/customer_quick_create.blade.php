@@ -1,4 +1,4 @@
-<div id="customer-quick-create-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+﻿<div id="customer-quick-create-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
     <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden anim-entrance">
         <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
             <h3 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
@@ -13,14 +13,14 @@
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Nome / Razão Social <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Nome / Raz├úo Social <span class="text-red-500">*</span></label>
                     <input type="text" name="name" required class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Tipo <span class="text-red-500">*</span></label>
                     <select name="type" required class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
-                        <option value="company">Pessoa Jurídica (CNPJ)</option>
-                        <option value="individual">Pessoa Física (CPF)</option>
+                        <option value="company">Pessoa Jur├¡dica (CNPJ)</option>
+                        <option value="individual">Pessoa F├¡sica (CPF)</option>
                     </select>
                 </div>
                 <div>
@@ -36,7 +36,7 @@
                     <input type="text" name="phone" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
                 </div>
                 <div class="md:col-span-2 border-t border-gray-100 dark:border-slate-800 pt-4 mt-2">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Endereço</h4>
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Endere├ºo</h4>
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Logradouro</label>
@@ -116,7 +116,7 @@ document.getElementById('quick-customer-form').addEventListener('submit', functi
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Erro de conexão ao cadastrar cliente.');
+        alert('Erro de conex├úo ao cadastrar cliente.');
     })
     .finally(() => {
         btn.disabled = false;

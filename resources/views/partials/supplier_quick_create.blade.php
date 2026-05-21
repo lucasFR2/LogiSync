@@ -1,4 +1,4 @@
-{{-- Supplier Quick Create Modal — reusable partial --}}
+﻿{{-- Supplier Quick Create Modal ÔÇö reusable partial --}}
 <div id="supplierModal" class="modal-backdrop" style="display:none;">
     <div class="modal" style="max-width:520px;">
         <div class="modal-header">
@@ -14,7 +14,7 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">Nome / Razão Social <span style="color:var(--red);">*</span></label>
+                <label class="form-label">Nome / Raz├úo Social <span style="color:var(--red);">*</span></label>
                 <input type="text" id="sq_name" class="form-input" placeholder="Ex: Distribuidora ABC Ltda" required>
             </div>
 
@@ -69,7 +69,7 @@
         }, 200);
     }
 
-    // Open triggers — any button with data-open-supplier-modal
+    // Open triggers ÔÇö any button with data-open-supplier-modal
     document.addEventListener('click', function(e) {
         if (e.target.closest('[data-open-supplier-modal]')) {
             e.preventDefault();
@@ -130,7 +130,7 @@
 
             closeModal();
         } catch(err) {
-            errList.innerHTML = '<div>Erro de conexão. Tente novamente.</div>';
+            errList.innerHTML = '<div>Erro de conex├úo. Tente novamente.</div>';
             errBox.style.display = 'flex';
         } finally {
             btn.disabled = false;

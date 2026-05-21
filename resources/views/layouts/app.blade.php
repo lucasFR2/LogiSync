@@ -33,7 +33,7 @@
             }
         }
     </script>
-    <link rel="stylesheet" href="{{ asset('css/logisync.css') }}?v=2.0.0">
+    <link rel="stylesheet" href="{{ asset('css/logisync.css') }}?v=2.1.1">
 
     {{-- Theme (must run before render) --}}
     <script src="{{ asset('js/theme.js') }}"></script>

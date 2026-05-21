@@ -1,4 +1,4 @@
-{{-- Category Quick Create Modal — reusable partial --}}
+﻿{{-- Category Quick Create Modal ÔÇö reusable partial --}}
 <div id="categoryModal" class="modal-backdrop" style="display:none;">
     <div class="modal" style="max-width:480px;">
         <div class="modal-header">
@@ -20,14 +20,14 @@
                     Nome da Categoria <span style="color:var(--red);">*</span>
                 </label>
                 <input type="text" id="cq_name" class="form-input"
-                       placeholder="Ex: Eletrônicos, Ferramentas..." required>
-                <small style="color:var(--text-muted);">Deve ser único. Máx. 100 caracteres.</small>
+                       placeholder="Ex: Eletr├┤nicos, Ferramentas..." required>
+                <small style="color:var(--text-muted);">Deve ser ├║nico. M├íx. 100 caracteres.</small>
             </div>
 
             <div class="form-group" style="margin-top:.75rem;">
-                <label class="form-label">Descrição</label>
+                <label class="form-label">Descri├º├úo</label>
                 <textarea id="cq_description" class="form-textarea" rows="2"
-                          placeholder="Descrição opcional..."></textarea>
+                          placeholder="Descri├º├úo opcional..."></textarea>
             </div>
         </div>
         <div class="modal-footer">
@@ -66,7 +66,7 @@
         }, 200);
     }
 
-    // Open triggers — any element with [data-open-category-modal]
+    // Open triggers ÔÇö any element with [data-open-category-modal]
     document.addEventListener('click', function(e) {
         if (e.target.closest('[data-open-category-modal]')) {
             e.preventDefault();
@@ -125,7 +125,7 @@
 
             closeModal();
         } catch(err) {
-            errList.innerHTML = '<div>Erro de conexão. Tente novamente.</div>';
+            errList.innerHTML = '<div>Erro de conex├úo. Tente novamente.</div>';
             errBox.style.display = 'flex';
         } finally {
             btn.disabled = false;

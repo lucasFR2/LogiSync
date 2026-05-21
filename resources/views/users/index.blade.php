@@ -156,7 +156,7 @@
 </div>
 
 <style>
-    .doc-item:hover { background: var(--bg-hover); transform: translateX(5px); }
+    .doc-item:hover { background: var(--bg-hover); }
     .hidden { display: none !important; }
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }

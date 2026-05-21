@@ -405,17 +405,25 @@ class ProductController extends Controller implements HasMiddleware
     // Buscar localizações (AJAX) — returns occupied status + occupant
     public function searchLocations(Request $request)
     {
-        $search   = $request->query('q', '');
-        $aisle    = $request->query('aisle', '');
+        $search   = strtoupper(trim($request->query('q', '')));
+        $aisle    = strtoupper(trim($request->query('aisle', '')));
+        $column   = strtoupper(trim($request->query('column', '')));
+        $level    = strtoupper(trim($request->query('level', '')));
         $freeOnly = $request->query('free_only', '0');
 
         $query = \App\Models\WarehouseLocation::with('products:id,name,warehouse_location_id');
 
-        if (!empty($search)) {
+        if ($search !== '') {
             $query->where('full_code', 'like', "%{$search}%");
         }
-        if (!empty($aisle)) {
-            $query->where('aisle', $aisle);
+        if ($aisle !== '') {
+            $query->where('aisle', 'like', "%{$aisle}%");
+        }
+        if ($column !== '') {
+            $query->where('column', 'like', "%{$column}%");
+        }
+        if ($level !== '') {
+            $query->where('level', 'like', "%{$level}%");
         }
         if ($freeOnly === '1') {
             $query->where('is_occupied', false);

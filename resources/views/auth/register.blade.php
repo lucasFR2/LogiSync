@@ -121,12 +121,6 @@
             border: 1px solid var(--glass-border);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            transform-style: preserve-3d;
-        }
-        
-        .login-card:hover {
-            transform: translateY(-5px) rotateX(2deg);
         }
 
         .login-header {

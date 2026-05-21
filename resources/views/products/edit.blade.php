@@ -125,7 +125,7 @@
                             <div style="display:flex; gap:0.4rem;">
                                 <input type="hidden" name="warehouse_location_id" id="warehouse_location_id" value="{{ $product->warehouse_location_id }}">
                                 <input type="text" id="warehouse_location_display" readonly value="{{ $product->location?->full_code ?? 'Não alocado' }}" class="form-input" style="background:var(--bg-hover); cursor:pointer;">
-                                <button type="button" id="btn-open-location-picker" class="btn btn-secondary" style="padding:0 .75rem;">
+                                <button type="button" id="btn-open-location-picker" data-open-location-picker class="btn btn-secondary" style="padding:0 .75rem;" title="Selecionar endereço no armazém">
                                     <i class="fa-solid fa-map-location-dot"></i>
                                 </button>
                             </div>

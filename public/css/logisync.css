@@ -220,7 +220,6 @@ body::after {
 }
 
 .nav-item:hover i { 
-  transform: scale(1.1); 
   color: var(--accent);
 }
 .nav-item.active:hover i { color: var(--accent-fg); }
@@ -290,13 +289,13 @@ body::after {
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
   border: 1px solid transparent;
   text-decoration: none;
   font-family: 'Outfit', sans-serif;
 }
 
-.btn:active { transform: scale(0.96); }
+.btn:active { transform: none; }
 
 .btn-primary {
   background: var(--accent);
@@ -306,8 +305,6 @@ body::after {
 
 .btn-primary:hover {
   background: var(--accent-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px 0 var(--accent-glow);
 }
 
 .btn-secondary {
@@ -348,13 +345,11 @@ body::after {
   border: 1px solid var(--glass-border);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-sm);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
   overflow: hidden;
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  /* sem movimento no hover */
 }
 
 .card-header {
@@ -381,6 +376,8 @@ body::after {
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   opacity: 0;
   transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
   pointer-events: none;
@@ -394,22 +391,32 @@ body::after {
   pointer-events: auto;
 }
 
-.modal {
+.modal-backdrop > .modal {
+  position: relative;
+  top: auto;
+  left: auto;
+  width: 100%;
+  height: auto;
   background: var(--bg-surface);
   border: 1px solid var(--glass-border);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-xl);
   max-width: 90vw;
-  max-height: 90vh;
-  overflow: auto;
-  display: flex;
+  max-height: min(90vh, calc(100dvh - 3rem));
+  overflow: hidden;
+  display: flex !important;
   flex-direction: column;
+  flex-shrink: 0;
+  margin: auto;
   transform: scale(0.95);
   opacity: 0;
   transition: transform 0.3s var(--spring), opacity 0.3s ease;
+  pointer-events: auto;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
-.modal-backdrop.open .modal {
+.modal-backdrop.open > .modal {
   transform: scale(1);
   opacity: 1;
 }
@@ -435,11 +442,14 @@ body::after {
 
 .modal-body {
   padding: 2rem;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-footer {
@@ -453,8 +463,8 @@ body::after {
   background: var(--bg-hover);
 }
 
-/* Legacy modal support for old .modal class */
-.modal {
+/* Legacy fullscreen overlay modals (e.g. xml upload) */
+#xmlModal.modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -467,9 +477,17 @@ body::after {
   z-index: 999;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  max-width: none;
+  max-height: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  transform: none;
+  opacity: 1;
 }
 
-.modal[style*="display: flex"] {
+#xmlModal.modal[style*="display: flex"],
+#xmlModal.modal.show {
   display: flex !important;
 }
 
@@ -551,7 +569,6 @@ body::after {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
   position: relative;
   overflow: hidden;
 }
@@ -565,8 +582,7 @@ body::after {
 }
 
 .stat-card:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow-lg);
+  /* sem movimento no hover */
 }
 
 .stat-icon {
@@ -673,7 +689,6 @@ body::after {
   border-color: var(--accent);
   background: var(--bg-surface);
   box-shadow: 0 0 0 4px var(--accent-glow), 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  transform: translateY(-1px);
 }
 
 .form-input:disabled, .form-select:disabled {
@@ -746,8 +761,6 @@ body::after {
 
 .table-wrap tbody tr:hover { 
   background: var(--bg-hover); 
-  transform: scale(1.002);
-  z-index: 10;
 }
 
 /* Responsive Grid Helper */
@@ -882,4 +895,93 @@ body::after {
 @media (max-width: 480px) {
   .grid { gap: 1rem; }
   .btn { padding: 0.6rem 1rem; font-size: 0.8rem; }
+}
+
+/* ── ALERTS ─────────────────────────────── */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--r-md);
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.alert-success {
+  background: var(--green-bg);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.alert-error {
+  background: var(--red-bg);
+  border-color: var(--red);
+  color: var(--red);
+}
+
+/* ── BADGES ─────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge-success { background: var(--green-bg); color: var(--green); }
+.badge-warning { background: var(--orange-bg); color: var(--orange); }
+.badge-danger  { background: var(--red-bg); color: var(--red); }
+.badge-info    { background: var(--blue-bg); color: var(--blue); }
+.badge-gray    { background: var(--bg-hover); color: var(--text-muted); }
+
+/* ── SEM ANIMAÇÃO DE HOVER (site inteiro) ───────────────────── */
+@media (hover: hover) {
+  *:hover,
+  *:hover::before,
+  *:hover::after {
+    transition-duration: 0s !important;
+    animation: none !important;
+  }
+}
+
+.card:hover,
+.stat-card:hover,
+.stat-card:hover .stat-icon,
+.btn:hover,
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn:active,
+.icon-btn:hover,
+.nav-item:hover i,
+.table-wrap tbody tr:hover,
+.loc-card:hover,
+.loc-card.loc-free:hover,
+.login-card:hover,
+.doc-item:hover,
+.permission-item:hover {
+  transform: none !important;
+}
+
+.card:hover,
+.stat-card:hover {
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 4px 14px 0 var(--accent-glow) !important;
+}
+
+/* Desativa utilitários Tailwind de movimento em hover */
+[class*="hover:-translate"],
+[class*="hover:translate"],
+[class*="hover:scale"],
+[class*="hover:rotate"],
+[class*="active:scale"] {
+  transform: none !important;
 }
