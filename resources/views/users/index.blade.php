@@ -91,6 +91,10 @@
                             <td>{{ $emp->cpf }}</td>
                             <td style="text-align:right;">
                                 <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                                    <a href="{{ route('employees.show', $emp->id) }}" class="icon-btn" title="Visualizar Funcionário" style="color:var(--accent);">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+
                                     <a href="{{ route('employees.edit', $emp->id) }}" class="icon-btn" title="Editar Funcionário">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>

@@ -21,6 +21,7 @@ class Supplier extends Model
         'state',
         'zip_code',
         'address',
+        'complement',
     ];
 
     /**

@@ -40,18 +40,21 @@ class CustomerController extends Controller implements HasMiddleware
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'document' => 'required|string|max:30|unique:customers,document',
-            'type' => 'required|in:individual,company',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:30',
+            'name'               => 'required|string|max:255',
+            'document'           => 'required|string|max:30|unique:customers,document',
+            'type'               => 'required|in:individual,company',
+            'email'              => 'nullable|email|max:255',
+            'phone'              => 'nullable|string|max:30',
             'state_registration' => 'nullable|string|max:30',
-            'address' => 'nullable|string|max:255',
-            'number' => 'nullable|string|max:20',
-            'neighborhood' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:100',
-            'state' => 'nullable|string|max:2',
-            'zip_code' => 'nullable|string|max:15',
+            'address'            => 'nullable|string|max:255',
+            'number'             => 'nullable|string|max:20',
+            'complement'         => 'nullable|string|max:255',
+            'neighborhood'       => 'nullable|string|max:255',
+            'city'               => 'nullable|string|max:100',
+            'state'              => 'nullable|string|max:2',
+            'zip_code'           => 'nullable|string|max:15',
+            'birth_date'         => 'nullable|date',
+            'gender'             => 'nullable|string|in:Masculino,Feminino,Outro,Prefiro não informar',
         ]);
 
         $customer = Customer::create($validated);
@@ -73,18 +76,21 @@ class CustomerController extends Controller implements HasMiddleware
     public function update(Request $request, Customer $customer)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'document' => 'required|string|max:30|unique:customers,document,' . $customer->id,
-            'type' => 'required|in:individual,company',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:30',
+            'name'               => 'required|string|max:255',
+            'document'           => 'required|string|max:30|unique:customers,document,' . $customer->id,
+            'type'               => 'required|in:individual,company',
+            'email'              => 'nullable|email|max:255',
+            'phone'              => 'nullable|string|max:30',
             'state_registration' => 'nullable|string|max:30',
-            'address' => 'nullable|string|max:255',
-            'number' => 'nullable|string|max:20',
-            'neighborhood' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:100',
-            'state' => 'nullable|string|max:2',
-            'zip_code' => 'nullable|string|max:15',
+            'address'            => 'nullable|string|max:255',
+            'number'             => 'nullable|string|max:20',
+            'complement'         => 'nullable|string|max:255',
+            'neighborhood'       => 'nullable|string|max:255',
+            'city'               => 'nullable|string|max:100',
+            'state'              => 'nullable|string|max:2',
+            'zip_code'           => 'nullable|string|max:15',
+            'birth_date'         => 'nullable|date',
+            'gender'             => 'nullable|string|in:Masculino,Feminino,Outro,Prefiro não informar',
         ]);
 
         $customer->update($validated);

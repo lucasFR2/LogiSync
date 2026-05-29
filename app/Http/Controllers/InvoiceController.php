@@ -91,6 +91,7 @@ class InvoiceController extends Controller
     {
         $invoice->load([
             'user:id,name',
+            'conferredBy:id,name',
             'items' => function ($query) {
                 $query->select([
                     'id',
@@ -194,5 +195,28 @@ class InvoiceController extends Controller
         $filename = 'NF-' . $invoice->number . '.pdf';
 
         return $pdf->download($filename);
+    }
+
+    /**
+     * Realiza a conferência da nota fiscal
+     */
+    public function confer(Request $request, Invoice $invoice)
+    {
+        $validated = $request->validate([
+            'conference_status' => 'required|in:Pendente,Conferida,Divergente',
+            'conference_notes'  => 'nullable|string|max:1000',
+        ]);
+
+        $invoice->update([
+            'conference_status' => $validated['conference_status'],
+            'conference_notes'  => $validated['conference_notes'],
+            'conferred_by'      => Auth::id(),
+            'conferred_at'      => now(),
+        ]);
+
+        Logger::log('confer_invoice', "O usuário realizou a conferência da NF #{$invoice->number} com status: {$validated['conference_status']}");
+
+        return redirect()->route('invoices.show', $invoice)
+                         ->with('success', 'Conferência da nota fiscal atualizada com sucesso!');
     }
 }

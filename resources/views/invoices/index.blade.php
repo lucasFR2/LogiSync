@@ -76,6 +76,7 @@
                         <th>Destinatário</th>
                         <th>Data Emissão</th>
                         <th style="text-align: right;">Valor Total</th>
+                        <th style="text-align: center;">Conferência</th>
                         <th style="text-align: center;">Status</th>
                         <th style="text-align: center; width: 140px;">Ações</th>
                     </tr>
@@ -107,6 +108,18 @@
                             </td>
                             <td style="text-align: right;">
                                 <div style="font-weight: 800; color: var(--text-primary); font-family: 'Outfit'; font-size: 1.1rem;">R$ {{ number_format($invoice->total, 2, ',', '.') }}</div>
+                            </td>
+                            <td style="text-align: center;">
+                                @php
+                                    $confStyle = [
+                                        'Pendente' => ['bg' => 'var(--orange-bg)', 'color' => 'var(--orange)', 'icon' => 'fa-clock'],
+                                        'Conferida' => ['bg' => 'var(--green-bg)', 'color' => 'var(--green)', 'icon' => 'fa-circle-check'],
+                                        'Divergente' => ['bg' => 'var(--red-bg)', 'color' => 'var(--red)', 'icon' => 'fa-circle-xmark']
+                                    ][$invoice->conference_status] ?? ['bg' => 'var(--orange-bg)', 'color' => 'var(--orange)', 'icon' => 'fa-clock'];
+                                @endphp
+                                <span class="badge" style="background: {{ $confStyle['bg'] }}; color: {{ $confStyle['color'] }}; font-weight: 700; font-size: 0.75rem;">
+                                    <i class="fa-solid {{ $confStyle['icon'] }} mr-1"></i> {{ $invoice->conference_status ?? 'Pendente' }}
+                                </span>
                             </td>
                             <td style="text-align: center;">
                                 @php

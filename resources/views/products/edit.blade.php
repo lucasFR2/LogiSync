@@ -29,7 +29,7 @@
 @endpush
 
 @section('content')
-<div style="max-width:1100px; margin: 0 auto;">
+<div class="w-full">
 
     @if($errors->any())
         <div class="alert alert-error mb-6">

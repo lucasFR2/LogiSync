@@ -112,7 +112,7 @@
 
         .login-card {
             width: 100%;
-            max-width: 680px;
+            max-width: 100%;
             margin: auto;
             padding: 3.5rem;
             background: var(--glass-bg);
@@ -185,7 +185,6 @@
     <div class="login-container">
         <!-- Visual Section -->
         <div class="login-visual anim-entrance">
-            <img src="{{ asset('images/login-bg.jpg') }}" class="bg" alt="Warehouse">
             <div class="login-visual-content">
                 <div class="brand-pill">LogiSync WMS v2.0</div>
                 <h1>Junte-se à nossa equipe operacional.</h1>
@@ -294,6 +293,11 @@
                             <label class="form-label">Telefone / Celular <span style="color:var(--red);">*</span></label>
                             <input type="tel" name="phone" id="phone" value="{{ old('phone') }}" required class="form-input" placeholder="(00) 00000-0000">
                         </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Data de Admissão <span style="color:var(--red);">*</span></label>
+                            <input type="date" name="admission_date" value="{{ old('admission_date') }}" required class="form-input">
+                        </div>
                     </div>
 
                     <div class="form-section-title">
@@ -314,6 +318,11 @@
                         <div class="form-group">
                             <label class="form-label">Número <span style="color:var(--red);">*</span></label>
                             <input type="text" name="number" value="{{ old('number') }}" required class="form-input" placeholder="123">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Complemento</label>
+                            <input type="text" name="complement" value="{{ old('complement') }}" class="form-input" placeholder="Apto, Bloco, etc.">
                         </div>
 
                         <div class="form-group">

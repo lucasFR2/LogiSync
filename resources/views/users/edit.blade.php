@@ -5,7 +5,7 @@
 @section('page-subtitle', 'Atualize as informações cadastrais do colaborador')
 
 @section('content')
-<div class="anim-entrance" style="max-width: 900px;">
+<div class="anim-entrance w-full">
 
     @if($errors->any())
         <div class="alert badge-danger" style="margin-bottom:1.5rem; font-size:0.875rem;">
@@ -73,6 +73,11 @@
                         <label class="form-label">Telefone / Celular <span style="color:var(--red);">*</span></label>
                         <input type="tel" name="phone" id="phone" value="{{ old('phone', $user->phone) }}" required class="form-input" placeholder="(00) 00000-0000">
                     </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Data de Admissão <span style="color:var(--red);">*</span></label>
+                        <input type="date" name="admission_date" value="{{ old('admission_date', $user->admission_date?->format('Y-m-d')) }}" required class="form-input">
+                    </div>
                 </div>
 
                 <div class="form-section-title">
@@ -93,6 +98,11 @@
                     <div class="form-group">
                         <label class="form-label">Número <span style="color:var(--red);">*</span></label>
                         <input type="text" name="number" value="{{ old('number', $user->number) }}" required class="form-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Complemento</label>
+                        <input type="text" name="complement" value="{{ old('complement', $user->complement) }}" class="form-input" placeholder="Apto, Bloco, etc.">
                     </div>
 
                     <div class="form-group">

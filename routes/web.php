@@ -87,6 +87,7 @@ Route::middleware('auth')->group(function () {
         Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
         Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
         Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+        Route::post('invoices/{invoice}/confer', [InvoiceController::class, 'confer'])->name('invoices.confer');
     });
 
     Route::middleware('permission:notas_fiscais.editar')->group(function () {

@@ -5,7 +5,7 @@
 @section('page-subtitle', 'Atualize os dados da categoria')
 
 @section('content')
-<div style="max-width:600px;">
+<div class="w-full">
 
     @if($errors->any())
         <div class="alert alert-error mb-6">

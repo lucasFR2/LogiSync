@@ -5,7 +5,7 @@
 @section('page-subtitle', 'Cadastre uma nova categoria de produto')
 
 @section('content')
-<div style="max-width:600px;">
+<div class="w-full">
 
     @if($errors->any())
         <div class="alert alert-error mb-6">

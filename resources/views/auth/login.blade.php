@@ -25,78 +25,29 @@
             background: var(--bg-base);
         }
 
+        body::before,
+        body::after {
+            display: none !important;
+        }
+
         .login-container {
             display: flex;
             height: 100vh;
             width: 100vw;
-        }
-
-        /* Left Side: Brand & Visual */
-        .login-visual {
-            flex: 1.2;
-            position: relative;
-            background: #020617;
-            display: flex;
-            flex-direction: column;
             justify-content: center;
-            padding: 4rem;
-            overflow: hidden;
+            align-items: center;
+            background: var(--bg-base);
         }
 
-        .login-visual img.bg {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.4;
-            filter: grayscale(0.5);
-        }
-
-        .login-visual-content {
-            position: relative;
-            z-index: 10;
-            color: white;
-            max-width: 600px;
-        }
-
-        .brand-pill {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 0.5rem 1rem;
-            border-radius: 99px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            display: inline-block;
-            margin-bottom: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .login-visual h1 {
-            font-size: 4rem;
-            line-height: 1.1;
-            margin-bottom: 1.5rem;
-            color: white;
-        }
-
-        .login-visual p {
-            font-size: 1.25rem;
-            opacity: 0.7;
-            line-height: 1.6;
-        }
-
-        /* Right Side: Form */
         .login-form-side {
-            flex: 0.8;
             background: var(--bg-base);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 4rem;
-            position: relative;
+            padding: 2rem;
+            width: 100%;
+            height: 100%;
         }
 
         .login-card {
@@ -152,50 +103,14 @@
             font-size: 0.8rem;
             color: var(--text-muted);
         }
-
-        @media (max-width: 1024px) {
-            .login-visual { display: none; }
-            .login-form-side { flex: 1; padding: 2rem; }
-        }
     </style>
 </head>
 <body>
 
     <div class="login-container">
-        <!-- Visual Section -->
-        <div class="login-visual anim-entrance">
-            <img src="{{ asset('images/login-bg.jpg') }}" class="bg" alt="Warehouse">
-            <div class="login-visual-content">
-                <div class="brand-pill">LogiSync WMS v2.0</div>
-                <h1>Sincronize sua logística de ponta a ponta.</h1>
-                <p>A plataforma definitiva para gerenciamento de armazéns, otimizada para performance e escalabilidade.</p>
-                
-                <div style="display:flex; gap:2rem; margin-top:4rem; opacity:0.8;">
-                    <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                        <span style="font-size:1.5rem; font-weight:800; font-family:'Outfit';">99.9%</span>
-                        <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Uptime</span>
-                    </div>
-                    <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                        <span style="font-size:1.5rem; font-weight:800; font-family:'Outfit';">24/7</span>
-                        <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Monitoramento</span>
-                    </div>
-                    <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                        <span style="font-size:1.5rem; font-weight:800; font-family:'Outfit';">100%</span>
-                        <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Seguro</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Form Section -->
         <div class="login-form-side anim-entrance" style="animation-delay: 0.2s;">
             
-            <div style="position:absolute; top:2rem; right:2rem;">
-                <button class="icon-btn" data-theme-toggle title="Mudar Tema">
-                    <i class="fa-solid fa-circle-half-stroke"></i>
-                </button>
-            </div>
-
             <div class="login-card">
                 <div class="login-header">
                     <div style="width:48px; height:48px; background:var(--accent); color:var(--accent-fg); border-radius:14px; display:flex; align-items:center; justify-content:center; font-weight:800; font-family:'Outfit'; font-size:1.5rem; margin-bottom:1.5rem;">LS</div>

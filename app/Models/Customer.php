@@ -19,5 +19,12 @@ class Customer extends Model
         'city',
         'state',
         'zip_code',
+        'birth_date',
+        'gender',
+        'complement',
+    ];
+
+    protected $casts = [
+        'birth_date' => 'date',
     ];
 }

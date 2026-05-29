@@ -15,9 +15,13 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 'email', 'password', 'role_id', 'cpf', 
         'phone', 'zip_code', 'address', 'number', 'neighborhood', 'city', 'state',
-        'document_path', 'rg'
+        'document_path', 'rg', 'admission_date', 'complement'
     ];
     protected $hidden = ['password', 'remember_token'];
+
+    protected $casts = [
+        'admission_date' => 'date',
+    ];
 
     /**
      * Relacionamento com Role

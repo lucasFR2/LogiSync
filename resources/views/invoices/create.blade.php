@@ -5,7 +5,7 @@
 @section('page-subtitle', 'Preencha os dados abaixo para gerar um novo documento fiscal')
 
 @section('content')
-<div class="max-w-7xl mx-auto">
+<div class="w-full">
     <form method="POST" action="{{ isset($invoice) ? route('invoices.update', $invoice) : route('invoices.store') }}" id="invoice-form" class="anim-entrance">
         @csrf
         @if(isset($invoice)) @method('PUT') @endif
@@ -24,26 +24,31 @@
                                 </div>
                                 <h3 class="m-0" style="font-family:'Outfit'; font-weight: 800; letter-spacing: -0.01em;">Dados do Destinatário</h3>
                             </div>
-                            <div class="flex gap-2 relative">
-                                <div style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.8rem; z-index: 1;">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
+                            <div class="flex gap-2 relative items-center">
+                                <div class="relative" style="flex: 1; min-width: 200px;">
+                                    <div style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.8rem; z-index: 1;">
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                    </div>
+                                    <select id="customer-select" class="form-control customer-select" style="width: 100%; max-width: 280px; font-size: 0.85rem; height: 42px; padding: 0 1rem 0 2.2rem; border-radius: var(--r-md); background: var(--bg-base);" onchange="fillCustomerData(this)">
+                                        <option value="">Vincular Cliente...</option>
+                                        @foreach($customers as $c)
+                                            <option value="{{ $c->id }}" 
+                                                    data-name="{{ $c->name }}" 
+                                                    data-document="{{ $c->document }}" 
+                                                    data-email="{{ $c->email }}" 
+                                                    data-phone="{{ $c->phone }}" 
+                                                    data-address="{{ $c->address }}"
+                                                    data-city="{{ $c->city }}"
+                                                    data-state="{{ $c->state }}"
+                                                    data-zip="{{ $c->zip_code }}">
+                                                {{ $c->name }} ({{ $c->document }})
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                                <select id="customer-select" class="form-control" style="width: 100%; max-width: 280px; font-size: 0.85rem; height: 42px; padding: 0 1rem 0 2.2rem; border-radius: var(--r-md); background: var(--bg-base);" onchange="fillCustomerData(this)">
-                                    <option value="">Vincular Cliente...</option>
-                                    @foreach($customers as $c)
-                                        <option value="{{ $c->id }}" 
-                                                data-name="{{ $c->name }}" 
-                                                data-document="{{ $c->document }}" 
-                                                data-email="{{ $c->email }}" 
-                                                data-phone="{{ $c->phone }}" 
-                                                data-address="{{ $c->address }}"
-                                                data-city="{{ $c->city }}"
-                                                data-state="{{ $c->state }}"
-                                                data-zip="{{ $c->zip_code }}">
-                                            {{ $c->name }} ({{ $c->document }})
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <button type="button" onclick="toggleCustomerModal()" class="btn btn-secondary" style="padding: 0 0.75rem; height: 42px;" title="Cadastrar novo cliente">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
                             </div>
                         </div>
                         <div class="card-body p-8 sm:p-6">
@@ -144,14 +149,19 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label">Fornecedor Associado (Opcional)</label>
-                                    <select name="supplier_id" class="form-control">
-                                        <option value="">Nenhum fornecedor vinculado</option>
-                                        @foreach($suppliers as $s)
-                                            <option value="{{ $s->id }}" {{ (isset($invoice) && $invoice->supplier_id == $s->id) ? 'selected' : '' }}>{{ $s->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                                     <label class="form-label">Fornecedor Associado (Opcional)</label>
+                                     <div style="display:flex; gap:0.4rem;">
+                                         <select name="supplier_id" class="form-control" style="flex:1;">
+                                             <option value="">Nenhum fornecedor vinculado</option>
+                                             @foreach($suppliers as $s)
+                                                 <option value="{{ $s->id }}" {{ (isset($invoice) && $invoice->supplier_id == $s->id) ? 'selected' : '' }}>{{ $s->name }}</option>
+                                             @endforeach
+                                         </select>
+                                         <button type="button" class="btn btn-secondary" data-open-supplier-modal style="padding:0 .75rem;" title="Novo Fornecedor">
+                                             <i class="fa-solid fa-plus"></i>
+                                         </button>
+                                     </div>
+                                 </div>
                             </div>
                         </div>
                     </div>
@@ -488,4 +498,6 @@ setTimeout(() => {
 @endif
 </script>
 @endpush
+@include('partials.customer_quick_create')
+@include('partials.supplier_quick_create')
 @endsection

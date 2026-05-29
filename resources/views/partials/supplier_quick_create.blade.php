@@ -1,6 +1,6 @@
-﻿{{-- Supplier Quick Create Modal ÔÇö reusable partial --}}
-<div id="supplierModal" class="modal-backdrop" style="display:none;">
-    <div class="modal" style="max-width:520px;">
+{{-- Supplier Quick Create Modal — reusable partial --}}
+<div id="supplierModal" class="modal-backdrop" style="display:none; padding:0; background:var(--bg-base);">
+    <div class="modal" style="max-width: 100% !important; width: 100% !important; height: 100vh !important; max-height: 100vh !important; border-radius: 0 !important; margin: 0 !important; border: none !important; box-shadow: none !important; display: flex !important; flex-direction: column;">
         <div class="modal-header">
             <h3 class="modal-title"><i class="fa-solid fa-building"></i> Novo Fornecedor</h3>
             <button type="button" class="icon-btn" id="closeSupplierModal" style="width:32px;height:32px;">

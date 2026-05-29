@@ -5,7 +5,7 @@
 @section('page-subtitle', 'Preencha os dados cadastrais do cliente')
 
 @section('content')
-<div style="max-width:800px;">
+<div class="w-full">
 
     @if($errors->any())
         <div class="alert badge-danger" style="margin-bottom:1.5rem; padding:1.25rem; border-radius:var(--r-md); display:flex; align-items:flex-start; gap:1rem;">
@@ -70,6 +70,22 @@
                         <label class="form-label">E-mail Corporativo</label>
                         <input type="email" name="email" value="{{ old('email') }}" placeholder="cliente@email.com" class="form-input">
                     </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Data de Nascimento</label>
+                        <input type="date" name="birth_date" value="{{ old('birth_date') }}" class="form-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Sexo</label>
+                        <select name="gender" class="form-select">
+                            <option value="" selected>Selecione...</option>
+                            <option value="Masculino" {{ old('gender') === 'Masculino' ? 'selected' : '' }}>Masculino</option>
+                            <option value="Feminino" {{ old('gender') === 'Feminino' ? 'selected' : '' }}>Feminino</option>
+                            <option value="Outro" {{ old('gender') === 'Outro' ? 'selected' : '' }}>Outro</option>
+                            <option value="Prefiro não informar" {{ old('gender') === 'Prefiro não informar' ? 'selected' : '' }}>Prefiro não informar</option>
+                        </select>
+                    </div>
                 </div>
 
                 {{-- Contact & Address --}}
@@ -98,6 +114,11 @@
                     <div class="form-group">
                         <label class="form-label">Número</label>
                         <input type="text" name="number" value="{{ old('number') }}" placeholder="Ex: 123" class="form-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Complemento</label>
+                        <input type="text" name="complement" value="{{ old('complement') }}" placeholder="Apto, Bloco, etc." class="form-input">
                     </div>
 
                     <div class="form-group">

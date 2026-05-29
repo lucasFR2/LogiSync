@@ -1,5 +1,5 @@
-﻿<div id="customer-quick-create-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
-    <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden anim-entrance">
+<div id="customer-quick-create-modal" class="hidden fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm">
+    <div class="bg-white dark:bg-slate-900 w-full h-full min-h-screen rounded-none shadow-none overflow-y-auto anim-entrance flex flex-col">
         <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
             <h3 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
                 <i class="fa-solid fa-user-plus text-blue-500"></i> Cadastrar Novo Cliente
@@ -9,7 +9,7 @@
             </button>
         </div>
 
-        <form id="quick-customer-form" class="p-6">
+        <form id="quick-customer-form" class="p-6 flex-1 flex flex-col justify-between">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="md:col-span-2">

@@ -7,6 +7,13 @@
 @section('content')
 <div class="anim-entrance" style="display:flex; flex-direction:column; gap:2rem;">
 
+    @if(session('success'))
+        <div class="alert badge-success" style="margin-bottom:0.5rem; font-size:0.875rem;">
+            <i class="fa-solid fa-circle-check"></i>
+            {{ session('success') }}
+        </div>
+    @endif
+
     {{-- Action Bar --}}
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
         <div style="display: flex; gap: 0.75rem; align-items: center;">
@@ -134,6 +141,97 @@
         </div>
     </div>
 
+    {{-- Conference Card --}}
+    <div class="card" style="border: 1px solid var(--accent-subtle);">
+        <div class="card-header" style="background: var(--bg-hover);">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+                <div style="width:32px; height:32px; background:var(--orange-bg); color:var(--orange); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                </div>
+                <h3 style="margin:0; font-family:'Outfit';">Conferência da Nota Fiscal</h3>
+            </div>
+            @php
+                $confColors = [
+                    'Pendente' => ['bg' => 'var(--orange-bg)', 'color' => 'var(--orange)', 'icon' => 'fa-clock'],
+                    'Conferida' => ['bg' => 'var(--green-bg)', 'color' => 'var(--green)', 'icon' => 'fa-circle-check'],
+                    'Divergente' => ['bg' => 'var(--red-bg)', 'color' => 'var(--red)', 'icon' => 'fa-circle-xmark'],
+                ][$invoice->conference_status] ?? ['bg' => 'var(--orange-bg)', 'color' => 'var(--orange)', 'icon' => 'fa-clock'];
+            @endphp
+            <div class="badge" style="background: {{ $confColors['bg'] }}; color: {{ $confColors['color'] }}; font-weight: 800; font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                <i class="fa-solid {{ $confColors['icon'] }} mr-2"></i> {{ $invoice->conference_status ?? 'Pendente' }}
+            </div>
+        </div>
+        <div class="card-body" style="display:flex; flex-direction:column; gap:1.5rem;">
+            
+            {{-- Info / Detail Block --}}
+            <div id="conference-details-panel" style="{{ $invoice->conference_status !== 'Pendente' ? '' : 'display:none;' }}">
+                <div class="grid grid-3" style="gap:1.5rem; margin-bottom:1.5rem;">
+                    <div>
+                        <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">Responsável</div>
+                        <div style="font-size:1rem; font-weight:600; color:var(--text-primary);">
+                            <i class="fa-solid fa-user-circle mr-1" style="color:var(--text-secondary);"></i>
+                            {{ $invoice->conferredBy->name ?? '—' }}
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">Data / Hora</div>
+                        <div style="font-size:1rem; font-weight:600; color:var(--text-primary);">
+                            <i class="fa-solid fa-calendar mr-1" style="color:var(--text-secondary);"></i>
+                            {{ $invoice->conferred_at ? $invoice->conferred_at->format('d/m/Y H:i') : '—' }}
+                        </div>
+                    </div>
+                </div>
+                
+                @if($invoice->conference_notes)
+                    <div style="background:var(--bg-base); border:1px solid var(--border); border-radius:var(--r-md); padding:1rem; margin-bottom:1.5rem;">
+                        <div style="font-size:0.75rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.4rem;">
+                            <i class="fa-solid fa-comment-dots"></i> Observações da Conferência
+                        </div>
+                        <p style="margin:0; font-size:0.9rem; color:var(--text-primary); white-space:pre-wrap;">{{ $invoice->conference_notes }}</p>
+                    </div>
+                @endif
+
+                <button type="button" class="btn btn-secondary" onclick="toggleConferenceForm()">
+                    <i class="fa-solid fa-arrows-rotate mr-2"></i> Alterar Status / Observações
+                </button>
+            </div>
+
+            {{-- Form Block --}}
+            <div id="conference-form-panel" style="{{ $invoice->conference_status === 'Pendente' ? '' : 'display:none;' }}">
+                <form action="{{ route('invoices.confer', $invoice) }}" method="POST" style="display:flex; flex-direction:column; gap:1.25rem;">
+                    @csrf
+                    
+                    <div class="form-group">
+                        <label class="form-label">Status da Conferência <span style="color:var(--red);">*</span></label>
+                        <select name="conference_status" id="conference_status_select" required class="form-select" style="max-width:320px;">
+                            <option value="Pendente" {{ $invoice->conference_status === 'Pendente' ? 'selected' : '' }}>Pendente</option>
+                            <option value="Conferida" {{ $invoice->conference_status === 'Conferida' ? 'selected' : '' }}>Conferida (Sem divergências)</option>
+                            <option value="Divergente" {{ $invoice->conference_status === 'Divergente' ? 'selected' : '' }}>Divergente (Possui pendências/erros)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Observações da Conferência</label>
+                        <textarea name="conference_notes" rows="3" class="form-textarea" placeholder="Descreva observações, divergências encontradas, justificativas, etc.">{{ $invoice->conference_notes }}</textarea>
+                    </div>
+
+                    <div style="display:flex; gap:0.75rem; align-items:center;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-save mr-2"></i> Salvar Conferência
+                        </button>
+                        
+                        @if($invoice->conference_status !== 'Pendente')
+                            <button type="button" class="btn btn-secondary" onclick="toggleConferenceForm()">
+                                Cancelar
+                            </button>
+                        @endif
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
     {{-- Items Table --}}
     <div class="card" style="padding: 0; overflow: hidden;">
         <div class="card-header">
@@ -203,4 +301,21 @@
     @endif
 
 </div>
+
+@push('scripts')
+<script>
+    function toggleConferenceForm() {
+        const details = document.getElementById('conference-details-panel');
+        const form = document.getElementById('conference-form-panel');
+        
+        if (form.style.display === 'none') {
+            form.style.display = '';
+            details.style.display = 'none';
+        } else {
+            form.style.display = 'none';
+            details.style.display = '';
+        }
+    }
+</script>
+@endpush
 @endsection

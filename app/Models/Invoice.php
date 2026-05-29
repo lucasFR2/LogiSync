@@ -15,16 +15,17 @@ class Invoice extends Model
         'recipient_address', 'recipient_city', 'recipient_state', 'recipient_zip',
         'subtotal', 'discount', 'shipping', 'total',
         'payment_method', 'notes', 'due_date', 'issued_at',
-        'user_id', 'supplier_id',
+        'user_id', 'supplier_id', 'conference_status', 'conferred_by', 'conferred_at', 'conference_notes',
     ];
 
     protected $casts = [
-        'subtotal'  => 'decimal:2',
-        'discount'  => 'decimal:2',
-        'shipping'  => 'decimal:2',
-        'total'     => 'decimal:2',
-        'due_date'  => 'date',
-        'issued_at' => 'date',
+        'subtotal'      => 'decimal:2',
+        'discount'      => 'decimal:2',
+        'shipping'      => 'decimal:2',
+        'total'         => 'decimal:2',
+        'due_date'      => 'date',
+        'issued_at'     => 'date',
+        'conferred_at'  => 'datetime',
     ];
 
     public function items(): HasMany
@@ -35,6 +36,11 @@ class Invoice extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function conferredBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'conferred_by');
     }
 
     public function supplier(): BelongsTo
@@ -69,6 +75,26 @@ class Invoice extends Model
             'emitida'   => 'green',
             'cancelada' => 'red',
             default     => 'gray',
+        };
+    }
+
+    public function conferenceStatusLabel(): string
+    {
+        return match ($this->conference_status) {
+            'Pendente'   => 'Pendente',
+            'Conferida'  => 'Conferida',
+            'Divergente' => 'Divergente',
+            default      => $this->conference_status ?? 'Pendente',
+        };
+    }
+
+    public function conferenceStatusColor(): string
+    {
+        return match ($this->conference_status) {
+            'Pendente'   => 'orange',
+            'Conferida'  => 'green',
+            'Divergente' => 'red',
+            default      => 'orange',
         };
     }
 
