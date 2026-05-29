@@ -56,6 +56,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('permission:estoque.entradas')->group(function () {
         Route::post('locations', [App\Http\Controllers\WarehouseLocationController::class, 'store'])->name('locations.store');
+        Route::put('locations/{location}', [App\Http\Controllers\WarehouseLocationController::class, 'update'])->name('locations.update');
         Route::delete('locations/{location}', [App\Http\Controllers\WarehouseLocationController::class, 'destroy'])->name('locations.destroy');
         Route::post('locations/generate', [App\Http\Controllers\WarehouseLocationController::class, 'generate'])->name('locations.generate');
     });
@@ -114,7 +115,7 @@ Route::middleware('auth')->group(function () {
 
     // ============ ADMINISTRAÇÃO ============
     Route::middleware('permission:cargos.gerenciar')->group(function () {
-        Route::resource('roles', App\Http\Controllers\RoleController::class)->except(['show', 'create', 'edit']);
+        Route::resource('roles', App\Http\Controllers\RoleController::class)->except(['show']);
         Route::get('/admin', fn() => 'Área Admin')->name('admin');
     });
 });

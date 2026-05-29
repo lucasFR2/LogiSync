@@ -31,88 +31,25 @@
             display: flex;
             min-height: 100vh;
             width: 100vw;
-        }
-
-        /* Left Side: Brand & Visual */
-        .login-visual {
-            flex: 1.2;
-            position: sticky;
-            top: 0;
-            height: 100vh;
-            background: #020617;
-            display: flex;
-            flex-direction: column;
             justify-content: center;
-            padding: 4rem;
-            overflow: hidden;
-            border-right: 1px solid var(--glass-border);
-        }
-
-        .login-visual img.bg {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.25;
-            filter: grayscale(1) contrast(1.1);
-        }
-
-        .login-visual-content {
-            position: relative;
-            z-index: 10;
-            color: white;
-            max-width: 600px;
-        }
-
-        .brand-pill {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(12px);
-            padding: 0.625rem 1.25rem;
-            border-radius: 99px;
-            font-size: 0.75rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 2.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
-        .login-visual h1 {
-            font-size: 4rem;
-            line-height: 1.05;
-            margin-bottom: 1.5rem;
-            color: white;
-            font-family: 'Outfit';
-            font-weight: 800;
-            letter-spacing: -0.02em;
-        }
-
-        .login-visual p {
-            font-size: 1.25rem;
-            opacity: 0.75;
-            line-height: 1.6;
-            font-weight: 400;
-        }
-
-        /* Right Side: Form */
+        /* Form Side */
         .login-form-side {
-            flex: 0.8;
+            flex: 1;
             background: var(--bg-base);
             display: flex;
             flex-direction: column;
             padding: 4rem 2rem;
             position: relative;
             overflow-y: auto;
+            width: 100%;
         }
 
         .login-card {
             width: 100%;
-            max-width: 100%;
+            max-width: 850px;
             margin: auto;
             padding: 3.5rem;
             background: var(--glass-bg);
@@ -168,14 +105,8 @@
             font-weight: 600;
         }
 
-        @media (max-width: 1400px) {
-            .login-visual { flex: 1; }
-            .login-form-side { flex: 1; }
-        }
-
         @media (max-width: 992px) {
-            .login-visual { display: none; }
-            .login-form-side { flex: 1; padding: 3rem 1.5rem; }
+            .login-form-side { padding: 3rem 1.5rem; }
             .login-card { padding: 2.5rem 1.5rem; }
         }
     </style>
@@ -183,30 +114,6 @@
 <body>
 
     <div class="login-container">
-        <!-- Visual Section -->
-        <div class="login-visual anim-entrance">
-            <div class="login-visual-content">
-                <div class="brand-pill">LogiSync WMS v2.0</div>
-                <h1>Junte-se à nossa equipe operacional.</h1>
-                <p>Crie sua conta de funcionário para começar a gerenciar o fluxo logístico com eficiência e precisão.</p>
-                
-                <div style="display:flex; gap:2rem; margin-top:4rem; opacity:0.8;">
-                    <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                        <span style="font-size:1.5rem; font-weight:800; font-family:'Outfit';">99.9%</span>
-                        <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Uptime</span>
-                    </div>
-                    <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                        <span style="font-size:1.5rem; font-weight:800; font-family:'Outfit';">24/7</span>
-                        <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Monitoramento</span>
-                    </div>
-                    <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                        <span style="font-size:1.5rem; font-weight:800; font-family:'Outfit';">100%</span>
-                        <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Seguro</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Form Section -->
         <div class="login-form-side anim-entrance" style="animation-delay: 0.2s;">
             

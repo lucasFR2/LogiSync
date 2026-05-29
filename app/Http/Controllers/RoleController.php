@@ -21,7 +21,17 @@ class RoleController extends Controller
             ->orderBy('label')
             ->get()
             ->groupBy('group');
-        return view('roles.index', compact('roles', 'permissions'));
+        return view('roles.index', compact('roles'));
+    }
+
+    public function create()
+    {
+        $permissions = Permission::select('id', 'name', 'label', 'group')
+            ->orderBy('group')
+            ->orderBy('label')
+            ->get()
+            ->groupBy('group');
+        return view('roles.create', compact('permissions'));
     }
 
     public function store(Request $request)
@@ -45,6 +55,18 @@ class RoleController extends Controller
         Logger::log('create_role', "O usuário criou o cargo: {$role->name} com " . count($validated['permissions'] ?? []) . " permissões.");
 
         return redirect()->route('roles.index')->with('success', 'Cargo criado com sucesso!');
+    }
+
+    public function edit(Role $role)
+    {
+        $role->load('permissions');
+        $permissions = Permission::select('id', 'name', 'label', 'group')
+            ->orderBy('group')
+            ->orderBy('label')
+            ->get()
+            ->groupBy('group');
+        $rolePermissions = $role->permissions->pluck('id')->toArray();
+        return view('roles.edit', compact('role', 'permissions', 'rolePermissions'));
     }
 
     public function update(Request $request, Role $role)

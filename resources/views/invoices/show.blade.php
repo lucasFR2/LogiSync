@@ -141,6 +141,73 @@
         </div>
     </div>
 
+    </div>
+
+    {{-- Tributos Consolidados --}}
+    <div class="card" style="border: 1px solid var(--accent-subtle);">
+        <div class="card-header" style="background: var(--bg-hover);">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+                <div style="width:32px; height:32px; background:var(--blue-bg); color:var(--blue); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                </div>
+                <h3 style="margin:0; font-family:'Outfit';">Tributos Consolidados da Nota Fiscal (2026)</h3>
+            </div>
+            <div class="badge text-xs p-1 px-3" style="background: var(--blue-bg); color: var(--blue); font-weight:800;">
+                TOTAL TRIBUTOS: R$ {{ number_format(
+                    $invoice->items->sum('icms_value') +
+                    $invoice->items->sum('icms_st_value') +
+                    $invoice->items->sum('ipi_value') +
+                    $invoice->items->sum('pis_value') +
+                    $invoice->items->sum('cofins_value') +
+                    $invoice->items->sum('iss_value') +
+                    $invoice->items->sum('csll_value') +
+                    $invoice->items->sum('irpj_value') +
+                    $invoice->items->sum('cpp_value') +
+                    $invoice->items->sum('ibs_value') +
+                    $invoice->items->sum('cbs_value') +
+                    $invoice->items->sum('is_value') +
+                    $invoice->items->sum('ii_value'),
+                    2, ',', '.'
+                ) }}
+            </div>
+        </div>
+        <div class="card-body">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; font-size: 0.9rem;">
+                <div>
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">ICMS Próprio & ST</div>
+                    <div style="font-weight:600; color:var(--text-primary);">
+                        ICMS: R$ {{ number_format($invoice->items->sum('icms_value'), 2, ',', '.') }}<br>
+                        ICMS ST: R$ {{ number_format($invoice->items->sum('icms_st_value'), 2, ',', '.') }}
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">IPI, PIS & COFINS</div>
+                    <div style="font-weight:600; color:var(--text-primary);">
+                        IPI: R$ {{ number_format($invoice->items->sum('ipi_value'), 2, ',', '.') }}<br>
+                        PIS: R$ {{ number_format($invoice->items->sum('pis_value'), 2, ',', '.') }}<br>
+                        COFINS: R$ {{ number_format($invoice->items->sum('cofins_value'), 2, ',', '.') }}
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">ISS & Retenções</div>
+                    <div style="font-weight:600; color:var(--text-primary);">
+                        ISS: R$ {{ number_format($invoice->items->sum('iss_value'), 2, ',', '.') }}<br>
+                        CSLL: R$ {{ number_format($invoice->items->sum('csll_value'), 2, ',', '.') }}<br>
+                        IRPJ / CPP: R$ {{ number_format($invoice->items->sum('irpj_value') + $invoice->items->sum('cpp_value'), 2, ',', '.') }}
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">Reforma 2026 / Importação</div>
+                    <div style="font-weight:600; color:var(--text-primary);">
+                        IBS: R$ {{ number_format($invoice->items->sum('ibs_value'), 2, ',', '.') }}<br>
+                        CBS / IS: R$ {{ number_format($invoice->items->sum('cbs_value') + $invoice->items->sum('is_value'), 2, ',', '.') }}<br>
+                        II (Importação): R$ {{ number_format($invoice->items->sum('ii_value'), 2, ',', '.') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Conference Card --}}
     <div class="card" style="border: 1px solid var(--accent-subtle);">
         <div class="card-header" style="background: var(--bg-hover);">
@@ -259,11 +326,14 @@
                 </thead>
                 <tbody>
                     @foreach($invoice->items as $idx => $item)
-                        <tr class="anim-entrance" style="animation-delay: {{ $idx * 0.05 }}s;">
+                        <tr class="anim-entrance" style="animation-delay: {{ $idx * 0.05 }}s; border-bottom: 1px solid var(--border);">
                             <td style="text-align: center; color: var(--text-muted); font-size: 0.8rem;">{{ str_pad($idx + 1, 2, '0', STR_PAD_LEFT) }}</td>
                             <td style="padding: 1rem;">
                                 <div style="font-weight: 700; color: var(--text-primary);">{{ $item->description }}</div>
                                 <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">SKU: {{ $item->product_id ?: 'MANUAL' }}</div>
+                                <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 0.7rem; margin-top: 6px; border-radius: 4px;" onclick="toggleDetailsRow({{ $item->id }})">
+                                    <i class="fa-solid fa-calculator mr-1"></i> Detalhes Tributários
+                                </button>
                             </td>
                             <td style="text-align: center; padding: 1rem;">
                                 <span style="font-family: monospace; font-size: 0.75rem; background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary);">{{ $item->ncm }}</span>
@@ -278,7 +348,63 @@
                             <td style="text-align: right; padding: 1rem;">
                                 <div style="font-size: 0.75rem; line-height: 1.4;">
                                     <div style="color: var(--blue); font-weight: 600;">ICMS: R$ {{ number_format($item->icms_value, 2, ',', '.') }} ({{ number_format($item->icms_rate, 1) }}%)</div>
-                                    <div style="color: var(--text-muted); font-size: 0.65rem;">IPI/PIS/COF: R$ {{ number_format($item->ipi_value + $item->pis_value + $item->cofins_value, 2, ',', '.') }}</div>
+                                    <div style="color: var(--text-muted); font-size: 0.65rem;">IBS/CBS: R$ {{ number_format($item->ibs_value + $item->cbs_value, 2, ',', '.') }}</div>
+                                </div>
+                            </td>
+                        </tr>
+                        {{-- Expandable Tax Detail Row --}}
+                        <tr id="details-row-{{ $item->id }}" style="display: none; background: var(--bg-hover);">
+                            <td colspan="8" style="padding: 1.5rem; border-bottom: 1px solid var(--border);">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; font-size: 0.8rem;">
+                                    <div class="card p-4" style="border: 1px solid var(--border); background: var(--bg-surface);">
+                                        <div style="font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 6px; color: var(--blue);">ICMS & ICMS ST</div>
+                                        <div>CST: {{ $item->icms_cst ?: '00' }} | Origem: {{ $item->icms_orig }}</div>
+                                        <div>BC ICMS: R$ {{ number_format($item->icms_base, 2, ',', '.') }}</div>
+                                        <div>Alíquota: {{ number_format($item->icms_rate, 2, ',', '.') }}% | Valor: R$ {{ number_format($item->icms_value, 2, ',', '.') }}</div>
+                                        <div style="margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 6px;">
+                                            <div>CST ST: {{ $item->icms_st_cst ?: '10' }} | MVA: {{ number_format($item->icms_st_mva, 2, ',', '.') }}%</div>
+                                            <div>BC ST: R$ {{ number_format($item->icms_st_base, 2, ',', '.') }}</div>
+                                            <div>Alíquota ST: {{ number_format($item->icms_st_rate, 2, ',', '.') }}% | Valor ST: R$ {{ number_format($item->icms_st_value, 2, ',', '.') }}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card p-4" style="border: 1px solid var(--border); background: var(--bg-surface);">
+                                        <div style="font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 6px; color: var(--red);">IPI, PIS & COFINS</div>
+                                        <div>IPI CST: {{ $item->ipi_cst ?: '50' }} | Enq: {{ $item->ipi_enq ?: '999' }}</div>
+                                        <div>BC IPI: R$ {{ number_format($item->ipi_base, 2, ',', '.') }} | Alíq: {{ number_format($item->ipi_rate, 2, ',', '.') }}% | Valor: R$ {{ number_format($item->ipi_value, 2, ',', '.') }}</div>
+                                        <div style="margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 6px;">
+                                            <div>PIS CST: {{ $item->pis_cst ?: '01' }} | BC PIS: R$ {{ number_format($item->pis_base, 2, ',', '.') }}</div>
+                                            <div>Alíq PIS: {{ number_format($item->pis_rate, 2, ',', '.') }}% | Valor PIS: R$ {{ number_format($item->pis_value, 2, ',', '.') }}</div>
+                                        </div>
+                                        <div style="margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 6px;">
+                                            <div>COFINS CST: {{ $item->cofins_cst ?: '01' }} | BC COF: R$ {{ number_format($item->cofins_base, 2, ',', '.') }}</div>
+                                            <div>Alíq COF: {{ number_format($item->cofins_rate, 2, ',', '.') }}% | Valor COF: R$ {{ number_format($item->cofins_value, 2, ',', '.') }}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card p-4" style="border: 1px solid var(--border); background: var(--bg-surface);">
+                                        <div style="font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 6px; color: var(--orange);">Retenções & ISS</div>
+                                        <div>ISS CST: {{ $item->iss_cst ?: '01' }} | BC ISS: R$ {{ number_format($item->iss_base, 2, ',', '.') }}</div>
+                                        <div>Alíq: {{ number_format($item->iss_rate, 2, ',', '.') }}% | Valor ISS: R$ {{ number_format($item->iss_value, 2, ',', '.') }}</div>
+                                        <div style="margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 6px;">
+                                            <div>CSLL: {{ number_format($item->csll_rate, 2, ',', '.') }}% | Valor CSLL: R$ {{ number_format($item->csll_value, 2, ',', '.') }}</div>
+                                            <div>IRPJ: {{ number_format($item->irpj_rate, 2, ',', '.') }}% | Valor IRPJ: R$ {{ number_format($item->irpj_value, 2, ',', '.') }}</div>
+                                            <div>CPP: {{ number_format($item->cpp_rate, 2, ',', '.') }}% | Valor CPP: R$ {{ number_format($item->cpp_value, 2, ',', '.') }}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card p-4" style="border: 1px solid var(--border); background: var(--bg-surface);">
+                                        <div style="font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 6px; color: var(--green);">Reforma 2026 & Importação</div>
+                                        <div>IBS CST: {{ $item->ibs_cst ?: '01' }} | Alíq: {{ number_format($item->ibs_rate, 2, ',', '.') }}% | Valor: R$ {{ number_format($item->ibs_value, 2, ',', '.') }}</div>
+                                        <div>CBS CST: {{ $item->cbs_cst ?: '01' }} | Alíq: {{ number_format($item->cbs_rate, 2, ',', '.') }}% | Valor: R$ {{ number_format($item->cbs_value, 2, ',', '.') }}</div>
+                                        <div>IS CST: {{ $item->is_cst ?: '01' }} | Alíq: {{ number_format($item->is_rate, 2, ',', '.') }}% | Valor: R$ {{ number_format($item->is_value, 2, ',', '.') }}</div>
+                                        @if($item->ii_value > 0 || $item->ii_desp > 0 || $item->ii_iof > 0)
+                                            <div style="margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 6px;">
+                                                <div>II BC: R$ {{ number_format($item->ii_base, 2, ',', '.') }} | Valor: R$ {{ number_format($item->ii_value, 2, ',', '.') }}</div>
+                                                <div>Despesas: R$ {{ number_format($item->ii_desp, 2, ',', '.') }} | IOF: R$ {{ number_format($item->ii_iof, 2, ',', '.') }}</div>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -314,6 +440,13 @@
         } else {
             form.style.display = 'none';
             details.style.display = '';
+        }
+    }
+
+    function toggleDetailsRow(id) {
+        const row = document.getElementById('details-row-' + id);
+        if (row) {
+            row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
         }
     }
 </script>

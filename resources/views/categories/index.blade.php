@@ -70,9 +70,17 @@
                                     {{ ($categories->currentPage() - 1) * $categories->perPage() + $loop->iteration }}
                                 </td>
                                 <td>
-                                    <div style="font-weight:700; color:var(--text-primary);">
+                                    <div style="font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:0.5rem;">
                                         {{ $category->name }}
+                                        @if($category->parent)
+                                            <span class="badge badge-info" style="font-size:0.65rem; padding:0.15rem 0.4rem;">Subgrupo</span>
+                                        @else
+                                            <span class="badge badge-success" style="font-size:0.65rem; padding:0.15rem 0.4rem; background:rgba(16, 185, 129, 0.1); color:var(--green);">Grupo Principal</span>
+                                        @endif
                                     </div>
+                                    @if($category->parent)
+                                        <small style="color:var(--text-muted);">Grupo: {{ $category->parent->name }}</small>
+                                    @endif
                                 </td>
                                 <td style="color:var(--text-secondary); font-size:0.875rem;">
                                     {{ $category->description ?? '—' }}

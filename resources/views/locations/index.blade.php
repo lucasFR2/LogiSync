@@ -52,6 +52,8 @@
                         <th>Corredor</th>
                         <th>Coluna</th>
                         <th>Nível</th>
+                        <th>Dimensões (LxAxP)</th>
+                        <th>Peso Máx.</th>
                         <th>Status</th>
                         <th>Produtos</th>
                         <th style="text-align:right;">Ações</th>
@@ -67,6 +69,20 @@
                         <td>{{ $loc->column }}</td>
                         <td>{{ $loc->level }}</td>
                         <td>
+                            @if($loc->width || $loc->height || $loc->depth)
+                                <span style="font-weight:500;">{{ number_format($loc->width ?? 0, 2, ',', '.') }}m x {{ number_format($loc->height ?? 0, 2, ',', '.') }}m x {{ number_format($loc->depth ?? 0, 2, ',', '.') }}m</span>
+                            @else
+                                <span class="text-muted text-xs">—</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($loc->max_weight)
+                                <span style="font-weight:600;">{{ number_format($loc->max_weight, 0, ',', '.') }} kg</span>
+                            @else
+                                <span class="text-muted text-xs">—</span>
+                            @endif
+                        </td>
+                        <td>
                             @if($loc->is_occupied)
                                 <span class="badge badge-warning">Ocupado</span>
                             @else
@@ -81,6 +97,17 @@
                         </td>
                         <td>
                             <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+                                <button class="btn btn-secondary btn-sm edit-location-btn" style="border-color:transparent;"
+                                        data-id="{{ $loc->id }}"
+                                        data-aisle="{{ $loc->aisle }}"
+                                        data-column="{{ $loc->column }}"
+                                        data-level="{{ $loc->level }}"
+                                        data-width="{{ $loc->width }}"
+                                        data-height="{{ $loc->height }}"
+                                        data-depth="{{ $loc->depth }}"
+                                        data-max-weight="{{ $loc->max_weight }}">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
                                 <form action="{{ route('locations.destroy', $loc) }}" method="POST" onsubmit="return confirm('Excluir esta localização?')">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn-secondary btn-sm" style="color:var(--red); border-color:transparent;">
@@ -123,21 +150,97 @@
             @csrf
             <div class="grid grid-cols-1 gap-4">
                 <div class="form-group">
-                    <label class="form-label">Corredor (Aisle)</label>
-                    <input type="text" name="aisle" class="form-control" placeholder="Ex: A01" required>
+                    <label class="form-label">Corredor (Aisle) <span style="color:var(--red);">*</span></label>
+                    <input type="text" name="aisle" class="form-control" placeholder="Ex: A01" required style="height:44px;">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Coluna (Column)</label>
-                    <input type="text" name="column" class="form-control" placeholder="Ex: 05" required>
+                    <label class="form-label">Coluna (Column) <span style="color:var(--red);">*</span></label>
+                    <input type="text" name="column" class="form-control" placeholder="Ex: 05" required style="height:44px;">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Nível (Level)</label>
-                    <input type="text" name="level" class="form-control" placeholder="Ex: N3" required>
+                    <label class="form-label">Nível (Level) <span style="color:var(--red);">*</span></label>
+                    <input type="text" name="level" class="form-control" placeholder="Ex: N3" required style="height:44px;">
+                </div>
+                
+                <div style="border-top: 1px solid var(--border); padding-top:1rem; margin-top:0.5rem;">
+                    <span style="font-size:0.75rem; font-weight:800; color:var(--accent); text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:0.75rem;">Dimensões e Capacidade</span>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="form-group">
+                            <label class="form-label">Largura (m)</label>
+                            <input type="number" name="width" step="0.01" min="0" class="form-control" placeholder="0,00" style="height:40px; padding:0 0.5rem;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Altura (m)</label>
+                            <input type="number" name="height" step="0.01" min="0" class="form-control" placeholder="0,00" style="height:40px; padding:0 0.5rem;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Profund. (m)</label>
+                            <input type="number" name="depth" step="0.01" min="0" class="form-control" placeholder="0,00" style="height:40px; padding:0 0.5rem;">
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label class="form-label">Peso Máximo (kg)</label>
+                        <input type="number" name="max_weight" step="0.1" min="0" class="form-control" placeholder="Ex: 1500" style="height:42px;">
+                    </div>
                 </div>
             </div>
             <div class="flex gap-3 mt-8">
                 <button type="button" onclick="document.getElementById('modal-single').style.display='none'" class="btn btn-secondary w-full">Cancelar</button>
                 <button type="submit" class="btn btn-primary w-full">Criar Endereço</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- Modal: Edit Location --}}
+<div id="modal-edit" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:100; align-items:center; justify-content:center;">
+    <div class="card p-8 anim-entrance" style="width:100%; max-width:500px;">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="m-0">Editar Localização</h3>
+            <button onclick="document.getElementById('modal-edit').style.display='none'" class="btn-close">&times;</button>
+        </div>
+        <form id="edit-location-form" method="POST">
+            @csrf
+            @method('PUT')
+            <div class="grid grid-cols-1 gap-4">
+                <div class="form-group">
+                    <label class="form-label">Corredor (Aisle) <span style="color:var(--red);">*</span></label>
+                    <input type="text" name="aisle" id="edit-aisle" class="form-control" placeholder="Ex: A01" required style="height:44px;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Coluna (Column) <span style="color:var(--red);">*</span></label>
+                    <input type="text" name="column" id="edit-column" class="form-control" placeholder="Ex: 05" required style="height:44px;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nível (Level) <span style="color:var(--red);">*</span></label>
+                    <input type="text" name="level" id="edit-level" class="form-control" placeholder="Ex: N3" required style="height:44px;">
+                </div>
+                
+                <div style="border-top: 1px solid var(--border); padding-top:1rem; margin-top:0.5rem;">
+                    <span style="font-size:0.75rem; font-weight:800; color:var(--accent); text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:0.75rem;">Dimensões e Capacidade</span>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="form-group">
+                            <label class="form-label">Largura (m)</label>
+                            <input type="number" name="width" id="edit-width" step="0.01" min="0" class="form-control" placeholder="0,00" style="height:40px; padding:0 0.5rem;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Altura (m)</label>
+                            <input type="number" name="height" id="edit-height" step="0.01" min="0" class="form-control" placeholder="0,00" style="height:40px; padding:0 0.5rem;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Profund. (m)</label>
+                            <input type="number" name="depth" id="edit-depth" step="0.01" min="0" class="form-control" placeholder="0,00" style="height:40px; padding:0 0.5rem;">
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label class="form-label">Peso Máximo (kg)</label>
+                        <input type="number" name="max_weight" id="edit-max-weight" step="0.1" min="0" class="form-control" placeholder="Ex: 1500" style="height:42px;">
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-8">
+                <button type="button" onclick="document.getElementById('modal-edit').style.display='none'" class="btn btn-secondary w-full">Cancelar</button>
+                <button type="submit" class="btn btn-primary w-full">Salvar Alterações</button>
             </div>
         </form>
     </div>
@@ -174,6 +277,28 @@
                     <label class="form-label">Níveis por Coluna (Altura)</label>
                     <input type="number" name="levels_count" class="form-control" value="4" min="1" max="10">
                 </div>
+                
+                <div class="col-span-2" style="border-top: 1px solid var(--border); padding-top:1rem; margin-top:0.5rem;">
+                    <span style="font-size:0.75rem; font-weight:800; color:var(--accent); text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:0.75rem;">Dimensões Padrão para Lote</span>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="form-group">
+                            <label class="form-label">Largura (m)</label>
+                            <input type="number" name="width" step="0.01" min="0" class="form-control" placeholder="0,00" style="height:40px; padding:0 0.5rem;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Altura (m)</label>
+                            <input type="number" name="height" step="0.01" min="0" class="form-control" placeholder="0,00" style="height:40px; padding:0 0.5rem;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Profund. (m)</label>
+                            <input type="number" name="depth" step="0.01" min="0" class="form-control" placeholder="0,00" style="height:40px; padding:0 0.5rem;">
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label class="form-label">Peso Máx. Padrão (kg)</label>
+                        <input type="number" name="max_weight" step="0.1" min="0" class="form-control" placeholder="Ex: 1500" style="height:42px;">
+                    </div>
+                </div>
             </div>
             
             <div class="bg-hover p-4 rounded-md mt-6 mb-8 text-xs text-muted border-dashed border">
@@ -199,4 +324,32 @@
     }
     .btn-close:hover { color: var(--text-primary); }
 </style>
+
+@push('scripts')
+<script>
+    document.querySelectorAll('.edit-location-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const aisle = this.getAttribute('data-aisle');
+            const column = this.getAttribute('data-column');
+            const level = this.getAttribute('data-level');
+            const width = this.getAttribute('data-width');
+            const height = this.getAttribute('data-height');
+            const depth = this.getAttribute('data-depth');
+            const maxWeight = this.getAttribute('data-max-weight');
+
+            document.getElementById('edit-location-form').action = `/locations/${id}`;
+            document.getElementById('edit-aisle').value = aisle;
+            document.getElementById('edit-column').value = column;
+            document.getElementById('edit-level').value = level;
+            document.getElementById('edit-width').value = width ? parseFloat(width) : '';
+            document.getElementById('edit-height').value = height ? parseFloat(height) : '';
+            document.getElementById('edit-depth').value = depth ? parseFloat(depth) : '';
+            document.getElementById('edit-max-weight').value = maxWeight ? parseFloat(maxWeight) : '';
+
+            document.getElementById('modal-edit').style.display = 'flex';
+        });
+    });
+</script>
+@endpush
 @endsection

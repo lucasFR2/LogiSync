@@ -172,7 +172,7 @@ class ProductController extends Controller implements HasMiddleware
 
         $manifestation->load('items');
         $products = Product::select('id', 'name', 'barcode')->orderBy('name')->get();
-        $categories = \App\Models\Category::orderBy('name')->get();
+        $categories = \App\Models\Category::with('subcategories')->whereNull('parent_id')->orderBy('name')->get();
 
         return view('inventory.bulk_import', compact('manifestation', 'products', 'categories'));
     }
@@ -245,8 +245,16 @@ class ProductController extends Controller implements HasMiddleware
                             "items.$itemId" => ['Item da NF-e inválido.'],
                         ]);
                     }
+                    $lastProduct = Product::where('sku', 'like', 'SKU-%')->latest('id')->first();
+                    $nextNumber = 1;
+                    if ($lastProduct && preg_match('/^SKU-(\d+)$/', $lastProduct->sku, $matches)) {
+                        $nextNumber = intval($matches[1]) + 1;
+                    }
+                    $sku = 'SKU-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
                     $product = Product::create([
                         'name' => $data['new_name'] ?? $xmlItem->description,
+                        'sku' => $sku,
                         'barcode' => $data['new_barcode'] ?? $xmlItem->barcode,
                         'description' => 'Produto importado via NF-e ' . $manifestation->number,
                         'unit_price' => $xmlItem->unit_price,
@@ -257,7 +265,29 @@ class ProductController extends Controller implements HasMiddleware
                         'unit' => $xmlItem->unit,
                         'category' => $data['new_category'] ?? 'Importado Automático',
                         'supplier_id' => $manifestation->supplier_id,
-                        'status' => 'ativo'
+                        'status' => 'ativo',
+                        
+                        // Taxes fields mapped from XML
+                        'ncm'                => $xmlItem->ncm,
+                        'cfop_default'       => $xmlItem->cfop,
+                        'iss_rate'           => $xmlItem->iss_rate,
+                        'pis_rate'           => $xmlItem->pis_rate,
+                        'cofins_rate'        => $xmlItem->cofins_rate,
+                        'csll_rate'          => $xmlItem->csll_rate,
+                        'irpj_rate'          => $xmlItem->irpj_rate,
+                        'cpp_rate'           => $xmlItem->cpp_rate,
+                        'ipi_rate'           => $xmlItem->ipi_rate,
+                        'icms_rate'          => $xmlItem->icms_rate,
+                        'icms_cst'           => $xmlItem->icms_cst,
+                        'icms_orig'          => $xmlItem->icms_orig,
+                        'icms_st_rate'       => $xmlItem->icms_st_rate,
+                        'icms_st_mva'        => $xmlItem->icms_st_mva,
+                        'icms_st_cst'        => $xmlItem->icms_st_cst,
+                        'ibs_rate'           => $xmlItem->ibs_rate,
+                        'cbs_rate'           => $xmlItem->cbs_rate,
+                        'is_rate'            => $xmlItem->is_rate,
+                        'icms_red_bc'        => $xmlItem->icms_red_bc,
+                        'icms_mod_bc'        => $xmlItem->icms_mod_bc,
                     ]);
                 } else {
                     $product = Product::findOrFail($data['product_id']);
@@ -288,7 +318,7 @@ class ProductController extends Controller implements HasMiddleware
     public function create()
     {
         $suppliers  = Supplier::select('id', 'name')->orderBy('name')->get();
-        $categories = Category::select('id', 'name')->orderBy('name')->get();
+        $categories = Category::with('subcategories')->whereNull('parent_id')->orderBy('name')->get();
 
         $lastProduct = Product::where('sku', 'like', 'SKU-%')->latest('id')->first();
         $nextNumber = 1;
@@ -313,6 +343,28 @@ class ProductController extends Controller implements HasMiddleware
             'status'             => 'required|in:ativo,inativo,descontinuado',
             'warehouse_location_id' => 'nullable|exists:warehouse_locations,id',
             'supplier_id'        => 'nullable|exists:suppliers,id',
+            // Validação Fiscal
+            'ncm'                => 'nullable|string|max:15',
+            'cfop_default'       => 'nullable|string|max:10',
+            'cest'               => 'nullable|string|max:15',
+            'iss_rate'           => 'nullable|numeric|min:0',
+            'pis_rate'           => 'nullable|numeric|min:0',
+            'cofins_rate'        => 'nullable|numeric|min:0',
+            'csll_rate'          => 'nullable|numeric|min:0',
+            'irpj_rate'          => 'nullable|numeric|min:0',
+            'cpp_rate'           => 'nullable|numeric|min:0',
+            'ipi_rate'           => 'nullable|numeric|min:0',
+            'icms_rate'          => 'nullable|numeric|min:0',
+            'icms_cst'           => 'nullable|string|max:10',
+            'icms_orig'          => 'nullable|integer',
+            'icms_st_rate'       => 'nullable|numeric|min:0',
+            'icms_st_mva'        => 'nullable|numeric|min:0',
+            'icms_st_cst'        => 'nullable|string|max:10',
+            'ibs_rate'           => 'nullable|numeric|min:0',
+            'cbs_rate'           => 'nullable|numeric|min:0',
+            'is_rate'            => 'nullable|numeric|min:0',
+            'icms_red_bc'        => 'nullable|numeric|min:0',
+            'icms_mod_bc'        => 'nullable|integer',
         ]);
 
         if (empty($validated['sku'])) {
@@ -346,7 +398,7 @@ class ProductController extends Controller implements HasMiddleware
     public function edit(Product $product)
     {
         $suppliers  = Supplier::select('id', 'name')->orderBy('name')->get();
-        $categories = Category::select('id', 'name')->orderBy('name')->get();
+        $categories = Category::with('subcategories')->whereNull('parent_id')->orderBy('name')->get();
         return view('products.edit', compact('product', 'suppliers', 'categories'));
     }
 
@@ -358,6 +410,28 @@ class ProductController extends Controller implements HasMiddleware
             'unit_price' => 'required|numeric|min:0',
             'quantity'   => 'required|integer|min:0',
             'status'     => 'required|in:ativo,inativo,descontinuado',
+            // Validação Fiscal
+            'ncm'                => 'nullable|string|max:15',
+            'cfop_default'       => 'nullable|string|max:10',
+            'cest'               => 'nullable|string|max:15',
+            'iss_rate'           => 'nullable|numeric|min:0',
+            'pis_rate'           => 'nullable|numeric|min:0',
+            'cofins_rate'        => 'nullable|numeric|min:0',
+            'csll_rate'          => 'nullable|numeric|min:0',
+            'irpj_rate'          => 'nullable|numeric|min:0',
+            'cpp_rate'           => 'nullable|numeric|min:0',
+            'ipi_rate'           => 'nullable|numeric|min:0',
+            'icms_rate'          => 'nullable|numeric|min:0',
+            'icms_cst'           => 'nullable|string|max:10',
+            'icms_orig'          => 'nullable|integer',
+            'icms_st_rate'       => 'nullable|numeric|min:0',
+            'icms_st_mva'        => 'nullable|numeric|min:0',
+            'icms_st_cst'        => 'nullable|string|max:10',
+            'ibs_rate'           => 'nullable|numeric|min:0',
+            'cbs_rate'           => 'nullable|numeric|min:0',
+            'is_rate'            => 'nullable|numeric|min:0',
+            'icms_red_bc'        => 'nullable|numeric|min:0',
+            'icms_mod_bc'        => 'nullable|integer',
         ]);
 
         try {

@@ -14,11 +14,19 @@ class WarehouseLocation extends Model
         'full_code',
         'is_occupied',
         'allow_shared',
+        'width',
+        'height',
+        'depth',
+        'max_weight',
     ];
 
     protected $casts = [
         'is_occupied'  => 'boolean',
         'allow_shared' => 'boolean',
+        'width'        => 'decimal:2',
+        'height'       => 'decimal:2',
+        'depth'        => 'decimal:2',
+        'max_weight'   => 'decimal:2',
     ];
 
     /**

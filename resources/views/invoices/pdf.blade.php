@@ -155,17 +155,21 @@
         <div class="danfe-row">
             <div class="danfe-col"><span class="label">BASE DE CÁLC. ICMS</span><span class="value">{{ number_format($invoice->items->sum('icms_base'), 2, ',', '.') }}</span></div>
             <div class="danfe-col"><span class="label">VALOR DO ICMS</span><span class="value">{{ number_format($invoice->items->sum('icms_value'), 2, ',', '.') }}</span></div>
-            <div class="danfe-col"><span class="label">BASE CÁLC. ICMS S.T.</span><span class="value">0,00</span></div>
-            <div class="danfe-col"><span class="label">VALOR DO ICMS S.T.</span><span class="value">0,00</span></div>
+            <div class="danfe-col"><span class="label">BASE CÁLC. ICMS S.T.</span><span class="value">{{ number_format($invoice->items->sum('icms_st_base'), 2, ',', '.') }}</span></div>
+            <div class="danfe-col"><span class="label">VALOR DO ICMS S.T.</span><span class="value">{{ number_format($invoice->items->sum('icms_st_value'), 2, ',', '.') }}</span></div>
             <div class="danfe-col"><span class="label">VALOR TOTAL DOS PRODUTOS</span><span class="value">R$ {{ number_format($invoice->subtotal, 2, ',', '.') }}</span></div>
         </div>
-        <div class="danfe-row" style="border-bottom: none;">
+        <div class="danfe-row">
             <div class="danfe-col"><span class="label">VALOR DO FRETE</span><span class="value">R$ {{ number_format($invoice->shipping, 2, ',', '.') }}</span></div>
-            <div class="danfe-col"><span class="label">VALOR DO SEGURO</span><span class="value">0,00</span></div>
             <div class="danfe-col"><span class="label">DESCONTO</span><span class="value">R$ {{ number_format($invoice->discount, 2, ',', '.') }}</span></div>
             <div class="danfe-col"><span class="label">VALOR DO IPI</span><span class="value">{{ number_format($invoice->items->sum('ipi_value'), 2, ',', '.') }}</span></div>
-            <div class="danfe-col"><span class="label">VALOR DO PIS/COFINS</span><span class="value">{{ number_format($invoice->items->sum('pis_value') + $invoice->items->sum('cofins_value'), 2, ',', '.') }}</span></div>
-            <div class="danfe-col"><span class="label">VALOR TOTAL DA NOTA</span><span class="value" style="font-size: 11px;">R$ {{ number_format($invoice->total, 2, ',', '.') }}</span></div>
+            <div class="danfe-col"><span class="label">VALOR PIS / COFINS</span><span class="value">{{ number_format($invoice->items->sum('pis_value') + $invoice->items->sum('cofins_value'), 2, ',', '.') }}</span></div>
+            <div class="danfe-col"><span class="label">VALOR ISS / CSLL / IRPJ / CPP</span><span class="value">{{ number_format($invoice->items->sum('iss_value') + $invoice->items->sum('csll_value') + $invoice->items->sum('irpj_value') + $invoice->items->sum('cpp_value'), 2, ',', '.') }}</span></div>
+        </div>
+        <div class="danfe-row" style="border-bottom: none;">
+            <div class="danfe-col" style="width: 40%;"><span class="label">VALOR IBS / CBS / IS (Reforma 2026)</span><span class="value">R$ {{ number_format($invoice->items->sum('ibs_value') + $invoice->items->sum('cbs_value') + $invoice->items->sum('is_value'), 2, ',', '.') }}</span></div>
+            <div class="danfe-col" style="width: 30%;"><span class="label">VALOR II (Importação)</span><span class="value">R$ {{ number_format($invoice->items->sum('ii_value'), 2, ',', '.') }}</span></div>
+            <div class="danfe-col" style="width: 30%;"><span class="label">VALOR TOTAL DA NOTA</span><span class="value" style="font-size: 11px;">R$ {{ number_format($invoice->total, 2, ',', '.') }}</span></div>
         </div>
     </div>
 

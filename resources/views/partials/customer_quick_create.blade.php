@@ -1,6 +1,23 @@
-<div id="customer-quick-create-modal" class="hidden fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm">
+<style>
+#customer-quick-create-modal {
+    z-index: 95 !important;
+    position: fixed !important;
+}
+@media (min-width: 769px) {
+    #customer-quick-create-modal {
+        left: var(--sidebar-w) !important;
+    }
+}
+#customer-quick-create-modal .customer-modal-inner {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+</style>
+<div id="customer-quick-create-modal" class="hidden fixed top-0 right-0 bottom-0 left-0 bg-slate-900/50 backdrop-blur-sm">
     <div class="bg-white dark:bg-slate-900 w-full h-full min-h-screen rounded-none shadow-none overflow-y-auto anim-entrance flex flex-col">
-        <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+        <div class="customer-modal-inner flex-1 flex flex-col">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
             <h3 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
                 <i class="fa-solid fa-user-plus text-blue-500"></i> Cadastrar Novo Cliente
             </h3>
@@ -13,14 +30,14 @@
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Nome / Raz├úo Social <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Nome / Razão Social <span class="text-red-500">*</span></label>
                     <input type="text" name="name" required class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Tipo <span class="text-red-500">*</span></label>
                     <select name="type" required class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
-                        <option value="company">Pessoa Jur├¡dica (CNPJ)</option>
-                        <option value="individual">Pessoa F├¡sica (CPF)</option>
+                        <option value="company">Pessoa Jurídica (CNPJ)</option>
+                        <option value="individual">Pessoa Física (CPF)</option>
                     </select>
                 </div>
                 <div>
@@ -36,7 +53,7 @@
                     <input type="text" name="phone" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
                 </div>
                 <div class="md:col-span-2 border-t border-gray-100 dark:border-slate-800 pt-4 mt-2">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Endere├ºo</h4>
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Endereço</h4>
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Logradouro</label>
@@ -62,11 +79,19 @@
                     <i class="fa-solid fa-check"></i> Salvar Cliente
                 </button>
             </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 
 <script>
+(function() {
+    const modal = document.getElementById('customer-quick-create-modal');
+    if (modal) {
+        document.body.appendChild(modal);
+    }
+})();
+
 function toggleCustomerModal() {
     const modal = document.getElementById('customer-quick-create-modal');
     modal.classList.toggle('hidden');
@@ -116,7 +141,7 @@ document.getElementById('quick-customer-form').addEventListener('submit', functi
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Erro de conex├úo ao cadastrar cliente.');
+        alert('Erro de conexão ao cadastrar cliente.');
     })
     .finally(() => {
         btn.disabled = false;

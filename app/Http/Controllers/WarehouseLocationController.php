@@ -24,6 +24,10 @@ class WarehouseLocationController extends Controller
             'aisle' => 'required|string|max:10',
             'column' => 'required|string|max:10',
             'level' => 'required|string|max:10',
+            'width' => 'nullable|numeric|min:0',
+            'height' => 'nullable|numeric|min:0',
+            'depth' => 'nullable|numeric|min:0',
+            'max_weight' => 'nullable|numeric|min:0',
         ]);
 
         $fullCode = strtoupper($request->aisle . '-' . $request->column . '-' . $request->level);
@@ -40,9 +44,46 @@ class WarehouseLocationController extends Controller
             'full_code' => $fullCode,
             'is_occupied' => false,
             'allow_shared' => true,
+            'width' => $request->width,
+            'height' => $request->height,
+            'depth' => $request->depth,
+            'max_weight' => $request->max_weight,
         ]);
 
         return redirect()->route('locations.index')->with('success', 'Localização criada com sucesso!');
+    }
+
+    public function update(Request $request, WarehouseLocation $location)
+    {
+        $request->validate([
+            'aisle' => 'required|string|max:10',
+            'column' => 'required|string|max:10',
+            'level' => 'required|string|max:10',
+            'width' => 'nullable|numeric|min:0',
+            'height' => 'nullable|numeric|min:0',
+            'depth' => 'nullable|numeric|min:0',
+            'max_weight' => 'nullable|numeric|min:0',
+        ]);
+
+        $fullCode = strtoupper($request->aisle . '-' . $request->column . '-' . $request->level);
+
+        // Check for duplicates
+        if (WarehouseLocation::where('full_code', $fullCode)->where('id', '!=', $location->id)->exists()) {
+            return back()->with('error', "A localização {$fullCode} já existe.");
+        }
+
+        $location->update([
+            'aisle' => strtoupper($request->aisle),
+            'column' => strtoupper($request->column),
+            'level' => strtoupper($request->level),
+            'full_code' => $fullCode,
+            'width' => $request->width,
+            'height' => $request->height,
+            'depth' => $request->depth,
+            'max_weight' => $request->max_weight,
+        ]);
+
+        return redirect()->route('locations.index')->with('success', 'Localização atualizada com sucesso!');
     }
 
     public function destroy(WarehouseLocation $location)
@@ -66,6 +107,10 @@ class WarehouseLocationController extends Controller
             'aisles_count' => 'required|integer|min:1|max:50',
             'columns_count' => 'required|integer|min:1|max:50',
             'levels_count' => 'required|integer|min:1|max:10',
+            'width' => 'nullable|numeric|min:0',
+            'height' => 'nullable|numeric|min:0',
+            'depth' => 'nullable|numeric|min:0',
+            'max_weight' => 'nullable|numeric|min:0',
         ]);
 
         $prefix = strtoupper($request->prefix);
@@ -86,7 +131,11 @@ class WarehouseLocationController extends Controller
                             'column' => $column,
                             'level' => $level,
                             'is_occupied' => false,
-                            'allow_shared' => true
+                            'allow_shared' => true,
+                            'width' => $request->width,
+                            'height' => $request->height,
+                            'depth' => $request->depth,
+                            'max_weight' => $request->max_weight,
                         ]
                     );
                     $count++;

@@ -75,10 +75,18 @@
                                                 <label style="font-size:0.75rem; color:var(--text-muted);">Categoria</label>
                                                 <div style="display:flex; gap:0.25rem;">
                                                     <select name="items[{{ $item->id }}][new_category]" class="form-select category-select" style="padding:0.5rem; font-size:0.875rem; width:100%;">
-                                                        <option value="">-- Sem Categoria --</option>
-                                                        @foreach($categories as $cat)
-                                                            <option value="{{ $cat->name }}">{{ $cat->name }}</option>
-                                                        @endforeach
+                                                          <option value="">-- Sem Categoria --</option>
+                                                          @foreach($categories as $cat)
+                                                              @if($cat->subcategories->count() > 0)
+                                                                  <optgroup label="{{ $cat->name }}">
+                                                                      @foreach($cat->subcategories as $sub)
+                                                                          <option value="{{ $sub->name }}">{{ $sub->name }}</option>
+                                                                      @endforeach
+                                                                  </optgroup>
+                                                              @else
+                                                                  <option value="{{ $cat->name }}">{{ $cat->name }}</option>
+                                                              @endif
+                                                          @endforeach
                                                     </select>
                                                     <button type="button" class="btn btn-secondary" data-open-category-modal title="Nova categoria" style="padding:0 0.5rem; height:34px;">
                                                         <i class="fa-solid fa-plus"></i>

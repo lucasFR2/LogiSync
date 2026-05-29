@@ -33,15 +33,77 @@ class InvoiceService
                     'unit_price'   => $price,
                     'discount'     => $disc,
                     'total'        => round($total, 2),
-                    'icms_base'    => round($total, 2),
+                    
+                    'icms_cst'     => $item['icms_cst'] ?? '00',
+                    'icms_orig'    => (int) ($item['icms_orig'] ?? 0),
+                    'icms_mod_bc'  => (int) ($item['icms_mod_bc'] ?? 3),
+                    'icms_red_bc'  => (float) ($item['icms_red_bc'] ?? 0),
+                    'icms_base'    => (float) ($item['icms_base'] ?? 0),
                     'icms_rate'    => (float) ($item['icms_rate'] ?? 0),
-                    'icms_value'   => round($total * (($item['icms_rate'] ?? 0) / 100), 2),
+                    'icms_value'   => (float) ($item['icms_value'] ?? 0),
+
+                    'icms_st_cst'  => $item['icms_st_cst'] ?? '10',
+                    'icms_st_mva'  => (float) ($item['icms_st_mva'] ?? 0),
+                    'icms_st_base' => (float) ($item['icms_st_base'] ?? 0),
+                    'icms_st_rate' => (float) ($item['icms_st_rate'] ?? 0),
+                    'icms_st_value'=> (float) ($item['icms_st_value'] ?? 0),
+
+                    'ipi_cst'      => $item['ipi_cst'] ?? '50',
+                    'ipi_enq'      => $item['ipi_enq'] ?? '999',
+                    'ipi_base'     => (float) ($item['ipi_base'] ?? 0),
                     'ipi_rate'     => (float) ($item['ipi_rate'] ?? 0),
-                    'ipi_value'    => round($total * (($item['ipi_rate'] ?? 0) / 100), 2),
+                    'ipi_value'    => (float) ($item['ipi_value'] ?? 0),
+
+                    'pis_cst'      => $item['pis_cst'] ?? '01',
+                    'pis_base'     => (float) ($item['pis_base'] ?? 0),
                     'pis_rate'     => (float) ($item['pis_rate'] ?? 0),
-                    'pis_value'    => round($total * (($item['pis_rate'] ?? 0) / 100), 2),
+                    'pis_value'    => (float) ($item['pis_value'] ?? 0),
+
+                    'cofins_cst'   => $item['cofins_cst'] ?? '01',
+                    'cofins_base'  => (float) ($item['cofins_base'] ?? 0),
                     'cofins_rate'  => (float) ($item['cofins_rate'] ?? 0),
-                    'cofins_value' => round($total * (($item['cofins_rate'] ?? 0) / 100), 2),
+                    'cofins_value' => (float) ($item['cofins_value'] ?? 0),
+
+                    'iss_cst'      => $item['iss_cst'] ?? '01',
+                    'iss_base'     => (float) ($item['iss_base'] ?? 0),
+                    'iss_rate'     => (float) ($item['iss_rate'] ?? 0),
+                    'iss_value'    => (float) ($item['iss_value'] ?? 0),
+
+                    'csll_cst'     => $item['csll_cst'] ?? '01',
+                    'csll_base'    => (float) ($item['csll_base'] ?? 0),
+                    'csll_rate'    => (float) ($item['csll_rate'] ?? 0),
+                    'csll_value'   => (float) ($item['csll_value'] ?? 0),
+
+                    'irpj_cst'     => $item['irpj_cst'] ?? '01',
+                    'irpj_base'    => (float) ($item['irpj_base'] ?? 0),
+                    'irpj_rate'    => (float) ($item['irpj_rate'] ?? 0),
+                    'irpj_value'   => (float) ($item['irpj_value'] ?? 0),
+
+                    'cpp_cst'      => $item['cpp_cst'] ?? '01',
+                    'cpp_base'     => (float) ($item['cpp_base'] ?? 0),
+                    'cpp_rate'     => (float) ($item['cpp_rate'] ?? 0),
+                    'cpp_value'    => (float) ($item['cpp_value'] ?? 0),
+
+                    'ibs_cst'      => $item['ibs_cst'] ?? '01',
+                    'ibs_base'     => (float) ($item['ibs_base'] ?? 0),
+                    'ibs_rate'     => (float) ($item['ibs_rate'] ?? 0),
+                    'ibs_value'    => (float) ($item['ibs_value'] ?? 0),
+
+                    'cbs_cst'      => $item['cbs_cst'] ?? '01',
+                    'cbs_base'     => (float) ($item['cbs_base'] ?? 0),
+                    'cbs_rate'     => (float) ($item['cbs_rate'] ?? 0),
+                    'cbs_value'    => (float) ($item['cbs_value'] ?? 0),
+
+                    'is_cst'       => $item['is_cst'] ?? '01',
+                    'is_base'      => (float) ($item['is_base'] ?? 0),
+                    'is_rate'      => (float) ($item['is_rate'] ?? 0),
+                    'is_value'     => (float) ($item['is_value'] ?? 0),
+
+                    'ii_base'      => (float) ($item['ii_base'] ?? 0),
+                    'ii_rate'      => (float) ($item['ii_rate'] ?? 0),
+                    'ii_value'     => (float) ($item['ii_value'] ?? 0),
+                    'ii_desp'      => (float) ($item['ii_desp'] ?? 0),
+                    'ii_iof'       => (float) ($item['ii_iof'] ?? 0),
                 ];
 
                 if ($isEmitting && !empty($item['product_id'])) {
