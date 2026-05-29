@@ -75,7 +75,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Referência / SKU</label>
-                                <input type="text" name="sku" value="{{ old('sku', $product->sku ?? '') }}" class="form-input" maxlength="50">
+                                <input type="text" name="sku" value="{{ old('sku', $product->sku ?? '') }}" class="form-input" maxlength="50" readonly style="background: var(--bg-hover); cursor: not-allowed;" title="Gerado automaticamente e não pode ser alterado">
                             </div>
                         </div>
 

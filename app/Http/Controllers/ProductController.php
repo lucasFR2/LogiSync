@@ -289,7 +289,15 @@ class ProductController extends Controller implements HasMiddleware
     {
         $suppliers  = Supplier::select('id', 'name')->orderBy('name')->get();
         $categories = Category::select('id', 'name')->orderBy('name')->get();
-        return view('products.create', compact('suppliers', 'categories'));
+
+        $lastProduct = Product::where('sku', 'like', 'SKU-%')->latest('id')->first();
+        $nextNumber = 1;
+        if ($lastProduct && preg_match('/^SKU-(\d+)$/', $lastProduct->sku, $matches)) {
+            $nextNumber = intval($matches[1]) + 1;
+        }
+        $nextSku = 'SKU-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
+        return view('products.create', compact('suppliers', 'categories', 'nextSku'));
     }
 
     // Gravar novo produto no banco
@@ -297,6 +305,7 @@ class ProductController extends Controller implements HasMiddleware
     {
         $validated = $request->validate([
             'name'               => 'required|string|max:255',
+            'sku'                => 'nullable|string|unique:products,sku|max:50',
             'barcode'            => 'nullable|string|unique:products,barcode|regex:/^[0-9]{1,20}$/',
             'unit_price'         => 'required|numeric|min:0',
             'quantity'           => 'required|integer|min:0',
@@ -305,6 +314,16 @@ class ProductController extends Controller implements HasMiddleware
             'warehouse_location_id' => 'nullable|exists:warehouse_locations,id',
             'supplier_id'        => 'nullable|exists:suppliers,id',
         ]);
+
+        if (empty($validated['sku'])) {
+            $lastProduct = Product::where('sku', 'like', 'SKU-%')->latest('id')->first();
+            $nextNumber = 1;
+            if ($lastProduct && preg_match('/^SKU-(\d+)$/', $lastProduct->sku, $matches)) {
+                $nextNumber = intval($matches[1]) + 1;
+            }
+            $validated['sku'] = 'SKU-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+            $request->merge(['sku' => $validated['sku']]);
+        }
 
         try {
             $product = $this->productService->createProduct($request->all());

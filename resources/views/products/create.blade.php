@@ -65,7 +65,7 @@
                         
                         <div class="form-group mb-5">
                             <label class="form-label">Nome Comercial <span style="color:var(--red);">*</span></label>
-                            <input type="text" name="name" value="{{ old('name') }}" placeholder="Ex: Monitor Gamer UltraWide 34'" required class="form-input">
+                            <input type="text" name="name" value="{{ old('name') }}" placeholder="Ex: Monitor Gamer UltraWide 34' Cor: Preta" required class="form-input">
                         </div>
 
                         <div class="grid grid-2 gap-4 mb-5">
@@ -75,7 +75,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Referência / SKU</label>
-                                <input type="text" name="sku" value="{{ old('sku') }}" placeholder="SKU-001" class="form-input" maxlength="50">
+                                <input type="text" name="sku" value="{{ old('sku', $nextSku) }}" class="form-input" maxlength="50" readonly style="background: var(--bg-hover); cursor: not-allowed;" title="Gerado automaticamente">
                             </div>
                         </div>
 
@@ -272,7 +272,7 @@
                     {{-- Operations --}}
                     <div class="card p-6" style="border: 1px solid var(--border);">
                         <h3 style="font-family:'Outfit'; font-size:1.1rem; color:var(--accent); margin-bottom:1.5rem; display:flex; align-items:center; gap:0.65rem;">
-                            <i class="fa-solid fa-gears"></i> Operação
+                            <i class="fa-solid fa-gears"></i> Fornecedor
                         </h3>
                         <div class="form-group mb-5">
                             <label class="form-label">Fornecedor Principal</label>
@@ -291,7 +291,7 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Status Inicial</label>
+                            <label class="form-label">Status Inicial do Produto</label>
                             <div style="display:flex; gap:1rem; padding:0.5rem; background:var(--bg-hover); border-radius:var(--r-md);">
                                 <label style="flex:1; display:flex; align-items:center; justify-content:center; gap:0.5rem; padding:0.6rem; border-radius:var(--r-md); cursor:pointer; font-size:0.8rem; font-weight:600; transition:0.2s;" class="status-radio-label">
                                     <input type="radio" name="status" value="ativo" {{ old('status', 'ativo') == 'ativo' ? 'checked' : '' }} style="display:none;">
