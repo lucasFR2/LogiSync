@@ -3,150 +3,430 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro - LogiSync WMS</title>
-    <!-- Tailwind CSS via CDN para estilização imediata -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="{{ asset('css/dashboard-dark.css') }}">
+    <title>Cadastro de Funcionário - LogiSync WMS</title>
+    
+    {{-- Fonts --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    {{-- Icons --}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    {{-- Styles --}}
+    <link rel="stylesheet" href="{{ asset('css/logisync.css') }}">
+    <script src="{{ asset('js/theme.js') }}"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-base);
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+        }
+
+        .login-container {
+            display: flex;
+            min-height: 100vh;
+            width: 100vw;
+        }
+
+        /* Left Side: Brand & Visual */
+        .login-visual {
+            flex: 1.2;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            background: #020617;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4rem;
+            overflow: hidden;
+            border-right: 1px solid var(--glass-border);
+        }
+
+        .login-visual img.bg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.25;
+            filter: grayscale(1) contrast(1.1);
+        }
+
+        .login-visual-content {
+            position: relative;
+            z-index: 10;
+            color: white;
+            max-width: 600px;
+        }
+
+        .brand-pill {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            padding: 0.625rem 1.25rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .login-visual h1 {
+            font-size: 4rem;
+            line-height: 1.05;
+            margin-bottom: 1.5rem;
+            color: white;
+            font-family: 'Outfit';
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .login-visual p {
+            font-size: 1.25rem;
+            opacity: 0.75;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+
+        /* Right Side: Form */
+        .login-form-side {
+            flex: 0.8;
+            background: var(--bg-base);
+            display: flex;
+            flex-direction: column;
+            padding: 4rem 2rem;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 680px;
+            margin: auto;
+            padding: 3.5rem;
+            background: var(--glass-bg);
+            border-radius: var(--r-2xl);
+            box-shadow: var(--shadow-2xl);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+
+        .login-header {
+            margin-bottom: 3rem;
+        }
+
+        .login-header h2 {
+            font-size: 2.25rem;
+            margin-bottom: 0.5rem;
+            font-family: 'Outfit';
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .login-header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.75rem;
+        }
+
+        .form-section-title {
+            font-family: 'Outfit';
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin: 2rem 0 0.75rem;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            border-bottom: 2px solid var(--border-subtle);
+            padding-bottom: 0.75rem;
+        }
+
+        .auth-footer {
+            margin-top: 4rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        @media (max-width: 1400px) {
+            .login-visual { flex: 1; }
+            .login-form-side { flex: 1; }
+        }
+
+        @media (max-width: 992px) {
+            .login-visual { display: none; }
+            .login-form-side { flex: 1; padding: 3rem 1.5rem; }
+            .login-card { padding: 2.5rem 1.5rem; }
+        }
+    </style>
 </head>
-<body class="bg-[#020617] font-sans antialiased">
+<body>
 
-    <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
-        
-        <!-- Logo Centralizada -->
-            <div class="p-6 border-b border-[#1E293B] flex justify-center">
-                <a href="/" class="hover:opacity-80 transition-opacity">
-                    <img src="{{ asset('images/logisync-logo.png') }}" alt="LogiSync Logo" class="w-40 h-auto brightness-0 invert">
-                </a>
-            </div>
-
-        <!-- Card de Registro -->
-        <div class="w-full sm:max-w-md px-8 py-10 bg-[#0F172A] shadow-xl rounded-lg border border-[#1E293B]">
-            
-            <div class="mb-6 text-center">
-                <h2 class="text-2xl font-extrabold text-[#FFFFFF]">Criar Conta</h2>
-                <p class="text-sm text-[#94A3B8]">Cadastre-se para gerenciar seu armazém</p>
-            </div>
-
-            <!-- Listagem de Erros -->
-            @if($errors->any())
-                <div class="mb-4 p-3 bg-red-900/20 border-l-4 border-red-600 text-red-400 text-sm rounded">
-                    <ul class="list-disc list-inside">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
+    <div class="login-container">
+        <!-- Visual Section -->
+        <div class="login-visual anim-entrance">
+            <img src="{{ asset('images/login-bg.jpg') }}" class="bg" alt="Warehouse">
+            <div class="login-visual-content">
+                <div class="brand-pill">LogiSync WMS v2.0</div>
+                <h1>Junte-se à nossa equipe operacional.</h1>
+                <p>Crie sua conta de funcionário para começar a gerenciar o fluxo logístico com eficiência e precisão.</p>
+                
+                <div style="display:flex; gap:2rem; margin-top:4rem; opacity:0.8;">
+                    <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                        <span style="font-size:1.5rem; font-weight:800; font-family:'Outfit';">99.9%</span>
+                        <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Uptime</span>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                        <span style="font-size:1.5rem; font-weight:800; font-family:'Outfit';">24/7</span>
+                        <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Monitoramento</span>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                        <span style="font-size:1.5rem; font-weight:800; font-family:'Outfit';">100%</span>
+                        <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Seguro</span>
+                    </div>
                 </div>
-            @endif
-
-            <form method="POST" action="{{ route('register') }}">
-                @csrf
-
-                <!-- Campo Nome -->
-                <div class="mb-4">
-                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-1">Nome Completo</label>
-                    <input type="text" name="name" placeholder="Seu nome" value="{{ old('name') }}" required
-                        class="w-full px-4 py-2 border border-[#1E293B] bg-[#0F172A] text-[#FFFFFF] placeholder-[#94A3B8] rounded-md focus:ring-2 focus:ring-blue-500/50 focus:border-[#2563EB] outline-none transition-all">
-                </div>
-
-                <!-- Campo E-mail -->
-                <div class="mb-4">
-                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-1">E-mail Corporativo</label>
-                    <input type="email" name="email" placeholder="exemplo@logisync.com" value="{{ old('email') }}" required
-                        class="w-full px-4 py-2 border border-[#1E293B] bg-[#0F172A] text-[#FFFFFF] placeholder-[#94A3B8] rounded-md focus:ring-2 focus:ring-blue-500/50 focus:border-[#2563EB] outline-none transition-all">
-                </div>
-
-                 <!-- Campo Cargo -->
-                <div class="mb-4">
-                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-1">Cargo</label>
-                    <input type="text" name="role" placeholder="Seu cargo atual" value="{{ old('role') }}" required
-                        class="w-full px-4 py-2 border border-[#1E293B] bg-[#0F172A] text-[#FFFFFF] placeholder-[#94A3B8] rounded-md focus:ring-2 focus:ring-blue-500/50 focus:border-[#2563EB] outline-none transition-all">
-                </div>
-                <!-- Campo CPF -->
-                 <div class="mb-4">
-                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-1">CPF</label>
-                    <input id="cpf" type="text" name="cpf" placeholder="000.000.000-00" value="{{ old('cpf') }}" required
-                        inputmode="numeric" autocomplete="off" maxlength="14"
-                        class="w-full px-4 py-2 border border-[#1E293B] bg-[#0F172A] text-[#FFFFFF] placeholder-[#94A3B8] rounded-md focus:ring-2 focus:ring-blue-500/50 focus:border-[#2563EB] outline-none transition-all">
-                </div>
-
-                <!-- Campo Senha -->
-                <div class="mb-4">
-                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-1">Senha</label>
-                    <input type="password" name="password" placeholder="Mínimo 8 caracteres" required
-                        class="w-full px-4 py-2 border border-[#1E293B] bg-[#0F172A] text-[#FFFFFF] placeholder-[#94A3B8] rounded-md focus:ring-2 focus:ring-blue-500/50 focus:border-[#2563EB] outline-none transition-all">
-                </div>
-
-                <!-- Confirmar Senha -->
-                <div class="mb-6">
-                    <label class="block text-sm font-semibold text-[#FFFFFF] mb-1">Confirmar Senha</label>
-                    <input type="password" name="password_confirmation" placeholder="Repita a senha" required
-                        class="w-full px-4 py-2 border border-[#1E293B] bg-[#0F172A] text-[#FFFFFF] placeholder-[#94A3B8] rounded-md focus:ring-2 focus:ring-blue-500/50 focus:border-[#2563EB] outline-none transition-all">
-                </div>
-
-                <!-- Botão de Ação -->
-                <button type="submit" 
-                    class="w-full bg-[#2563EB] hover:bg-blue-700 text-[#FFFFFF] font-bold py-2 px-4 rounded-md shadow-lg transform active:scale-95 transition-all">
-                    Registrar Agora
-                </button>
-            </form>
-
-            <!-- Rodapé do Card -->
-            <div class="mt-8 pt-6 border-t border-[#1E293B] text-center">
-                <p class="text-sm text-[#94A3B8]">
-                    Já possui uma conta? 
-                    <a href="{{ route('login') }}" class="font-bold text-[#2563EB] hover:text-blue-400 transition-colors">Fazer Login</a>
-                </p>
             </div>
         </div>
 
-        <!-- Footer da Página -->
-        <p class="mt-6 text-xs text-gray-400">© {{ date('Y') }} LogiSync WMS. Todos os direitos reservados.</p>
+        <!-- Form Section -->
+        <div class="login-form-side anim-entrance" style="animation-delay: 0.2s;">
+            
+            <div style="position:absolute; top:2rem; left:2rem; z-index:100;">
+                <a href="{{ route('employees.index') }}" class="btn btn-secondary" style="padding:0.625rem 1.25rem; font-size:0.875rem; border-radius:12px; box-shadow: var(--shadow-sm);">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> Voltar à Listagem
+                </a>
+            </div>
+
+            <div style="position:absolute; top:2rem; right:2rem; z-index:100;">
+                <button class="icon-btn" data-theme-toggle title="Mudar Tema" style="width:42px; height:42px; border-radius:12px; background: var(--bg-surface); border: 1px solid var(--border);">
+                    <i class="fa-solid fa-circle-half-stroke"></i>
+                </button>
+            </div>
+
+            <div class="login-card">
+                <div class="login-header">
+                    <div style="width:56px; height:56px; background: linear-gradient(135deg, var(--accent), #4f46e5); color:white; border-radius:16px; display:flex; align-items:center; justify-content:center; font-weight:900; font-family:'Outfit'; font-size:1.75rem; margin-bottom:1.75rem; box-shadow: 0 8px 16px -4px var(--accent-glow);">LS</div>
+                    <h2>Cadastro de Funcionário</h2>
+                    <p>Insira as informações do novo colaborador para habilitar o acesso.</p>
+                </div>
+
+                @if(session('success'))
+                    <div class="badge badge-success" style="width:100%; padding:1rem; margin-bottom:2rem; font-size:0.9rem; justify-content:center; border-radius:12px;">
+                        <i class="fa-solid fa-circle-check mr-2"></i>
+                        {{ session('success') }}
+                    </div>
+                @endif
+
+                @if($errors->any())
+                    <div class="badge badge-danger" style="width:100%; padding:1rem; margin-bottom:2rem; font-size:0.9rem; flex-direction:column; align-items:center; border-radius:12px;">
+                        <div style="display:flex; align-items:center; gap:0.5rem; font-weight:800; margin-bottom:0.5rem;">
+                            <i class="fa-solid fa-circle-exclamation"></i> Ops! Algo deu errado
+                        </div>
+                        <div style="font-size:0.8rem; opacity:0.9;">
+                            @foreach($errors->all() as $error)
+                                <div>• {{ $error }}</div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                <form method="POST" action="{{ route('register') }}" class="auth-form" enctype="multipart/form-data">
+                    @csrf
+
+                    <div class="form-section-title">
+                        <i class="fa-solid fa-id-card"></i> Dados Pessoais
+                    </div>
+
+                    <div class="grid grid-2">
+                        <div class="form-group" style="grid-column: 1/-1;">
+                            <label class="form-label">Nome Completo <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="name" value="{{ old('name') }}" required class="form-input" placeholder="Nome completo do funcionário">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Cargo <span style="color:var(--red);">*</span></label>
+                            <select name="role_id" required class="form-select">
+                                <option value="" disabled selected>Selecione o cargo</option>
+                                @foreach($roles as $role)
+                                    <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>
+                                        {{ $role->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">CPF <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="cpf" id="cpf" value="{{ old('cpf') }}" required class="form-input" placeholder="000.000.000-00" maxlength="14">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">RG <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="rg" id="rg" value="{{ old('rg') }}" required class="form-input" placeholder="00.000.000-0" maxlength="12">
+                        </div>
+
+                        <div class="form-group" style="grid-column: 1/-1;">
+                            <label class="form-label">E-mail Corporativo <span style="color:var(--red);">*</span></label>
+                            <input type="email" name="email" value="{{ old('email') }}" required class="form-input" placeholder="email@logisync.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Telefone / Celular <span style="color:var(--red);">*</span></label>
+                            <input type="tel" name="phone" id="phone" value="{{ old('phone') }}" required class="form-input" placeholder="(00) 00000-0000">
+                        </div>
+                    </div>
+
+                    <div class="form-section-title">
+                        <i class="fa-solid fa-map-location-dot"></i> Endereço
+                    </div>
+
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label class="form-label">CEP <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="zip_code" id="zip_code" value="{{ old('zip_code') }}" required class="form-input" placeholder="00000-000" maxlength="9">
+                        </div>
+
+                        <div class="form-group" style="grid-column: 1/-1;">
+                            <label class="form-label">Logradouro <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="address" value="{{ old('address') }}" required class="form-input" placeholder="Rua, Avenida, etc.">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Número <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="number" value="{{ old('number') }}" required class="form-input" placeholder="123">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Bairro <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="neighborhood" value="{{ old('neighborhood') }}" required class="form-input" placeholder="Ex: Centro">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Cidade <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="city" value="{{ old('city') }}" required class="form-input" placeholder="Cidade">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Estado (UF) <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="state" value="{{ old('state') }}" required class="form-input" placeholder="SP" maxlength="2">
+                        </div>
+                    </div>
+
+                    <div class="form-section-title">
+                        <i class="fa-solid fa-file-pdf"></i> Documentação
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: 1/-1;">
+                        <label class="form-label">Anexar Documentos (PDF, Imagem) <span style="color:var(--red);">*</span></label>
+                        <div style="position:relative; background:var(--bg-base); border:2px dashed var(--border); border-radius:var(--r-md); padding:1.5rem; text-align:center; transition:all 0.3s;" id="drop-zone">
+                            <i class="fa-solid fa-cloud-arrow-up" style="font-size:2rem; color:var(--text-muted); margin-bottom:1rem;"></i>
+                            <div style="font-size:0.875rem; color:var(--text-secondary);">
+                                Clique para selecionar ou arraste o arquivo aqui
+                            </div>
+                            <input type="file" name="documents[]" class="form-input" style="position:absolute; inset:0; opacity:0; cursor:pointer;" onchange="updateFileName(this)" multiple>
+                            <div id="file-name" style="margin-top:0.5rem; font-size:0.8rem; font-weight:700; color:var(--accent);"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-section-title">
+                        <i class="fa-solid fa-key"></i> Segurança
+                    </div>
+
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Senha de Acesso <span style="color:var(--red);">*</span></label>
+                            <input type="password" name="password" required class="form-input" placeholder="••••••••">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Confirmar Senha <span style="color:var(--red);">*</span></label>
+                            <input type="password" name="password_confirmation" required class="form-input" placeholder="••••••••">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="padding:1.125rem; margin-top:2rem; font-size:1.1rem; width:100%; border-radius:14px; background: linear-gradient(135deg, var(--accent), #4f46e5); border:none; box-shadow: 0 10px 20px -5px var(--accent-glow);">
+                        <i class="fa-solid fa-user-plus mr-2"></i>
+                        Finalizar Cadastro de Funcionário
+                    </button>
+                </form>
+
+                <div class="auth-footer">
+                    &copy; {{ date('Y') }} LogiSync Global.
+                </div>
+            </div>
+        </div>
     </div>
 
-<script>
-    (function () {
-        function formatCpf(value) {
-            const digits = String(value || '').replace(/\D/g, '').slice(0, 11);
-
-            const p1 = digits.slice(0, 3);
-            const p2 = digits.slice(3, 6);
-            const p3 = digits.slice(6, 9);
-            const p4 = digits.slice(9, 11);
-
-            let out = p1;
-            if (p2) out += '.' + p2;
-            if (p3) out += '.' + p3;
-            if (p4) out += '-' + p4;
-            return out;
+    <script>
+        function updateFileName(input) {
+            const fileNameDisplay = document.getElementById('file-name');
+            const dropZone = document.getElementById('drop-zone');
+            if (input.files && input.files.length > 0) {
+                const names = Array.from(input.files).map(f => f.name).join(' | ');
+                fileNameDisplay.textContent = input.files.length + ' arquivo(s) selecionado(s): ' + names;
+                dropZone.style.borderColor = 'var(--accent)';
+                dropZone.style.background = 'var(--accent-subtle)';
+            } else {
+                fileNameDisplay.textContent = '';
+                dropZone.style.borderColor = 'var(--border)';
+                dropZone.style.background = 'var(--bg-base)';
+            }
         }
 
-        function applyCpfMask(input) {
-            if (!input) return;
+        // Simple Input Masks
+        document.getElementById('cpf').addEventListener('input', function (e) {
+            let v = e.target.value.replace(/\D/g, '');
+            if (v.length > 11) v = v.slice(0, 11);
+            if (v.length > 9) v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+            else if (v.length > 6) v = v.replace(/^(\d{3})(\d{3})(\d{0,3})$/, "$1.$2.$3");
+            else if (v.length > 3) v = v.replace(/^(\d{3})(\d{0,3})$/, "$1.$2");
+            e.target.value = v;
+        });
 
-            input.addEventListener('input', function () {
-                const caretAtEnd = input.selectionStart === input.value.length;
-                input.value = formatCpf(input.value);
-                if (caretAtEnd) {
-                    input.setSelectionRange(input.value.length, input.value.length);
-                }
-            });
+        document.getElementById('rg').addEventListener('input', function (e) {
+            let v = e.target.value.replace(/\D/g, '');
+            if (v.length > 9) v = v.slice(0, 9);
+            if (v.length > 8) v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{1})$/, "$1.$2.$3-$4");
+            else if (v.length > 5) v = v.replace(/^(\d{2})(\d{3})(\d{0,3})$/, "$1.$2.$3");
+            else if (v.length > 2) v = v.replace(/^(\d{2})(\d{0,3})$/, "$1.$2");
+            e.target.value = v;
+        });
 
-            input.addEventListener('blur', function () {
-                input.value = formatCpf(input.value);
-            });
+        document.getElementById('zip_code').addEventListener('input', function (e) {
+            let v = e.target.value.replace(/\D/g, '');
+            if (v.length > 8) v = v.slice(0, 8);
+            if (v.length > 5) v = v.replace(/^(\d{5})(\d{0,3})$/, "$1-$2");
+            e.target.value = v;
+        });
 
-            input.value = formatCpf(input.value);
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function () {
-                applyCpfMask(document.getElementById('cpf'));
-            });
-        } else {
-            applyCpfMask(document.getElementById('cpf'));
-        }
-    })();
-</script>
-
+        document.getElementById('phone').addEventListener('input', function (e) {
+            let v = e.target.value.replace(/\D/g, '');
+            if (v.length > 11) v = v.slice(0, 11);
+            if (v.length > 10) v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+            else if (v.length > 6) v = v.replace(/^(\d{2})(\d{4})(\d{0,4})$/, "($1) $2-$3");
+            else if (v.length > 2) v = v.replace(/^(\d{2})(\d{0,5})$/, "($1) $2");
+            e.target.value = v;
+        });
+    </script>
 </body>
 </html>

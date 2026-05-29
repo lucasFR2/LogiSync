@@ -1,283 +1,401 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\Supplier;
-use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Models\Inventory;
-use Carbon\Carbon;
+use App\Models\IncomingInvoice;
+use Illuminate\Support\Facades\DB;
+use App\Helpers\Logger;
+use Illuminate\Validation\ValidationException;
 
-class ProductController extends Controller
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+
+class ProductController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:produtos.visualizar'),
+        ];
+    }
+
+    protected $productService;
+    
+    public function __construct(\App\Services\ProductService $productService)
+    {
+        $this->productService = $productService;
+    }
+
     // Listar todos os produtos
     public function index(Request $request)
     {
-        $search = $request->query('search', '');
-        $filterBy = $request->query('filter', 'all'); // all, name, barcode, category, status
-        
-        // Filtros avançados
-        $statusFilter = $request->query('status_filter', '');
-        $priceMin = $request->query('price_min', '');
-        $priceMax = $request->query('price_max', '');
-        $stockFilter = $request->query('stock_filter', '');
-        $categoryFilter = $request->query('category_filter', '');
-        $supplierFilter = $request->query('supplier_filter', '');
+        $search = $request->query('search');
+        $filterBy = $request->query('filter', 'all');
+        $status = $request->query('status_filter');
+        $priceMin = $request->query('price_min');
+        $priceMax = $request->query('price_max');
+        $stockFilter = $request->query('stock_filter');
 
         $query = Product::query();
 
-        // Aplicar filtro de busca rápida
-        if (!empty($search)) {
-            switch ($filterBy) {
-                case 'name':
-                    $query->where('name', 'like', "%{$search}%");
-                    break;
-                case 'barcode':
-                    $query->where('barcode', 'like', "%{$search}%");
-                    break;
-                case 'category':
-                    $query->where('category', 'like', "%{$search}%");
-                    break;
-                case 'status':
-                    $query->where('status', $search);
-                    break;
-                case 'all':
-                default:
-                    // Busca em múltiplos campos
-                    $query->where(function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%")
-                          ->orWhere('barcode', 'like', "%{$search}%")
-                          ->orWhere('description', 'like', "%{$search}%")
-                          ->orWhere('category', 'like', "%{$search}%");
-                    });
-                    break;
+        $allowedFilterColumns = ['all', 'name', 'barcode', 'category'];
+        if (!in_array($filterBy, $allowedFilterColumns, true)) {
+            $filterBy = 'all';
+        }
+
+        // Basic Search
+        if ($search) {
+            if ($filterBy === 'all') {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('barcode', 'like', "%{$search}%")
+                      ->orWhere('category', 'like', "%{$search}%");
+                });
+            } else {
+                $query->where($filterBy, 'like', "%{$search}%");
             }
         }
 
-        // Aplicar filtros avançados
-        if (!empty($statusFilter)) {
-            $query->where('status', $statusFilter);
+        // Status Filter
+        if ($status) {
+            $query->where('status', $status);
         }
 
-        if (!empty($priceMin)) {
-            $query->where('unit_price', '>=', (float)$priceMin);
+        // Price Range
+        if ($priceMin !== null && $priceMin !== '') {
+            $query->where('unit_price', '>=', $priceMin);
+        }
+        if ($priceMax !== null && $priceMax !== '') {
+            $query->where('unit_price', '<=', $priceMax);
         }
 
-        if (!empty($priceMax)) {
-            $query->where('unit_price', '<=', (float)$priceMax);
-        }
-
-        if (!empty($stockFilter)) {
+        // Stock Filter
+        if ($stockFilter) {
             if ($stockFilter === 'low') {
-                $query->whereRaw('quantity <= reorder_level');
+                // quantity <= reorder_level
+                $query->whereColumn('quantity', '<=', 'reorder_level');
             } elseif ($stockFilter === 'medium') {
-                $query->whereRaw('quantity > reorder_level AND quantity <= (reorder_level * 1.5)');
+                // reorder_level < quantity <= max_stock
+                $query->whereColumn('quantity', '>', 'reorder_level')
+                      ->whereColumn('quantity', '<=', 'max_stock');
             } elseif ($stockFilter === 'high') {
-                $query->whereRaw('quantity > (reorder_level * 1.5)');
+                // quantity > max_stock
+                $query->whereColumn('quantity', '>', 'max_stock');
             }
         }
 
-        if (!empty($categoryFilter)) {
-            $query->where('category', 'like', "%{$categoryFilter}%");
-        }
+        // Preserve all query parameters for pagination
+        $products = $query->paginate(15)->withQueryString();
 
-        if (!empty($supplierFilter)) {
-            $query->whereHas('supplier', function ($q) use ($supplierFilter) {
-                $q->where('name', 'like', "%{$supplierFilter}%");
-            });
-        }
-
-        $products = $query->paginate(15);
-        
-        return view('products.index', compact('products', 'search', 'filterBy'));
+        return view('products.index', array_merge($request->all(), compact('products')));
     }
     
 
     public function inventories()
     {
-        $inventories = Inventory::with('product')
+        $inventories = Inventory::with(['product:id,name,supplier_id,barcode', 'product.supplier:id,name', 'supplier:id,name'])
             ->latest()
-            ->paginate(10);
+            ->paginate(15);
 
-        return view('inventory.index', compact('inventories'));
+        // Don't cache during development or if precision is needed for recent entries
+        $stats = [
+            'totalEntries' => Inventory::count(),
+            'monthEntries' => Inventory::where('created_at', '>=', now()->startOfMonth())->count(),
+            'todayEntries' => Inventory::where('created_at', '>=', now()->startOfDay())->count(),
+            'activeSKUs'   => Inventory::distinct('product_id')->count('product_id'),
+        ];
+
+        $totalEntries = $stats['totalEntries'];
+        $monthEntries = $stats['monthEntries'];
+        $todayEntries = $stats['todayEntries'];
+        $activeSKUs   = $stats['activeSKUs'];
+
+        return view('inventory.index', compact('inventories', 'totalEntries', 'monthEntries', 'todayEntries', 'activeSKUs'));
+    }
+
+    public function createInventory()
+    {
+        // Fetch products with all necessary fields for the UI attributes
+        $products = Product::select('id', 'name', 'supplier_id', 'quantity', 'unit', 'unit_price', 'category', 'warehouse_location', 'barcode')
+            ->with('supplier:id,name')
+            ->orderBy('name')
+            ->get();
+            
+        $suppliers = Supplier::select('id', 'name')->orderBy('name')->get();
+        return view('inventory.create', compact('products', 'suppliers'));
+    }
+
+    public function storeInventory(Request $request)
+    {
+        $validated = $request->validate([
+            'product_id'  => 'required|exists:products,id',
+            'quantity'    => 'required|integer|min:1',
+            'notes'       => 'nullable|string|max:500',
+            'entry_date'  => 'nullable|date',
+            'lot_number'  => 'nullable|string|max:100',
+            'expiry_date' => 'nullable|date',
+            'supplier_id' => 'nullable|exists:suppliers,id',
+        ]);
+
+        DB::transaction(function() use ($validated) {
+            $product = Product::findOrFail($validated['product_id']);
+            
+            // Forçamos a conversão para Carbon e garantimos que a hora seja preservada
+            // Se vier nulo, usa o agora. Se vier string, converte.
+            try {
+                $entryDate = $validated['entry_date'] ? \Carbon\Carbon::parse($validated['entry_date']) : now();
+            } catch (\Exception $e) {
+                $entryDate = now();
+            }
+
+            Inventory::create(array_merge($validated, [
+                'entry_date' => $entryDate,
+                'user_id'    => auth()->id(),
+                'type'       => 'entrada',
+                'status'     => 'confirmada',
+            ]));
+            $product->increment('quantity', $validated['quantity']);
+        });
+
+        return redirect()->route('inventory.index')->with('success', 'Entrada de estoque registrada com sucesso!');
+    }
+
+    public function bulkCreate(\App\Models\IncomingInvoice $manifestation)
+    {
+        if ($manifestation->entry_status === 'imported') {
+            return redirect()->route('manifestations.show', $manifestation)->with('error', 'Esta Nota Fiscal já foi importada.');
+        }
+
+        $manifestation->load('items');
+        $products = Product::select('id', 'name', 'barcode')->orderBy('name')->get();
+        $categories = \App\Models\Category::orderBy('name')->get();
+
+        return view('inventory.bulk_import', compact('manifestation', 'products', 'categories'));
+    }
+
+    public function bulkStore(Request $request, \App\Models\IncomingInvoice $manifestation)
+    {
+        if ($manifestation->entry_status === 'imported') {
+            return redirect()->route('manifestations.show', $manifestation)->with('error', 'Esta Nota Fiscal já foi importada.');
+        }
+
+        $request->validate([
+            'items' => 'required|array',
+            'items.*.product_id' => 'required|string', // Can be numeric ID or 'new'
+            'items.*.quantity' => 'required|numeric|min:0.001',
+        ]);
+
+        $items = $request->input('items', []);
+        $errors = [];
+
+        foreach ($items as $itemId => $data) {
+            $productId = (string) ($data['product_id'] ?? '');
+            $quantity = $data['quantity'] ?? null;
+
+            if ($productId === 'new') {
+                $validator = validator($data, [
+                    'new_name' => 'nullable|string|max:255',
+                    'new_barcode' => 'nullable|string|max:20|regex:/^[0-9]{1,20}$/',
+                    'new_category' => 'nullable|string|max:100',
+                    'quantity' => 'required|numeric|min:0.001',
+                ], [
+                    'new_barcode.regex' => 'Código de barras deve conter apenas números',
+                ]);
+
+                if ($validator->fails()) {
+                    foreach ($validator->errors()->toArray() as $field => $messages) {
+                        foreach ($messages as $message) {
+                            $errors["items.$itemId.$field"][] = $message;
+                        }
+                    }
+                }
+            } else {
+                if ($productId === '' || !ctype_digit($productId) || !Product::whereKey((int) $productId)->exists()) {
+                    $errors["items.$itemId.product_id"][] = 'Produto inválido.';
+                }
+
+                if ($quantity === null) {
+                    $errors["items.$itemId.quantity"][] = 'Quantidade é obrigatória.';
+                }
+            }
+
+            if (!$manifestation->items()->whereKey($itemId)->exists()) {
+                $errors["items.$itemId"][] = 'Item da NF-e inválido.';
+            }
+        }
+
+        if (!empty($errors)) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        try {
+            DB::transaction(function () use ($request, $manifestation) {
+            foreach ($request->items as $itemId => $data) {
+                $qty = (float) $data['quantity'];
+                
+                if ($data['product_id'] === 'new') {
+                    // Automagic creation of product based on XML item and user inputs
+                    $xmlItem = $manifestation->items()->find($itemId);
+                    if (!$xmlItem) {
+                        throw ValidationException::withMessages([
+                            "items.$itemId" => ['Item da NF-e inválido.'],
+                        ]);
+                    }
+                    $product = Product::create([
+                        'name' => $data['new_name'] ?? $xmlItem->description,
+                        'barcode' => $data['new_barcode'] ?? $xmlItem->barcode,
+                        'description' => 'Produto importado via NF-e ' . $manifestation->number,
+                        'unit_price' => $xmlItem->unit_price,
+                        'purchase_price' => $xmlItem->unit_price,
+                        'cost_price' => $xmlItem->unit_price,
+                        'quantity' => 0, // will be incremented
+                        'reorder_level' => 10,
+                        'unit' => $xmlItem->unit,
+                        'category' => $data['new_category'] ?? 'Importado Automático',
+                        'supplier_id' => $manifestation->supplier_id,
+                        'status' => 'ativo'
+                    ]);
+                } else {
+                    $product = Product::findOrFail($data['product_id']);
+                }
+
+                    Inventory::create([
+                        'product_id' => $product->id,
+                        'quantity' => $qty,
+                        'notes' => 'Entrada via NF-e ' . $manifestation->number,
+                        'supplier_id' => $manifestation->supplier_id,
+                        'user_id' => auth()->id(),
+                        'type' => 'entrada',
+                        'status' => 'confirmada',
+                    ]);
+
+                    $product->increment('quantity', $qty);
+                    $manifestation->items()->where('id', $itemId)->update(['product_id' => $product->id]);
+                }
+                $manifestation->update(['entry_status' => 'imported']);
+            });
+            return redirect()->route('manifestations.show', $manifestation)->with('success', 'Estoque atualizado com sucesso!');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 
     // Mostrar formulário de criação
     public function create()
     {
-        $suppliers = Supplier::all();
-        $categories = Category::all();
-        return view('products.create', compact('suppliers', 'categories'));
+        $suppliers  = Supplier::select('id', 'name')->orderBy('name')->get();
+        $categories = Category::select('id', 'name')->orderBy('name')->get();
+
+        $lastProduct = Product::where('sku', 'like', 'SKU-%')->latest('id')->first();
+        $nextNumber = 1;
+        if ($lastProduct && preg_match('/^SKU-(\d+)$/', $lastProduct->sku, $matches)) {
+            $nextNumber = intval($matches[1]) + 1;
+        }
+        $nextSku = 'SKU-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
+        return view('products.create', compact('suppliers', 'categories', 'nextSku'));
     }
 
     // Gravar novo produto no banco
     public function store(Request $request)
     {
-        // Validar os dados
         $validated = $request->validate([
             'name'               => 'required|string|max:255',
-            'barcode'            => 'nullable|string|unique:products,barcode|regex:/^[0-9]{1,13}$/',
-            'description'        => 'nullable|string',
-            'cost_price'         => 'nullable|numeric|min:0.01|max:999999.99',
-            'unit_price'         => 'required|numeric|min:0.01|max:999999.99',
-            'selling_price'      => 'nullable|numeric|min:0.01|max:999999.99',
-            'quantity'           => 'required|integer|min:0|max:9999999',
-            'max_stock'          => 'nullable|integer|min:1|max:9999999',
-            'reorder_level'      => 'required|integer|min:0|max:9999999',
-            'package_quantity'   => 'nullable|numeric|min:1|max:999999.99',
-            'weight'             => 'nullable|numeric|min:0|max:999999.99',
-            'height'             => 'nullable|numeric|min:0|max:999999.99',
-            'width'              => 'nullable|numeric|min:0|max:999999.99',
-            'depth'              => 'nullable|numeric|min:0|max:999999.99',
-            'category'           => 'nullable|string',
-            'unit'               => 'nullable|string',
-            'warehouse_location' => 'nullable|string',
-            'supplier_id'        => 'nullable|exists:suppliers,id',
+            'sku'                => 'nullable|string|unique:products,sku|max:50',
+            'barcode'            => 'nullable|string|unique:products,barcode|regex:/^[0-9]{1,20}$/',
+            'unit_price'         => 'required|numeric|min:0',
+            'quantity'           => 'required|integer|min:0',
+            'reorder_level'      => 'required|integer|min:0',
             'status'             => 'required|in:ativo,inativo,descontinuado',
-        ], [
-            'barcode.regex'      => 'Código de barras deve conter apenas números',
-            'cost_price.min'     => 'Custo unitário deve ser maior que R$ 0.00',
-            'unit_price.min'     => 'Preço de venda deve ser maior que R$ 0.00',
-            'max_stock.min'      => 'Estoque máximo deve ser pelo menos 1 unidade',
-            'supplier_id.exists' => 'Fornecedor inválido',
+            'warehouse_location_id' => 'nullable|exists:warehouse_locations,id',
+            'supplier_id'        => 'nullable|exists:suppliers,id',
         ]);
 
-        // Criar o produto
-        $product = Product::create($validated);
-
-        // Registrar entrada inicial de estoque se quantidade > 0
-        if ($validated['quantity'] > 0) {
-            Inventory::create([
-                'product_id' => $product->id,
-                'quantity'   => $validated['quantity'],
-                'notes'      => 'Entrada inicial - Cadastro do produto',
-            ]);
+        if (empty($validated['sku'])) {
+            $lastProduct = Product::where('sku', 'like', 'SKU-%')->latest('id')->first();
+            $nextNumber = 1;
+            if ($lastProduct && preg_match('/^SKU-(\d+)$/', $lastProduct->sku, $matches)) {
+                $nextNumber = intval($matches[1]) + 1;
+            }
+            $validated['sku'] = 'SKU-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+            $request->merge(['sku' => $validated['sku']]);
         }
 
-        return redirect()->route('products.index')
-            ->with('success', 'Produto cadastrado com sucesso!');
+        try {
+            $product = $this->productService->createProduct($request->all());
+            Logger::log('create_product', "O usuário cadastrou o produto: {$product->name}");
+            return redirect()->route('products.index')->with('success', 'Produto cadastrado com sucesso!');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()])->withInput();
+        }
     }
 
     // Mostrar um produto
     public function show(Product $product)
     {
-        $inventories = $product->inventories()->latest()->paginate(10);
+        $product->load('supplier', 'location', 'auditLogs.user');
+        $inventories = $product->inventories()->with('user:id,name')->latest()->paginate(10);
         return view('products.show', compact('product', 'inventories'));
     }
 
     // Mostrar formulário de edição
     public function edit(Product $product)
     {
-        $suppliers = Supplier::all();
-        $categories = Category::all();
+        $suppliers  = Supplier::select('id', 'name')->orderBy('name')->get();
+        $categories = Category::select('id', 'name')->orderBy('name')->get();
         return view('products.edit', compact('product', 'suppliers', 'categories'));
     }
 
     // Atualizar produto no banco
     public function update(Request $request, Product $product)
     {
-        // Validar os dados
-        $validated = $request->validate([
-            'name'               => 'required|string|max:255',
-            'barcode'            => 'nullable|string|unique:products,barcode,' . $product->id . '|regex:/^[0-9]{1,13}$/',
-            'description'        => 'nullable|string',
-            'cost_price'         => 'nullable|numeric|min:0.01|max:999999.99',
-            'unit_price'         => 'required|numeric|min:0.01|max:999999.99',
-            'selling_price'      => 'nullable|numeric|min:0.01|max:999999.99',
-            'quantity'           => 'required|integer|min:0|max:9999999',
-            'max_stock'          => 'nullable|integer|min:1|max:9999999',
-            'reorder_level'      => 'required|integer|min:0|max:9999999',
-            'package_quantity'   => 'nullable|numeric|min:1|max:999999.99',
-            'weight'             => 'nullable|numeric|min:0|max:999999.99',
-            'height'             => 'nullable|numeric|min:0|max:999999.99',
-            'width'              => 'nullable|numeric|min:0|max:999999.99',
-            'depth'              => 'nullable|numeric|min:0|max:999999.99',
-            'category'           => 'nullable|string',
-            'unit'               => 'nullable|string',
-            'warehouse_location' => 'nullable|string',
-            'supplier_id'        => 'nullable|exists:suppliers,id',
-            'status'             => 'required|in:ativo,inativo,descontinuado',
-        ], [
-            'barcode.regex'      => 'Código de barras deve conter apenas números',
-            'cost_price.min'     => 'Custo unitário deve ser maior que R$ 0.00',
-            'unit_price.min'     => 'Preço de venda deve ser maior que R$ 0.00',
-            'max_stock.min'      => 'Estoque máximo deve ser pelo menos 1 unidade',
-            'supplier_id.exists' => 'Fornecedor inválido',
+        $request->validate([
+            'name'       => 'required|string|max:255',
+            'unit_price' => 'required|numeric|min:0',
+            'quantity'   => 'required|integer|min:0',
+            'status'     => 'required|in:ativo,inativo,descontinuado',
         ]);
 
-        // Atualizar o produto
-        $product->update($validated);
-
-        return redirect()->route('products.show', $product)
-            ->with('success', 'Produto atualizado com sucesso!');
+        try {
+            $this->productService->updateProduct($product, $request->all());
+            Logger::log('update_product', "O usuário alterou o produto: {$product->name}");
+            return redirect()->route('products.show', $product)->with('success', 'Produto atualizado com sucesso!');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()])->withInput();
+        }
     }
 
     // Deletar produto
     public function destroy(Product $product)
     {
+        $name = $product->name;
         $product->delete();
-
-        return redirect()->route('products.index')
-            ->with('success', 'Produto deletado com sucesso!');
+        Logger::log('delete_product', "O usuário removeu o produto: {$name}");
+        return redirect()->route('products.index')->with('success', 'Produto deletado!');
     }
 
-    // Registrar entrada de estoque
+    // Registrar entrada de estoque rápida
     public function addInventory(Request $request, Product $product)
     {
-        // Validar os dados
-        $validated = $request->validate([
-            'quantity'   => 'required|integer|min:1|max:9999999',
-            'notes'      => 'nullable|string|max:500',
-            'entry_date' => 'nullable|date',
-            'lot_number' => 'nullable|string|max:100',
-        ], [
-            'quantity.required' => 'A quantidade é obrigatória',
-            'quantity.min'      => 'A quantidade deve ser pelo menos 1 unidade',
-            'quantity.max'      => 'A quantidade não pode exceder 9.999.999 unidades',
-            'entry_date.date'   => 'Data de entrada inválida',
-            'lot_number.max'    => 'O número do lote não pode exceder 100 caracteres',
-        ]);
-
-        // Criar registro de entrada
-        $inventoryData = [
-            'product_id' => $product->id,
-            'quantity'   => $validated['quantity'],
-            'notes'      => $validated['notes'] ?? null,
-            'lot_number' => $validated['lot_number'] ?? null,
-            'user_id'    => auth()->id(), // Adicionar usuário autenticado
-        ];
-
-        // If an entry_date was provided, use it as created_at and set entry_date
-        $dt = null;
-        if (!empty($validated['entry_date'])) {
-            try {
-                $dt = Carbon::parse($validated['entry_date']);
-                // store entry_date in Y-m-d H:i:s format later
-                $inventoryData['entry_date'] = $dt->toDateTimeString();
-            } catch (\Exception $e) {
-                $dt = null;
-            }
-        }
-
-        // Create inventory (created_at will be set by Eloquent)
-        $inventory = Inventory::create($inventoryData);
-
-        // If a custom datetime was provided, overwrite timestamps and entry_date
-        if ($dt) {
-            $inventory->timestamps = false;
-            $inventory->entry_date = $dt->toDateTimeString();
-            $inventory->created_at = $dt;
-            $inventory->updated_at = $dt;
-            $inventory->save();
-        }
-
-        // Atualizar quantidade do produto
-        $product->increment('quantity', $validated['quantity']);
-
-        return redirect()->route('products.show', $product)
-            ->with('success', 'Entrada registrada com sucesso! Quantidade atualizada.');
+        $validated = $request->validate(['quantity' => 'required|integer|min:1']);
+        DB::transaction(function() use ($product, $validated, $request) {
+            Inventory::create([
+                'product_id' => $product->id,
+                'quantity'   => $validated['quantity'],
+                'notes'      => $request->notes,
+                'user_id'    => auth()->id(),
+                'type'       => 'entrada',
+                'status'     => 'confirmada',
+            ]);
+            $product->increment('quantity', $validated['quantity']);
+        });
+        Logger::log('inventory_entry', "Entrada de {$validated['quantity']} para {$product->name}");
+        return redirect()->route('products.show', $product)->with('success', 'Estoque atualizado!');
     }
-
     // Adicionar nova categoria (via AJAX)
     public function storeCategory(Request $request)
     {
@@ -292,7 +410,7 @@ class ProductController extends Controller
         ]);
 
         // Salvar categoria no banco de dados
-        $category = Category::create($validated);
+        $category = \App\Models\Category::create($validated);
 
         return response()->json([
             'success' => true,
@@ -301,5 +419,101 @@ class ProductController extends Controller
             'description' => $category->description ?? '',
             'message' => 'Categoria adicionada com sucesso!'
         ]);
+    }
+
+    // Buscar localizações (AJAX) — returns occupied status + occupant
+    public function searchLocations(Request $request)
+    {
+        $search   = strtoupper(trim($request->query('q', '')));
+        $aisle    = strtoupper(trim($request->query('aisle', '')));
+        $column   = strtoupper(trim($request->query('column', '')));
+        $level    = strtoupper(trim($request->query('level', '')));
+        $freeOnly = $request->query('free_only', '0');
+
+        $query = \App\Models\WarehouseLocation::with('products:id,name,warehouse_location_id');
+
+        if ($search !== '') {
+            $query->where('full_code', 'like', "%{$search}%");
+        }
+        if ($aisle !== '') {
+            $query->where('aisle', 'like', "%{$aisle}%");
+        }
+        if ($column !== '') {
+            $query->where('column', 'like', "%{$column}%");
+        }
+        if ($level !== '') {
+            $query->where('level', 'like', "%{$level}%");
+        }
+        if ($freeOnly === '1') {
+            $query->where('is_occupied', false);
+        }
+
+        $locations = $query->orderBy('full_code')
+            ->limit(50)
+            ->get()
+            ->map(function ($loc) {
+                $occupant = $loc->products->first();
+                return [
+                    'id'            => $loc->id,
+                    'full_code'     => $loc->full_code,
+                    'aisle'         => $loc->aisle,
+                    'column'        => $loc->column,
+                    'level'         => $loc->level,
+                    'is_occupied'   => $loc->is_occupied,
+                    'occupant_name' => $occupant?->name,
+                ];
+            });
+
+        return response()->json($locations);
+    }
+
+    /**
+     * Tela de seleção de produtos para etiquetas
+     */
+    public function labelSelection(Request $request)
+    {
+        $search = $request->query('search');
+        $query = Product::where('status', 'ativo');
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('barcode', 'like', "%{$search}%");
+        }
+
+        $products = $query->orderBy('name')->get();
+
+        return view('products.labels_select', compact('products'));
+    }
+
+    /**
+     * Gerar etiquetas em lote (PDF)
+     */
+    public function printLabels(Request $request)
+    {
+        $ids = $request->input('product_ids');
+
+        $query = Product::where('status', 'ativo');
+
+        if ($ids && is_array($ids)) {
+            $query->whereIn('id', $ids);
+        } else {
+            // Se nenhum for selecionado e vier da seleção, volta com erro
+            if ($request->has('from_selection')) {
+                return redirect()->back()->with('error', 'Por favor, selecione ao menos um produto.');
+            }
+            // Comportamento padrão: todos com estoque (se acessado diretamente)
+            $query->where('quantity', '>', 0);
+        }
+
+        $products = $query->orderBy('name')->get();
+
+        if ($products->isEmpty()) {
+            return redirect()->back()->with('error', 'Nenhum produto encontrado para gerar etiquetas.');
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('products.labels', compact('products'));
+        $pdf->setPaper('A4', 'portrait');
+
+        return $pdf->stream('etiquetas_logisync_' . now()->format('Ymd_His') . '.pdf');
     }
 }

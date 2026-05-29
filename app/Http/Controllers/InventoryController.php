@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\Inventory;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Helpers\Logger;
 
 class InventoryController extends Controller
 {
@@ -12,7 +13,12 @@ class InventoryController extends Controller
      */
     public function index()
     {
-        $inventories = Inventory::with('product')
+        $inventories = Inventory::select('id', 'product_id', 'supplier_id', 'quantity', 'notes', 'entry_date', 'created_at')
+            ->with([
+                'product:id,name,barcode,supplier_id',
+                'product.supplier:id,name',
+                'supplier:id,name',
+            ])
             ->latest()
             ->paginate(10);
 
@@ -24,7 +30,9 @@ class InventoryController extends Controller
      */
     public function create()
     {
-        $products = \App\Models\Product::orderBy('name')->get();
+        $products = \App\Models\Product::select('id', 'name', 'barcode', 'quantity')
+            ->orderBy('name')
+            ->get();
         return view('inventory.create', compact('products'));
     }
 
@@ -70,6 +78,8 @@ class InventoryController extends Controller
 
         $product->increment('quantity', $validated['quantity']);
 
+        Logger::log('inventory_create', "O usuário registrou uma entrada de {$validated['quantity']} unidades para o produto: {$product->name}");
+
         return redirect()->route('inventory.index')
             ->with('success', 'Entrada registrada com sucesso.');
     }
@@ -79,7 +89,9 @@ class InventoryController extends Controller
      */
     public function edit(Inventory $inventory)
     {
-        $products = \App\Models\Product::orderBy('name')->get();
+        $products = \App\Models\Product::select('id', 'name', 'barcode', 'quantity')
+            ->orderBy('name')
+            ->get();
         return view('inventory.edit', compact('inventory', 'products'));
     }
 
@@ -134,6 +146,8 @@ class InventoryController extends Controller
 
         $inventory->save();
 
+        Logger::log('inventory_update', "O usuário alterou os dados de uma entrada de estoque (ID #{$inventory->id})");
+
         return redirect()->route('inventory.index')->with('success', 'Entrada atualizada com sucesso.');
     }
 
@@ -148,7 +162,10 @@ class InventoryController extends Controller
             $product->decrement('quantity', $inventory->quantity);
         }
 
+        $invId = $inventory->id;
         $inventory->delete();
+
+        Logger::log('inventory_delete', "O usuário removeu o registro de entrada ID #{$invId}");
 
         return redirect()->route('inventory.index')->with('success', 'Entrada removida.');
     }

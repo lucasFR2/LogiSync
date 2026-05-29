@@ -1,0 +1,81 @@
+@php
+    $currentRoute = request()->route()->getName();
+    $user = auth()->user();
+    
+    $allNavItems = [
+        ['route' => 'dashboard',           'icon' => 'fa-chart-pie',               'label' => 'Dashboard'],
+        ['route' => 'products.index',      'icon' => 'fa-cubes',                   'label' => 'Produtos',      'permission' => 'produtos.visualizar'],
+        ['route' => 'categories.index',    'icon' => 'fa-tags',                    'label' => 'Categorias',    'permission' => 'categorias.gerenciar'],
+        ['route' => 'inventory.index',     'icon' => 'fa-arrow-right-to-bracket',  'label' => 'Entradas',      'permission' => 'estoque.visualizar'],
+        ['route' => 'invoices.index',      'icon' => 'fa-file-invoice-dollar',     'label' => 'Emissão NF-e',  'permission' => 'notas_fiscais.visualizar'],
+        ['route' => 'manifestations.index','icon' => 'fa-file-invoice',            'label' => 'Manifestação',  'permission' => 'manifestacoes.gerenciar'],
+        ['route' => 'suppliers.index',     'icon' => 'fa-address-book',            'label' => 'Fornecedores',  'permission' => 'fornecedores.gerenciar'],
+        ['route' => 'customers.index',     'icon' => 'fa-users',                   'label' => 'Clientes',      'permission' => 'clientes.gerenciar'],
+        ['route' => 'employees.index',     'icon' => 'fa-users-gear',              'label' => 'Gestão de Funcionários', 'permission' => 'usuarios.gerenciar'],
+        ['route' => 'logs.index',          'icon' => 'fa-list-check',              'label' => 'Logs do Sistema',       'permission' => 'logs.visualizar'],
+        ['route' => 'roles.index',         'icon' => 'fa-id-card-clip',            'label' => 'Cargos e Funções',      'permission' => 'cargos.gerenciar'],
+        ['route' => 'locations.index',     'icon' => 'fa-map-location-dot',        'label' => 'Localizações',          'permission' => 'localizacao.visualizar'],
+    ];
+
+    $navItems = array_filter($allNavItems, function($item) use ($user) {
+        if (!isset($item['permission'])) return true;
+        return $user->hasPermission($item['permission']);
+    });
+@endphp
+
+<aside class="sidebar" id="sidebar">
+    {{-- Logo --}}
+    <div class="sidebar-logo">
+        <a href="{{ route('dashboard') }}" style="display:flex;align-items:center;gap:.875rem;text-decoration:none;" class="group">
+            <div style="background:var(--accent); color:var(--accent-fg); width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:800; font-family:'Outfit'; font-size:1.1rem; box-shadow: 0 4px 8px -2px var(--accent-glow);">
+                <span>LS</span>
+            </div>
+            <div style="display:flex; flex-direction:column;">
+                <span style="font-family:'Outfit'; font-weight:800; font-size:1.35rem; color:var(--text-primary); letter-spacing:-0.04em; line-height:1;">LogiSync</span>
+                <span style="font-size:0.65rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.1em; margin-top:2px;">WMS System</span>
+            </div>
+        </a>
+    </div>
+
+    {{-- Navigation --}}
+    <div class="sidebar-section-label">Menu Principal</div>
+    <nav class="sidebar-nav">
+        @foreach($navItems as $item)
+            @php
+                $isActive = str_starts_with($currentRoute, explode('.', $item['route'])[0]);
+            @endphp
+            <a href="{{ route($item['route']) }}"
+               class="nav-item {{ $isActive ? 'active' : '' }}">
+                <i class="fa-solid {{ $item['icon'] }}"></i>
+                <span>{{ $item['label'] }}</span>
+            </a>
+        @endforeach
+    </nav>
+
+    {{-- Footer --}}
+    <div class="sidebar-footer">
+        <div class="sidebar-user">
+            <div class="sidebar-user-avatar">
+                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+            </div>
+            <div style="min-width:0;">
+                <div class="sidebar-user-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ auth()->user()->name }}</div>
+                <div class="sidebar-user-role">{{ auth()->user()->role ? auth()->user()->role->name : 'N/A' }}</div>
+            </div>
+        </div>
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="btn btn-secondary w-full" style="width:100%; padding:0.5rem; justify-content:center;">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Sair</span>
+            </button>
+        </form>
+    </div>
+</aside>
+
+{{-- Mobile overlay --}}
+<div id="sidebar-overlay"
+     onclick="document.getElementById('sidebar').classList.remove('open'); this.classList.add('hidden');"
+     class="hidden"
+     style="position:fixed;inset:0;background:rgba(2,6,23,0.3);z-index:99;backdrop-filter:blur(4px);">
+</div>

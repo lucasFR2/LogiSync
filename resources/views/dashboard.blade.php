@@ -1,208 +1,352 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - LogiSync WMS</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ asset('css/dashboard-dark.css') }}">
-    <script src="{{ asset('js/theme-toggle.js') }}"></script>
-    <style>
-        :root {
-            --color-bg-primary: #020617;
-            --color-bg-card: #0F172A;
-            --color-border: #1E293B;
-            --color-text-primary: #FFFFFF;
-            --color-text-secondary: #94A3B8;
-        }
-        
-        .dark {
-            background-color: var(--color-bg-primary);
-            color: var(--color-text-primary);
-        }
-        
-        .card-dark {
-            background-color: var(--color-bg-card);
-            border-color: var(--color-border);
-            color: var(--color-text-primary);
-        }
-        
-        .card-dark:hover {
-            background-color: #111927;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-        }
-    </style>
-</head>
-<body class="bg-[#020617] dark:bg-[#020617] font-sans transition-colors text-[#FFFFFF]">
+@extends('layouts.app')
 
-    <div class="min-h-screen flex bg-[#020617]">
-        <!-- Sidebar (Barra Lateral) -->
-        <aside class="w-64 bg-[#0F172A] text-white hidden md:flex flex-col border-r border-[#1E293B] shadow-xl">
-            <!-- LOGO ADICIONADA AQUI -->
-            <div class="p-6 border-b border-[#1E293B] flex justify-center">
-                <a href="/" class="hover:opacity-80 transition-opacity">
-                    <img src="{{ asset('images/logisync-logo.png') }}" alt="LogiSync Logo" class="w-40 h-auto brightness-0 invert">
-                </a>
+@section('title', 'Dashboard')
+@section('page-title', 'Dashboard')
+@section('page-subtitle', 'Visão geral inteligente das operações LogiSync')
+
+@push('styles')
+<style>
+    .dashboard-page {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        width: 100%;
+    }
+    .dashboard-kpis {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1.5rem;
+    }
+    .dashboard-hero,
+    .dashboard-charts,
+    .dashboard-bottom {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        gap: 1.5rem;
+        align-items: stretch;
+    }
+    .dashboard-charts .dashboard-chart-wide {
+        grid-column: 1;
+    }
+    .dashboard-welcome {
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .dashboard-welcome-bg {
+        position: absolute;
+        right: -10px;
+        top: -10px;
+        font-size: 10rem;
+        opacity: 0.06;
+        pointer-events: none;
+        color: var(--accent);
+    }
+    .dashboard-chart-box {
+        height: 280px;
+        position: relative;
+    }
+    .dashboard-actions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .dashboard-log-item {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border);
+    }
+    .dashboard-log-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    @media (max-width: 1200px) {
+        .dashboard-kpis {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (max-width: 900px) {
+        .dashboard-kpis,
+        .dashboard-hero,
+        .dashboard-charts,
+        .dashboard-bottom {
+            grid-template-columns: 1fr;
+        }
+        .dashboard-charts .dashboard-chart-wide {
+            grid-column: auto;
+        }
+    }
+</style>
+@endpush
+
+@section('content')
+<div class="anim-entrance dashboard-page">
+
+    @unless(Auth::user()->hasRole('rh'))
+    {{-- KPIs --}}
+    <div class="dashboard-kpis">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:var(--accent-subtle); color:var(--accent);">
+                <i class="fa-solid fa-cubes"></i>
             </div>
-            
-            <nav class="flex-1 px-4 mt-6 space-y-2">
-                <a href="{{ route('dashboard') }}" class="flex items-center p-3 bg-blue-600 hover:bg-blue-700 rounded-xl text-white transition-all shadow-md">
-                    <i class="fa-solid fa-chart-line mr-3"></i> Dashboard
-                </a>
-                <a href="{{ route('products.index') }}" class="flex items-center p-3 text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#FFFFFF] rounded-xl transition-colors">
-                    <i class="fa-solid fa-boxes-stacked mr-3"></i> Produtos
-                </a>
-                <a href="{{ route('inventory.index') }}" class="flex items-center p-3 text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#FFFFFF] rounded-xl transition-colors">
-                    <i class="fa-solid fa-truck-ramp-box mr-3"></i> Entradas
-                </a>
-                <a href="{{ route('suppliers.index') }}" class="flex items-center p-3 text-[#94A3B8] hover:bg-[#1A2438] hover:text-white rounded-lg transition">
-                    <i class="fa-solid fa-handshake mr-3"></i> Fornecedores
-                </a>
-            </nav>
-
-            <div class="p-4 border-t border-[#1E293B]">
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="flex items-center w-full p-3 text-red-400 hover:bg-red-900/20 rounded-xl transition-colors">
-                        <i class="fa-solid fa-right-from-bracket mr-3"></i> Sair
-                    </button>
-                </form>
+            <div class="stat-label">Estoque Total</div>
+            <div class="stat-value">{{ number_format($totalStock, 0, ',', '.') }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background:var(--orange-bg); color:var(--orange);">
+                <i class="fa-solid fa-file-invoice"></i>
             </div>
-        </aside>
-
-        <!-- Conteúdo Principal -->
-        <main class="flex-1 bg-[#020617]">
-            <!-- Header Superior -->
-            <header class="bg-[#0F172A] shadow-lg px-8 py-6 flex justify-between items-center border-b border-[#1E293B]">
-                <div>
-                    <h1 class="text-3xl font-bold text-[#FFFFFF]">
-                        <i class="fa-solid fa-chart-line text-blue-500 mr-3"></i>Dashboard
-                    </h1>
-                    <p class="text-[#94A3B8] text-sm mt-1">Bem-vindo à sua visão geral de movimentações</p>
-                </div>
-                <div class="flex items-center gap-6">
-                    
-                    <div class="flex items-center gap-3">
-                        <div class="text-right">
-                            <p class="text-sm font-semibold text-[#FFFFFF]">{{ auth()->user()->name }}</p>
-                            <p class="text-xs text-[#94A3B8] uppercase tracking-wider">{{ Auth::user()->role }}</p>
-                        </div>
-                        <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
-                            {{ substr(auth()->user()->name, 0, 1) }}
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Grid de Cards de Estatísticas -->
-            <div class="p-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <!-- Card 1 -->
-                    <div class="card-dark p-6 rounded-2xl border transition-all duration-300 hover:shadow-xl hover:border-blue-500/30">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="flex-1">
-                                <p class="text-[#94A3B8] text-sm font-medium mb-2">Total em Estoque</p>
-                                <h3 class="text-4xl font-bold text-[#FFFFFF] mb-1">0</h3>
-                            </div>
-                            <div class="p-4 bg-blue-600/20 text-blue-400 rounded-xl">
-                                <i class="fa-solid fa-box text-xl"></i>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2 text-green-400 text-xs">
-                            <i class="fa-solid fa-arrow-trend-up"></i>
-                            <span>Aguardando sincronização</span>
-                        </div>
-                    </div>
-
-                    <!-- Card 2 -->
-                    <div class="card-dark p-6 rounded-2xl border transition-all duration-300 hover:shadow-xl hover:border-orange-500/30">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="flex-1">
-                                <p class="text-[#94A3B8] text-sm font-medium mb-2">Pedidos Pendentes</p>
-                                <h3 class="text-4xl font-bold text-[#FFFFFF] mb-1">0</h3>
-                            </div>
-                            <div class="p-4 bg-orange-600/20 text-orange-400 rounded-xl">
-                                <i class="fa-solid fa-clock text-xl"></i>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2 text-orange-400 text-xs">
-                            <i class="fa-solid fa-hourglass-end"></i>
-                            <span>Aguardando separação</span>
-                        </div>
-                    </div>
-
-                    <!-- Card 3 -->
-                    <div class="card-dark p-6 rounded-2xl border transition-all duration-300 hover:shadow-xl hover:border-red-500/30">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="flex-1">
-                                <p class="text-[#94A3B8] text-sm font-medium mb-2">Produtos em Alerta</p>
-                                <h3 class="text-4xl font-bold text-red-400 mb-1">0</h3>
-                            </div>
-                            <div class="p-4 bg-red-600/20 text-red-400 rounded-xl">
-                                <i class="fa-solid fa-triangle-exclamation text-xl"></i>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2 text-red-400 text-xs">
-                            <i class="fa-solid fa-exclamation-circle"></i>
-                            <span>Estoque abaixo do mínimo</span>
-                        </div>
-                    </div>
-
-                    <!-- Card 4 -->
-                    <div class="card-dark p-6 rounded-2xl border transition-all duration-300 hover:shadow-xl hover:border-green-500/30">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="flex-1">
-                                <p class="text-[#94A3B8] text-sm font-medium mb-2">Seu Cargo</p>
-                                <h3 class="text-3xl font-bold text-[#FFFFFF] mb-1 capitalize">{{ Auth::user()->role }}</h3>
-                            </div>
-                            <div class="p-4 bg-green-600/20 text-green-400 rounded-xl">
-                                <i class="fa-solid fa-user-shield text-xl"></i>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2 text-[#94A3B8] text-xs">
-                            <i class="fa-solid fa-id-card"></i>
-                            <span class="truncate">CPF: {{ Auth::user()->cpf }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tabela de Atividade Recente -->
-                <div class="card-dark rounded-2xl border overflow-hidden shadow-lg">
-                    <div class="p-6 border-b border-[#1E293B] flex justify-between items-center">
-                        <h3 class="font-bold text-[#FFFFFF] text-lg flex items-center gap-2">
-                            <i class="fa-solid fa-history text-blue-400"></i>
-                            Últimas Movimentações
-                        </h3>
-                        <button class="text-sm text-blue-400 hover:text-blue-300 transition flex items-center gap-1">
-                            Ver tudo <i class="fa-solid fa-arrow-right"></i>
-                        </button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead class="bg-[#1E293B]/50 text-[#94A3B8] text-sm font-semibold uppercase tracking-wider">
-                                <tr class="border-b border-[#1E293B]">
-                                    <th class="px-6 py-4">Produto</th>
-                                    <th class="px-6 py-4">Tipo</th>
-                                    <th class="px-6 py-4">Quantidade</th>
-                                    <th class="px-6 py-4">Data</th>
-                                    <th class="px-6 py-4">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="border-b border-[#1E293B]/50 hover:bg-[#111927] transition-colors">
-                                    <td colspan="5" class="px-6 py-8 text-center text-[#94A3B8]">
-                                        <i class="fa-solid fa-inbox text-2xl mb-2 block opacity-50"></i>
-                                        Nenhuma movimentação registrada
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+            <div class="stat-label">NF-e Pendentes</div>
+            <div class="stat-value">{{ $pendingOrders }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background:var(--red-bg); color:var(--red);">
+                <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
-        </main>
+            <div class="stat-label">Estoque Baixo</div>
+            <div class="stat-value">{{ $lowStockCount }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background:var(--blue-bg); color:var(--blue);">
+                <i class="fa-solid fa-map-location-dot"></i>
+            </div>
+            <div class="stat-label">Ocupação WMS</div>
+            <div class="stat-value">{{ $occupancyRate }}%</div>
+        </div>
     </div>
 
-</body>
-</html>
+    {{-- Boas-vindas + ocupação --}}
+    <div class="dashboard-hero">
+        <div class="card dashboard-welcome">
+            <div style="position:relative; z-index:1;">
+                <h2 style="font-family:'Outfit',sans-serif; font-size:1.65rem; margin:0 0 0.5rem; color:var(--text-primary);">
+                    Bem-vindo, {{ explode(' ', Auth::user()->name)[0] }}!
+                </h2>
+                <p style="margin:0; font-size:0.95rem; line-height:1.6; color:var(--text-secondary); max-width:520px;">
+                    O armazém está com <strong style="color:var(--accent);">{{ $occupancyRate }}% de ocupação</strong>
+                    ({{ $occupiedLocations }} de {{ $totalLocations }} posições).
+                    @if($pendingOrders > 0)
+                        Há <strong style="color:var(--orange);">{{ $pendingOrders }}</strong> nota(s) em rascunho aguardando emissão.
+                    @else
+                        Nenhuma nota pendente no momento.
+                    @endif
+                </p>
+                <div style="display:flex; flex-wrap:wrap; gap:0.75rem; margin-top:1.5rem;">
+                    <a href="{{ route('inventory.create') }}" class="btn btn-primary">
+                        <i class="fa-solid fa-plus"></i> Nova Entrada
+                    </a>
+                    @can('notas_fiscais.emitir')
+                    <a href="{{ route('invoices.create') }}" class="btn btn-secondary">
+                        <i class="fa-solid fa-file-invoice"></i> Emitir NF-e
+                    </a>
+                    @endcan
+                    <a href="{{ route('products.index') }}" class="btn btn-secondary">
+                        <i class="fa-solid fa-box"></i> Ver Produtos
+                    </a>
+                </div>
+            </div>
+            <div class="dashboard-welcome-bg"><i class="fa-solid fa-warehouse"></i></div>
+        </div>
+
+        <div class="card" style="padding:1.5rem; display:flex; flex-direction:column; justify-content:space-between;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Ocupação do Armazém</span>
+                    <div style="font-size:2rem; font-weight:800; font-family:'Outfit',sans-serif; color:var(--accent); margin-top:0.25rem;">{{ $occupancyRate }}%</div>
+                </div>
+                <div style="width:44px; height:44px; background:var(--blue-bg); color:var(--blue); border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+            </div>
+            <div style="margin-top:1.25rem; background:var(--bg-hover); height:10px; border-radius:6px; overflow:hidden;">
+                <div style="width:{{ min($occupancyRate, 100) }}%; height:100%; background:var(--blue); border-radius:6px; transition:width 0.4s ease;"></div>
+            </div>
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.85rem; display:flex; justify-content:space-between; align-items:center;">
+                <span>{{ $occupiedLocations }} / {{ $totalLocations }} posições</span>
+                <span style="color:var(--green); font-weight:700;"><i class="fa-solid fa-circle-check"></i> Sincronizado</span>
+            </div>
+            <a href="{{ route('locations.index') }}" class="btn btn-secondary" style="margin-top:1.25rem; width:100%; justify-content:center;">
+                <i class="fa-solid fa-map"></i> Gerenciar Localizações
+            </a>
+        </div>
+    </div>
+
+    {{-- Gráficos --}}
+    <div class="dashboard-charts">
+        <div class="card dashboard-chart-wide" style="padding:1.5rem;">
+            <div class="card-header" style="padding:0 0 1.25rem; border:none; background:transparent;">
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <div style="width:10px; height:24px; background:var(--blue); border-radius:4px;"></div>
+                    <h3 style="margin:0; font-family:'Outfit',sans-serif; font-size:1.1rem;">Fluxo de Movimentação (7 dias)</h3>
+                </div>
+                <span style="font-size:0.75rem; font-weight:700; padding:0.25rem 0.65rem; border-radius:999px; background:var(--blue-bg); color:var(--blue);">Sincronizado</span>
+            </div>
+            <div class="dashboard-chart-box">
+                <canvas id="flowChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card" style="padding:1.5rem;">
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1.25rem;">
+                <div style="width:10px; height:24px; background:var(--orange); border-radius:4px;"></div>
+                <h3 style="margin:0; font-family:'Outfit',sans-serif; font-size:1.1rem;">Mix de Categorias</h3>
+            </div>
+            <div class="dashboard-chart-box">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+    @endunless
+
+    {{-- Atividade + ações --}}
+    <div class="dashboard-bottom">
+        @can('logs.visualizar')
+        <div class="card" style="padding:1.5rem;">
+            <div class="card-header" style="padding:0 0 1rem; border:none; background:transparent;">
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <div style="width:10px; height:24px; background:var(--accent); border-radius:4px;"></div>
+                    <h3 style="margin:0; font-family:'Outfit',sans-serif; font-size:1.1rem;">Atividade Recente</h3>
+                </div>
+                <a href="{{ route('logs.index') }}" class="btn btn-secondary btn-sm">Ver todos</a>
+            </div>
+            @if($recentLogs->count() > 0)
+                <div style="max-height:280px; overflow-y:auto;">
+                    @foreach($recentLogs->take(6) as $log)
+                        <div class="dashboard-log-item">
+                            <div style="width:36px; height:36px; border-radius:10px; background:var(--bg-hover); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--text-muted);">
+                                <i class="fa-solid fa-clock-rotate-left" style="font-size:0.85rem;"></i>
+                            </div>
+                            <div style="flex:1; min-width:0;">
+                                <div style="font-weight:600; font-size:0.875rem; color:var(--text-primary);">{{ Str::limit($log->description ?? $log->action ?? 'Registro', 80) }}</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.15rem;">
+                                    {{ $log->user?->name ?? 'Sistema' }} · {{ $log->created_at?->diffForHumans() }}
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <p style="margin:0; color:var(--text-muted); font-size:0.875rem;">Nenhuma atividade registrada recentemente.</p>
+            @endif
+        </div>
+        @else
+        <div class="card" style="padding:1.5rem;">
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+                <div style="width:10px; height:24px; background:var(--accent); border-radius:4px;"></div>
+                <h3 style="margin:0; font-family:'Outfit',sans-serif; font-size:1.1rem;">Acesso Rápido</h3>
+            </div>
+            <p style="margin:0; color:var(--text-muted); font-size:0.875rem; line-height:1.5;">
+                Use o menu lateral para navegar entre módulos do WMS. Registre entradas, gerencie produtos e emita notas fiscais.
+            </p>
+        </div>
+        @endcan
+
+        <div style="display:flex; flex-direction:column; gap:1.5rem;">
+            <div class="card" style="padding:1.5rem;">
+                <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1.25rem;">
+                    <div style="width:10px; height:24px; background:var(--green); border-radius:4px;"></div>
+                    <h3 style="margin:0; font-family:'Outfit',sans-serif; font-size:1.1rem;">Ações Inteligentes</h3>
+                </div>
+                <div class="dashboard-actions-list">
+                    <a href="{{ route('products.labels.select') }}" class="btn btn-secondary" style="width:100%; justify-content:flex-start; gap:0.75rem;">
+                        <i class="fa-solid fa-barcode" style="color:var(--blue);"></i> Gerar Etiquetas em Lote
+                    </a>
+                    <a href="{{ route('products.index') }}" class="btn btn-secondary" style="width:100%; justify-content:flex-start; gap:0.75rem;">
+                        <i class="fa-solid fa-boxes-packing" style="color:var(--orange);"></i> Consultar Catálogo
+                    </a>
+                    @unless(Auth::user()->hasRole('rh'))
+                    <a href="{{ route('locations.index') }}" class="btn btn-secondary" style="width:100%; justify-content:flex-start; gap:0.75rem;">
+                        <i class="fa-solid fa-map-location-dot" style="color:var(--green);"></i> Mapa de Localizações
+                    </a>
+                    @endunless
+                </div>
+            </div>
+
+            <div class="card" style="padding:1.25rem; background:var(--accent-subtle); border:1px dashed var(--accent);">
+                <div style="display:flex; gap:1rem; align-items:center;">
+                    <div style="width:48px; height:48px; background:var(--accent); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0;">
+                        <i class="fa-solid fa-headset"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:700; font-size:0.9rem;">Precisa de ajuda?</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.15rem;">Suporte técnico disponível para sua operação.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    @unless(Auth::user()->hasRole('rh'))
+    const flowEl = document.getElementById('flowChart');
+    if (flowEl) {
+        new Chart(flowEl.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: @json($chartLabels ?? []),
+                datasets: [
+                    {
+                        label: 'Entradas (Produtos)',
+                        data: @json($entriesData ?? []),
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Saídas (Notas)',
+                        data: @json($exitsData ?? []),
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    const catEl = document.getElementById('categoryChart');
+    if (catEl) {
+        new Chart(catEl.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: @json($categoriesStats->pluck('category') ?? []),
+                datasets: [{
+                    data: @json($categoriesStats->pluck('count') ?? []),
+                    backgroundColor: ['#3B82F6', '#F59E0B', '#10B981', '#94A3B8', '#6366F1', '#8B5CF6'],
+                    borderWidth: 0,
+                    hoverOffset: 15
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+    @endunless
+});
+</script>
+@endpush
+@endsection
