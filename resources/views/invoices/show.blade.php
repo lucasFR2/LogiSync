@@ -296,6 +296,14 @@
                 </form>
             </div>
 
+            {{-- Interactive Conference Button --}}
+            <div style="border-top:1px solid var(--border); margin-top:1rem; padding-top:1.25rem;">
+                <a href="{{ route('invoices.confer-workflow', $invoice) }}" class="btn btn-secondary" style="width:100%; justify-content:center; padding:0.85rem; background:var(--accent-subtle); color:var(--accent); border-color:var(--accent-subtle); font-weight:700; font-size:0.95rem;">
+                    <i class="fa-solid fa-barcode" style="margin-right:0.5rem;"></i> Abrir Conferência Interativa (Bipe)
+                </a>
+                <p style="margin:0.5rem 0 0; font-size:0.75rem; color:var(--text-muted); text-align:center;">Utilize o leitor de código de barras para conferir cada item</p>
+            </div>
+
         </div>
     </div>
 

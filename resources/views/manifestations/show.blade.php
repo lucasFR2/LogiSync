@@ -161,6 +161,36 @@
                             <i class="fa-solid fa-check-circle"></i> Estoque Atualizado
                         </div>
                     @endif
+
+                    {{-- Interactive Conference Button --}}
+                    <hr style="margin:1.5rem 0; border-color:var(--border);">
+                    <a href="{{ route('manifestations.confer-workflow', $manifestation) }}" class="btn btn-secondary" style="width:100%; justify-content:center; padding:0.85rem; background:var(--accent-subtle); color:var(--accent); border-color:var(--accent-subtle); font-weight:700;">
+                        <i class="fa-solid fa-barcode" style="margin-right:0.5rem;"></i> Iniciar Conferência Interativa
+                    </a>
+                    @if($manifestation->conference_status && $manifestation->conference_status !== 'Pendente')
+                        <div style="text-align:center; margin-top:0.75rem;">
+                            @php
+                                $confColor = match($manifestation->conference_status) {
+                                    'Conferida' => 'var(--green)',
+                                    'Divergente' => 'var(--red)',
+                                    default => 'var(--orange)',
+                                };
+                                $confBg = match($manifestation->conference_status) {
+                                    'Conferida' => 'var(--green-bg)',
+                                    'Divergente' => 'var(--red-bg)',
+                                    default => 'var(--orange-bg)',
+                                };
+                                $confIcon = match($manifestation->conference_status) {
+                                    'Conferida' => 'fa-circle-check',
+                                    'Divergente' => 'fa-circle-xmark',
+                                    default => 'fa-clock',
+                                };
+                            @endphp
+                            <span class="badge" style="background:{{ $confBg }}; color:{{ $confColor }}; font-weight:700; padding:0.4rem 0.8rem; font-size:0.85rem;">
+                                <i class="fa-solid {{ $confIcon }}" style="margin-right:0.35rem;"></i> {{ $manifestation->conference_status }}
+                            </span>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

@@ -24,6 +24,7 @@ class InvoiceItem extends Model
         'cbs_cst', 'cbs_base', 'cbs_rate', 'cbs_value',
         'is_cst', 'is_base', 'is_rate', 'is_value',
         'ii_base', 'ii_rate', 'ii_value', 'ii_desp', 'ii_iof',
+        'checked_quantity',
     ];
 
     protected $casts = [
@@ -76,6 +77,7 @@ class InvoiceItem extends Model
         'ii_value'      => 'decimal:2',
         'ii_desp'       => 'decimal:2',
         'ii_iof'        => 'decimal:2',
+        'checked_quantity' => 'decimal:4',
     ];
 
     public function invoice(): BelongsTo

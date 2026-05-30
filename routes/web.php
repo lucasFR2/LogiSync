@@ -89,6 +89,8 @@ Route::middleware('auth')->group(function () {
         Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
         Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
         Route::post('invoices/{invoice}/confer', [InvoiceController::class, 'confer'])->name('invoices.confer');
+        Route::get('invoices/{invoice}/confer-workflow', [InvoiceController::class, 'conferWorkflow'])->name('invoices.confer-workflow');
+        Route::post('invoices/{invoice}/confer-save', [InvoiceController::class, 'conferSave'])->name('invoices.confer-save');
     });
 
     Route::middleware('permission:notas_fiscais.editar')->group(function () {
@@ -106,6 +108,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/{manifestation}', [App\Http\Controllers\ManifestationController::class, 'show'])->name('show');
         Route::post('/{manifestation}/manifest', [App\Http\Controllers\ManifestationController::class, 'manifest'])->name('manifest');
         Route::get('/{manifestation}/danfe', [App\Http\Controllers\ManifestationController::class, 'danfe'])->name('danfe');
+        Route::get('/{manifestation}/confer-workflow', [App\Http\Controllers\ManifestationController::class, 'conferWorkflow'])->name('confer-workflow');
+        Route::post('/{manifestation}/confer-save', [App\Http\Controllers\ManifestationController::class, 'conferSave'])->name('confer-save');
     });
 
     // ============ LOGS ============

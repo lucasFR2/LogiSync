@@ -219,4 +219,58 @@ class InvoiceController extends Controller
         return redirect()->route('invoices.show', $invoice)
                          ->with('success', 'Conferência da nota fiscal atualizada com sucesso!');
     }
+
+    /**
+     * Tela de conferência interativa de saída (expedição)
+     */
+    public function conferWorkflow(Invoice $invoice)
+    {
+        $invoice->load(['items.product', 'user:id,name']);
+        return view('invoices.confer', compact('invoice'));
+    }
+
+    /**
+     * Salvar resultado da conferência interativa de saída
+     */
+    public function conferSave(Request $request, Invoice $invoice)
+    {
+        $request->validate([
+            'checked_quantities' => 'required|array',
+            'checked_quantities.*' => 'numeric|min:0',
+        ]);
+
+        $invoice->load('items');
+
+        $hasDivergence = false;
+        $divergences = [];
+
+        foreach ($invoice->items as $item) {
+            $checked = (float) ($request->checked_quantities[$item->id] ?? 0);
+            $item->update(['checked_quantity' => $checked]);
+
+            if (abs($checked - (float)$item->quantity) > 0.001) {
+                $hasDivergence = true;
+                $diff = $checked - (float)$item->quantity;
+                $type = $diff > 0 ? 'EXCESSO' : 'FALTA';
+                $divergences[] = "{$item->description}: {$type} de " . abs($diff) . " " . ($item->unit ?? 'UN');
+            }
+        }
+
+        $status = $hasDivergence ? 'Divergente' : 'Conferida';
+        $notes = $hasDivergence
+            ? "Divergências encontradas:\n" . implode("\n", $divergences)
+            : 'Conferência realizada sem divergências.';
+
+        $invoice->update([
+            'conference_status' => $status,
+            'conference_notes'  => $notes,
+            'conferred_by'      => Auth::id(),
+            'conferred_at'      => now(),
+        ]);
+
+        Logger::log('confer_invoice_workflow', "O usuário realizou a conferência interativa da NF #{$invoice->number} com status: {$status}");
+
+        return redirect()->route('invoices.show', $invoice)
+                         ->with('success', "Conferência finalizada com status: {$status}");
+    }
 }

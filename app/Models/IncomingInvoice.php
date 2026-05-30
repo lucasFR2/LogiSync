@@ -11,12 +11,14 @@ class IncomingInvoice extends Model
     protected $fillable = [
         'access_key', 'number', 'series', 'supplier_id',
         'supplier_name', 'supplier_cnpj', 'emission_date',
-        'total_amount', 'manifestation_status', 'entry_status', 'xml_data'
+        'total_amount', 'manifestation_status', 'entry_status', 'xml_data',
+        'conference_status', 'conference_notes', 'conferred_by', 'conferred_at'
     ];
 
     protected $casts = [
         'emission_date' => 'date',
         'total_amount' => 'decimal:2',
+        'conferred_at' => 'datetime',
     ];
 
     public function items(): HasMany
@@ -27,6 +29,11 @@ class IncomingInvoice extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    public function conferredBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'conferred_by');
     }
 
     public function getStatusLabelAttribute(): string

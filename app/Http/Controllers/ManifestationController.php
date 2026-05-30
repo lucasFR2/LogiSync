@@ -504,4 +504,58 @@ class ManifestationController extends Controller implements HasMiddleware
             ->header('Content-Type', 'application/xml')
             ->header('Content-Disposition', 'attachment; filename="nfe_mock_'.$accessKey.'.xml"');
     }
+
+    /**
+     * Tela de conferência interativa de entrada (recebimento)
+     */
+    public function conferWorkflow(IncomingInvoice $manifestation)
+    {
+        $manifestation->load(['supplier', 'items']);
+        return view('manifestations.confer', compact('manifestation'));
+    }
+
+    /**
+     * Salvar resultado da conferência de entrada
+     */
+    public function conferSave(Request $request, IncomingInvoice $manifestation)
+    {
+        $request->validate([
+            'checked_quantities' => 'required|array',
+            'checked_quantities.*' => 'numeric|min:0',
+        ]);
+
+        $manifestation->load('items');
+
+        $hasDivergence = false;
+        $divergences = [];
+
+        foreach ($manifestation->items as $item) {
+            $checked = (float) ($request->checked_quantities[$item->id] ?? 0);
+            $item->update(['checked_quantity' => $checked]);
+
+            if (abs($checked - (float)$item->quantity) > 0.001) {
+                $hasDivergence = true;
+                $diff = $checked - (float)$item->quantity;
+                $type = $diff > 0 ? 'EXCESSO' : 'FALTA';
+                $divergences[] = "{$item->description}: {$type} de " . abs($diff) . " {$item->unit}";
+            }
+        }
+
+        $status = $hasDivergence ? 'Divergente' : 'Conferida';
+        $notes = $hasDivergence
+            ? "Divergências encontradas:\n" . implode("\n", $divergences)
+            : 'Conferência realizada sem divergências.';
+
+        $manifestation->update([
+            'conference_status' => $status,
+            'conference_notes'  => $notes,
+            'conferred_by'      => auth()->id(),
+            'conferred_at'      => now(),
+        ]);
+
+        Logger::log('confer_incoming', "O usuário realizou a conferência da NF-e de entrada #{$manifestation->number} com status: {$status}");
+
+        return redirect()->route('manifestations.show', $manifestation)
+            ->with('success', "Conferência finalizada com status: {$status}");
+    }
 }
