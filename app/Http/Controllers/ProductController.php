@@ -339,7 +339,17 @@ class ProductController extends Controller implements HasMiddleware
     {
         $product->load('supplier', 'location', 'auditLogs.user');
         $inventories = $product->inventories()->with('user:id,name')->latest()->paginate(10);
-        return view('products.show', compact('product', 'inventories'));
+        
+        $fifoBatches = $product->inventories()
+            ->where('type', 'entrada')
+            ->where('status', 'confirmada')
+            ->where('remaining_quantity', '>', 0)
+            ->orderBy('entry_date', 'asc')
+            ->orderBy('created_at', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        return view('products.show', compact('product', 'inventories', 'fifoBatches'));
     }
 
     // Mostrar formulário de edição
@@ -349,6 +359,8 @@ class ProductController extends Controller implements HasMiddleware
         $categories = Category::select('id', 'name')->orderBy('name')->get();
         return view('products.edit', compact('product', 'suppliers', 'categories'));
     }
+
+
 
     // Atualizar produto no banco
     public function update(Request $request, Product $product)

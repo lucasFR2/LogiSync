@@ -230,6 +230,111 @@
             </div>
         </div>
     </div>
+    <!-- Lotes Disponíveis (Fila FIFO) -->
+    <div class="card anim-fade-up" style="animation-delay:0.15s;">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="card-title">
+                <i class="fa-solid fa-layer-group"></i> Fila de Estoque FIFO (Lotes Disponíveis)
+            </span>
+            <span style="font-size:0.8rem;color:var(--text-muted);font-weight:500;">
+                Ordenado por ordem de saída (Mais Antigo Primeiro)
+            </span>
+        </div>
+        <div class="table-wrap">
+            @if (isset($fifoBatches) && $fifoBatches->count() > 0)
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:60px;">Fila</th>
+                            <th>Lote</th>
+                            <th>Entrada</th>
+                            <th>Validade</th>
+                            <th>Localização</th>
+                            <th style="text-align:center;">Qtd. Inicial</th>
+                            <th style="text-align:center;">Qtd. Disponível</th>
+                            <th>Saldo (%)</th>
+                            <th>Idade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($fifoBatches as $index => $batch)
+                            @php
+                                $percentRemaining = ($batch->quantity > 0) ? round(($batch->remaining_quantity / $batch->quantity) * 100) : 0;
+                                $daysInStock = $batch->entry_date ? now()->diffInDays($batch->entry_date) : now()->diffInDays($batch->created_at);
+                                $daysInStock = (int) abs($daysInStock);
+                                
+                                $expiryClass = '';
+                                $expiryText = '—';
+                                if ($batch->expiry_date) {
+                                    $daysToExpiry = now()->diffInDays($batch->expiry_date, false);
+                                    $expiryText = $batch->expiry_date->format('d/m/Y');
+                                    if ($daysToExpiry < 0) {
+                                        $expiryClass = 'badge-red';
+                                        $expiryText .= ' (Vencido)';
+                                    } elseif ($daysToExpiry <= 30) {
+                                        $expiryClass = 'badge-orange';
+                                        $expiryText .= ' (' . $daysToExpiry . ' d)';
+                                    } else {
+                                        $expiryClass = 'badge-green';
+                                    }
+                                }
+                            @endphp
+                            <tr>
+                                <td>
+                                    <span class="badge" style="background:var(--accent-dim);color:var(--accent);font-weight:700;">#{{ $index + 1 }}</span>
+                                </td>
+                                <td>
+                                    <div style="font-family:monospace;font-weight:600;font-size:0.9rem;">
+                                        <i class="fa-solid fa-barcode" style="opacity:0.6;margin-right:0.25rem;"></i>{{ $batch->lot_number ?? 'S/L' }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="font-size:0.85rem;">{{ ($batch->entry_date ?? $batch->created_at)->format('d/m/Y') }}</div>
+                                </td>
+                                <td>
+                                    @if($batch->expiry_date)
+                                        <span class="badge {{ $expiryClass }}">{{ $expiryText }}</span>
+                                    @else
+                                        <span style="color:var(--text-muted);font-size:0.85rem;">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="badge" style="background:var(--bg-hover);color:var(--text-primary);">
+                                        <i class="fa-solid fa-location-dot" style="margin-right:0.25rem;"></i>{{ $product->location?->full_code ?? ($product->warehouse_location ?? '—') }}
+                                    </span>
+                                </td>
+                                <td style="text-align:center;font-size:0.85rem;color:var(--text-secondary);">
+                                    {{ $batch->quantity }}
+                                </td>
+                                <td style="text-align:center;">
+                                    <span class="badge badge-green" style="font-weight:700;font-size:0.9rem;">{{ $batch->remaining_quantity }}</span>
+                                </td>
+                                <td style="vertical-align:middle;width:150px;">
+                                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                                        <div style="flex:1;background:var(--border);height:6px;border-radius:3px;overflow:hidden;">
+                                            <div style="background:var(--green);height:100%;width:{{ $percentRemaining }}%;"></div>
+                                        </div>
+                                        <span style="font-size:0.75rem;font-weight:600;color:var(--text-secondary);min-width:30px;text-align:right;">{{ $percentRemaining }}%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span style="font-size:0.85rem;font-weight:500;color:{{ $daysInStock > 90 ? 'var(--red)' : ($daysInStock > 45 ? 'var(--orange)' : 'var(--text-secondary)') }};">
+                                        {{ $daysInStock }} {{ Str::plural('dia', $daysInStock) }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @else
+                <div class="empty-state" style="padding:2rem;">
+                    <div class="empty-state-icon"><i class="fa-solid fa-layer-group"></i></div>
+                    <h4>Sem Lotes Disponíveis</h4>
+                    <p>Não há saldo de lotes ativos/disponíveis no momento para este produto.</p>
+                </div>
+            @endif
+        </div>
+    </div>
 
     <!-- Histórico de Entradas -->
     <div class="card anim-fade-up" style="animation-delay:0.2s;">
