@@ -114,9 +114,10 @@ Route::middleware('auth')->group(function () {
 
     // ============ ADMINISTRAÇÃO ============
     Route::middleware('permission:cargos.gerenciar')->group(function () {
-        Route::resource('roles', App\Http\Controllers\RoleController::class)->except(['show', 'create', 'edit']);
+        Route::resource('roles', App\Http\Controllers\RoleController::class)->except(['show']);
         Route::get('/admin', fn() => 'Área Admin')->name('admin');
     });
+
 });
 
 Route::get('/', fn() => redirect()->route('login'));

@@ -101,19 +101,21 @@
 
         /* Right Side: Form */
         .login-form-side {
-            flex: 0.8;
+            flex: 1;
+            width: 100%;
             background: var(--bg-base);
             display: flex;
             flex-direction: column;
             padding: 4rem 2rem;
             position: relative;
             overflow-y: auto;
+            align-items: center;
         }
 
         .login-card {
             width: 100%;
-            max-width: 100%;
-            margin: auto;
+            max-width: 960px;
+            margin: 2rem auto;
             padding: 3.5rem;
             background: var(--glass-bg);
             border-radius: var(--r-2xl);
@@ -183,30 +185,6 @@
 <body>
 
     <div class="login-container">
-        <!-- Visual Section -->
-        <div class="login-visual anim-entrance">
-            <div class="login-visual-content">
-                <div class="brand-pill">LogiSync WMS v2.0</div>
-                <h1>Junte-se à nossa equipe operacional.</h1>
-                <p>Crie sua conta de funcionário para começar a gerenciar o fluxo logístico com eficiência e precisão.</p>
-                
-                <div style="display:flex; gap:2rem; margin-top:4rem; opacity:0.8;">
-                    <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                        <span style="font-size:1.5rem; font-weight:800; font-family:'Outfit';">99.9%</span>
-                        <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Uptime</span>
-                    </div>
-                    <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                        <span style="font-size:1.5rem; font-weight:800; font-family:'Outfit';">24/7</span>
-                        <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Monitoramento</span>
-                    </div>
-                    <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                        <span style="font-size:1.5rem; font-weight:800; font-family:'Outfit';">100%</span>
-                        <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Seguro</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Form Section -->
         <div class="login-form-side anim-entrance" style="animation-delay: 0.2s;">
             
@@ -288,7 +266,6 @@
                             <label class="form-label">E-mail Corporativo <span style="color:var(--red);">*</span></label>
                             <input type="email" name="email" value="{{ old('email') }}" required class="form-input" placeholder="email@logisync.com">
                         </div>
-
                         <div class="form-group">
                             <label class="form-label">Telefone / Celular <span style="color:var(--red);">*</span></label>
                             <input type="tel" name="phone" id="phone" value="{{ old('phone') }}" required class="form-input" placeholder="(00) 00000-0000">
@@ -297,6 +274,22 @@
                         <div class="form-group">
                             <label class="form-label">Data de Admissão <span style="color:var(--red);">*</span></label>
                             <input type="date" name="admission_date" value="{{ old('admission_date') }}" required class="form-input">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Data de Nascimento <span style="color:var(--red);">*</span></label>
+                            <input type="date" name="birth_date" value="{{ old('birth_date') }}" required class="form-input">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Sexo do Funcionário <span style="color:var(--red);">*</span></label>
+                            <select name="gender" required class="form-select">
+                                <option value="" disabled selected>Selecione o sexo</option>
+                                <option value="Masculino" {{ old('gender') == 'Masculino' ? 'selected' : '' }}>Masculino</option>
+                                <option value="Feminino" {{ old('gender') == 'Feminino' ? 'selected' : '' }}>Feminino</option>
+                                <option value="Outro" {{ old('gender') == 'Outro' ? 'selected' : '' }}>Outro</option>
+                                <option value="Preferiu não dizer" {{ old('gender') == 'Preferiu não dizer' ? 'selected' : '' }}>Preferiu não dizer</option>
+                            </select>
                         </div>
                     </div>
 
