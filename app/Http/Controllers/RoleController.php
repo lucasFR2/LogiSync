@@ -16,11 +16,6 @@ class RoleController extends Controller
             ->orderBy('name')
             ->get();
 
-        $permissions = Permission::select('id', 'name', 'label', 'group')
-            ->orderBy('group')
-            ->orderBy('label')
-            ->get()
-            ->groupBy('group');
         return view('roles.index', compact('roles'));
     }
 
@@ -32,6 +27,28 @@ class RoleController extends Controller
             ->get()
             ->groupBy('group');
         return view('roles.create', compact('permissions'));
+    }
+
+    public function edit(Role $role)
+    {
+        $permissions = Permission::select('id', 'name', 'label', 'group')
+            ->orderBy('group')
+            ->orderBy('label')
+            ->get()
+            ->groupBy('group');
+        
+        $rolePermissions = $role->permissions->pluck('id')->toArray();
+        return view('roles.edit', compact('role'));
+    }
+
+    public function create()
+    {
+        $permissions = Permission::select('id', 'name', 'label', 'group')
+            ->orderBy('group')
+            ->orderBy('label')
+            ->get()
+            ->groupBy('group');
+        return view('roles.create', compact('permissions', 'rolePermissions'));
     }
 
     public function store(Request $request)

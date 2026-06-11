@@ -16,6 +16,9 @@ class InvoiceService
             $subtotal = 0;
             $itemsData = [];
 
+            // Pre-calculate invoice number for references
+            $invoiceNumber = $invoice ? $invoice->number : ($data['number'] ?? Invoice::nextNumber());
+
             foreach ($data['items'] as $item) {
                 $disc  = (float) ($item['discount'] ?? 0);
                 $qty   = (float) $item['quantity'];
@@ -107,7 +110,7 @@ class InvoiceService
                 ];
 
                 if ($isEmitting && !empty($item['product_id'])) {
-                    $this->handleStockMovement($item['product_id'], $qty, $data['type']);
+                    $this->handleStockMovement($item['product_id'], $qty, $data['type'], $invoiceNumber);
                 }
             }
 
@@ -127,7 +130,7 @@ class InvoiceService
                 $invoice->update($invoiceData);
                 $invoice->items()->delete();
             } else {
-                $invoiceData['number'] = Invoice::nextNumber();
+                $invoiceData['number'] = $invoiceNumber;
                 $invoiceData['series'] = '001';
                 $invoice = Invoice::create($invoiceData);
             }
@@ -138,28 +141,27 @@ class InvoiceService
         });
     }
 
-    protected function handleStockMovement($productId, $qty, $type)
+    protected function handleStockMovement($productId, $qty, $type, $reference = '')
     {
         $product = Product::findOrFail($productId);
         
         if ($type === 'saida') {
-            if ($product->quantity < $qty) {
-                throw new \Exception("Estoque insuficiente para o produto '{$product->name}'. Disponível: {$product->quantity}");
-            }
-            $product->decrement('quantity', $qty);
-            $movType = 'saida';
+            // Allocate stock using WMS FIFO logic
+            FIFOStockService::allocateFIFOStock($product, $qty, $reference, Auth::id());
         } else {
+            // Standard incoming invoice / return
             $product->increment('quantity', $qty);
-            $movType = 'entrada';
+            
+            Inventory::create([
+                'product_id'         => $product->id,
+                'quantity'           => $qty,
+                'remaining_quantity' => $qty, // Positive adjustment starts with full qty
+                'type'               => 'entrada',
+                'status'             => 'confirmada',
+                'reference'          => $reference,
+                'notes'              => 'Entrada automática via NF ' . $reference,
+                'user_id'            => Auth::id(),
+            ]);
         }
-
-        Inventory::create([
-            'product_id' => $product->id,
-            'quantity'   => $qty,
-            'type'       => $movType,
-            'status'     => 'confirmada',
-            'notes'      => 'Movimentação automática via ' . ($type === 'saida' ? 'Saída' : 'Entrada') . ' de NF',
-            'user_id'    => Auth::id(),
-        ]);
     }
 }

@@ -122,6 +122,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('roles', App\Http\Controllers\RoleController::class)->except(['show']);
         Route::get('/admin', fn() => 'Área Admin')->name('admin');
     });
+
 });
 
 Route::get('/', fn() => redirect()->route('login'));

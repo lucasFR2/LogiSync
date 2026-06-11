@@ -9,7 +9,7 @@
 @endpush
 
 @section('content')
-<div style="max-width:860px;">
+<div class="w-full">
 
     @if($errors->any())
         <div class="alert alert-error" style="margin-bottom:1.5rem;">

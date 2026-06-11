@@ -83,7 +83,7 @@
                             <option value="Masculino" {{ old('gender') === 'Masculino' ? 'selected' : '' }}>Masculino</option>
                             <option value="Feminino" {{ old('gender') === 'Feminino' ? 'selected' : '' }}>Feminino</option>
                             <option value="Outro" {{ old('gender') === 'Outro' ? 'selected' : '' }}>Outro</option>
-                            <option value="Prefiro não informar" {{ old('gender') === 'Prefiro não informar' ? 'selected' : '' }}>Prefiro não informar</option>
+                            <option value="Preferiu não informar" {{ old('gender') === 'Preferiu não informar' ? 'selected' : '' }}>Preferiu não informar</option>
                         </select>
                     </div>
                 </div>

@@ -83,7 +83,7 @@
                             <option value="Masculino" {{ old('gender', $customer->gender) === 'Masculino' ? 'selected' : '' }}>Masculino</option>
                             <option value="Feminino" {{ old('gender', $customer->gender) === 'Feminino' ? 'selected' : '' }}>Feminino</option>
                             <option value="Outro" {{ old('gender', $customer->gender) === 'Outro' ? 'selected' : '' }}>Outro</option>
-                            <option value="Prefiro não informar" {{ old('gender', $customer->gender) === 'Prefiro não informar' ? 'selected' : '' }}>Prefiro não informar</option>
+                            <option value="Preferiu não informar" {{ old('gender', $customer->gender) === 'Preferiu não informar' ? 'selected' : '' }}>Preferiu não informar</option>
                         </select>
                     </div>
                 </div>

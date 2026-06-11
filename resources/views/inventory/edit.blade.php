@@ -2,10 +2,8 @@
 
 @section('title', 'Editar Entrada')
 @section('page-title', 'Editar Entrada')
-@section('page-subtitle', 'Atualizar dados da movimentaÃ§Ã£o')
-
 @section('content')
-<div style="max-width:600px;">
+<div class="w-full">
     <div class="card anim-entrance">
         <div class="card-header">
             <div style="display:flex; align-items:center; gap:0.75rem;">

@@ -22,8 +22,13 @@
                     <div style="width:12px; height:24px; background:var(--accent); border-radius:4px; box-shadow: 0 0 15px var(--accent-glow);"></div>
                     <h3 style="margin:0; font-size: 1.25rem;">Funções Ativas</h3>
                 </div>
+<<<<<<< HEAD
                 <a href="{{ route('roles.create') }}" class="btn btn-primary" style="padding:0.625rem 1.25rem; font-size:0.875rem; border-radius:12px; box-shadow: var(--shadow-sm);">
                     <i class="fa-solid fa-plus mr-2"></i> Novo Cargo
+=======
+                <a href="{{ route('roles.create') }}" class="btn btn-primary">
+                    <i class="fa-solid fa-plus"></i> Novo Cargo
+>>>>>>> origin/LUCAS
                 </a>
             </div>
             <div class="table-wrap">
@@ -60,14 +65,18 @@
                                 </td>
                                 <td style="padding: 1.25rem 1.5rem; text-align:right;">
                                     <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+<<<<<<< HEAD
                                         <a href="{{ route('roles.edit', $role->id) }}" class="icon-btn" style="background:var(--bg-base); border:1px solid var(--border);" title="Editar">
+=======
+                                        <a href="{{ route('roles.edit', $role->id) }}" class="icon-btn" style="background:var(--bg-base); border:1px solid var(--border); display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:var(--r-md); color:var(--text-secondary);" title="Editar">
+>>>>>>> origin/LUCAS
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </a>
                                         @if($role->name !== 'Administrador')
                                         <form action="{{ route('roles.destroy', $role->id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja remover este cargo?')">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="icon-btn" title="Remover" style="background:var(--bg-base); border:1px solid var(--red-alpha); color:var(--red);">
+                                            <button type="submit" class="icon-btn" title="Remover" style="background:var(--bg-base); border:1px solid var(--red-alpha); color:var(--red); display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:var(--r-md);">
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </form>

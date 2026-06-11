@@ -77,6 +77,8 @@ class AuthController extends Controller
             'documents.*'    => 'file|mimes:pdf,jpg,jpeg,png|max:10240',
             'rg'             => 'required|string|max:20',
             'admission_date' => 'required|date',
+            'birth_date'     => 'required|date',
+            'gender'         => 'required|string|in:Masculino,Feminino,Outro,Preferiu não dizer',
         ]);
 
         $cpfDigits = preg_replace('/\D/', '', (string) $data['cpf']) ?? '';
@@ -108,6 +110,8 @@ class AuthController extends Controller
             'state'          => $data['state'],
             'document_path'  => json_encode($documentPaths),
             'admission_date' => $data['admission_date'],
+            'birth_date'     => $data['birth_date'],
+            'gender'         => $data['gender'],
         ]);
 
         if (Auth::check()) {

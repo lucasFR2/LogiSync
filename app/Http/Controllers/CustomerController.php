@@ -54,7 +54,7 @@ class CustomerController extends Controller implements HasMiddleware
             'state'              => 'nullable|string|max:2',
             'zip_code'           => 'nullable|string|max:15',
             'birth_date'         => 'nullable|date',
-            'gender'             => 'nullable|string|in:Masculino,Feminino,Outro,Prefiro não informar',
+            'gender'             => 'nullable|string|in:Masculino,Feminino,Outro,Preferiu não informar',
         ]);
 
         $customer = Customer::create($validated);
@@ -90,7 +90,7 @@ class CustomerController extends Controller implements HasMiddleware
             'state'              => 'nullable|string|max:2',
             'zip_code'           => 'nullable|string|max:15',
             'birth_date'         => 'nullable|date',
-            'gender'             => 'nullable|string|in:Masculino,Feminino,Outro,Prefiro não informar',
+            'gender'             => 'nullable|string|in:Masculino,Feminino,Outro,Preferiu não informar',
         ]);
 
         $customer->update($validated);

@@ -37,19 +37,18 @@
 
         /* Form Side */
         .login-form-side {
-            flex: 1;
+            flex: 0.8;
             background: var(--bg-base);
             display: flex;
             flex-direction: column;
             padding: 4rem 2rem;
             position: relative;
             overflow-y: auto;
-            width: 100%;
         }
 
         .login-card {
             width: 100%;
-            max-width: 850px;
+            max-width: 100%;
             margin: auto;
             padding: 3.5rem;
             background: var(--glass-bg);
@@ -195,7 +194,6 @@
                             <label class="form-label">E-mail Corporativo <span style="color:var(--red);">*</span></label>
                             <input type="email" name="email" value="{{ old('email') }}" required class="form-input" placeholder="email@logisync.com">
                         </div>
-
                         <div class="form-group">
                             <label class="form-label">Telefone / Celular <span style="color:var(--red);">*</span></label>
                             <input type="tel" name="phone" id="phone" value="{{ old('phone') }}" required class="form-input" placeholder="(00) 00000-0000">
@@ -204,6 +202,22 @@
                         <div class="form-group">
                             <label class="form-label">Data de Admissão <span style="color:var(--red);">*</span></label>
                             <input type="date" name="admission_date" value="{{ old('admission_date') }}" required class="form-input">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Data de Nascimento <span style="color:var(--red);">*</span></label>
+                            <input type="date" name="birth_date" value="{{ old('birth_date') }}" required class="form-input">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Sexo do Funcionário <span style="color:var(--red);">*</span></label>
+                            <select name="gender" required class="form-select">
+                                <option value="" disabled selected>Selecione o sexo</option>
+                                <option value="Masculino" {{ old('gender') == 'Masculino' ? 'selected' : '' }}>Masculino</option>
+                                <option value="Feminino" {{ old('gender') == 'Feminino' ? 'selected' : '' }}>Feminino</option>
+                                <option value="Outro" {{ old('gender') == 'Outro' ? 'selected' : '' }}>Outro</option>
+                                <option value="Preferiu não dizer" {{ old('gender') == 'Preferiu não dizer' ? 'selected' : '' }}>Preferiu não dizer</option>
+                            </select>
                         </div>
                     </div>
 
