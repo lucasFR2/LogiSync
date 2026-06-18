@@ -147,6 +147,35 @@
                 </div>
             </div>
 
+            {{-- SECTION 3: Conference Verification --}}
+            <div class="card anim-entrance" style="animation-delay:0.1s;">
+                <div class="card-header">
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        <div style="width:10px; height:24px; background:var(--accent); border-radius:4px;"></div>
+                        <h3 style="margin:0;">3. Conferência de Mercadoria</h3>
+                    </div>
+                </div>
+                <div class="card-body" style="display:flex; flex-direction:column; gap:1.5rem;">
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Quantidade Conferida <span style="color:var(--red);">*</span></label>
+                            <input type="number" name="checked_quantity" value="{{ old('checked_quantity') }}" min="0" required class="form-input" placeholder="Ex: 100">
+                            <small style="color:var(--text-muted);">A quantidade real contada que será adicionada ao estoque.</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Status da Conferência</label>
+                            <div style="padding: 0.75rem; background: var(--bg-hover); border: 1px solid var(--border); border-radius: var(--r-md); font-weight: 700; height: 42px; display: flex; align-items: center;" id="conference_status_badge">
+                                <span class="text-muted">Informe as quantidades acima</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Observações da Conferência</label>
+                        <textarea name="conference_notes" rows="2" class="form-textarea" placeholder="Descreva divergências ou observações do recebimento...">{{ old('conference_notes') }}</textarea>
+                    </div>
+                </div>
+            </div>
+
             {{-- Actions --}}
             <div style="display:flex; gap:1rem; justify-content:flex-end; padding-top:0.5rem;">
                 <a href="{{ route('inventory.index') }}" class="btn btn-secondary">Cancelar</a>
@@ -192,6 +221,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Trigger on page load if old value present
     if (sel.value) sel.dispatchEvent(new Event('change'));
+
+    // Conference Live Verification
+    const qtyInput = document.querySelector('input[name="quantity"]');
+    const checkedQtyInput = document.querySelector('input[name="checked_quantity"]');
+    const statusBadge = document.getElementById('conference_status_badge');
+
+    function updateConferenceStatus() {
+        const qty = parseInt(qtyInput.value);
+        const checkedQty = parseInt(checkedQtyInput.value);
+
+        if (isNaN(qty) || isNaN(checkedQty)) {
+            statusBadge.innerHTML = '<span style="color:var(--text-muted);"><i class="fa-solid fa-spinner"></i> Informe as quantidades</span>';
+            statusBadge.style.borderColor = 'var(--border)';
+            statusBadge.style.background = 'var(--bg-hover)';
+            return;
+        }
+
+        if (qty === checkedQty) {
+            statusBadge.innerHTML = '<span style="color:var(--green);"><i class="fa-solid fa-circle-check"></i> Sem Divergência (Confirmada)</span>';
+            statusBadge.style.borderColor = 'var(--green)';
+            statusBadge.style.background = 'var(--green-bg)';
+        } else {
+            statusBadge.innerHTML = '<span style="color:var(--orange);"><i class="fa-solid fa-triangle-exclamation"></i> Divergente</span>';
+            statusBadge.style.borderColor = 'var(--orange)';
+            statusBadge.style.background = 'var(--orange-bg)';
+        }
+    }
+
+    if (qtyInput && checkedQtyInput && statusBadge) {
+        qtyInput.addEventListener('input', updateConferenceStatus);
+        checkedQtyInput.addEventListener('input', updateConferenceStatus);
+    }
 });
 </script>
 @endpush

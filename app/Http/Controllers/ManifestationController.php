@@ -230,7 +230,7 @@ class ManifestationController extends Controller implements HasMiddleware
 
             DB::commit();
             Logger::log('xml_import', "O usuário importou o XML da NF-e #{$invoice->number} (Chave: {$invoice->access_key})");
-            return redirect()->route('inventory.bulkCreate', $invoice)->with('success', 'XML processado com sucesso!');
+            return redirect()->route('manifestations.show', $invoice)->with('success', 'XML processado com sucesso!');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -322,7 +322,7 @@ class ManifestationController extends Controller implements HasMiddleware
         $invoice->update(['total_amount' => $total]);
 
         DB::commit();
-        return redirect()->route('inventory.bulkCreate', $invoice)->with('success', 'XML simulado importado com sucesso!');
+        return redirect()->route('manifestations.show', $invoice)->with('success', 'XML simulado importado com sucesso!');
     }
 
     public function generateXml()

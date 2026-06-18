@@ -57,157 +57,130 @@
         
         <div class="flex flex-col gap-6 lg:gap-10 pb-36">
 
-            <div class="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-6 lg:gap-10 items-start">
-                {{-- Destinatário (Left Column) --}}
-                <div class="flex flex-col gap-6 lg:gap-10">
-                    {{-- Recipient Card --}}
-                    <div class="card shadow-md">
-                        <div class="card-header bg-surface" style="border-bottom: 2px solid var(--accent-subtle);">
-                            <div class="flex items-center gap-2">
-                                <div style="width:36px; height:36px; background:var(--accent-subtle); color:var(--accent); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1rem;">
-                                    <i class="fa-solid fa-user-tag"></i>
-                                </div>
-                                <h3 class="m-0" style="font-family:'Outfit'; font-weight: 800; letter-spacing: -0.01em;">Dados do Destinatário</h3>
-                            </div>
-                            <div class="flex gap-2 relative items-center">
-                                <div class="relative" style="flex: 1; min-width: 200px;">
-                                    <div style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.8rem; z-index: 1;">
-                                        <i class="fa-solid fa-magnifying-glass"></i>
-                                    </div>
-                                    <select id="customer-select" class="form-control customer-select" style="width: 100%; max-width: 280px; font-size: 0.85rem; height: 42px; padding: 0 1rem 0 2.2rem; border-radius: var(--r-md); background: var(--bg-base);" onchange="fillCustomerData(this)">
-                                        <option value="">Vincular Cliente...</option>
-                                        @foreach($customers as $c)
-                                            <option value="{{ $c->id }}" 
-                                                    data-name="{{ $c->name }}" 
-                                                    data-document="{{ $c->document }}" 
-                                                    data-email="{{ $c->email }}" 
-                                                    data-phone="{{ $c->phone }}" 
-                                                    data-address="{{ $c->address }}"
-                                                    data-city="{{ $c->city }}"
-                                                    data-state="{{ $c->state }}"
-                                                    data-zip="{{ $c->zip_code }}">
-                                                {{ $c->name }} ({{ $c->document }})
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <button type="button" onclick="toggleCustomerModal()" class="btn btn-secondary" style="padding: 0 0.75rem; height: 42px;" title="Cadastrar novo cliente">
-                                    <i class="fa-solid fa-plus"></i>
-                                </button>
-                            </div>
+            {{-- Card Unificado: Dados Gerais e Destinatário --}}
+            <div class="card shadow-md">
+                <div class="card-header bg-surface" style="border-bottom: 2px solid var(--accent-subtle); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; padding: 1.5rem 2rem;">
+                    <div class="flex items-center gap-3">
+                        <div style="width:36px; height:36px; background:var(--accent-subtle); color:var(--accent); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+                            <i class="fa-solid fa-file-invoice-dollar"></i>
                         </div>
-                        <div class="card-body p-8 sm:p-6">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div class="form-group">
-                                    <label class="form-label">Nome / Razão Social <span style="color:var(--red);">*</span></label>
-                                    <input type="text" name="recipient_name" id="recipient_name" value="{{ $invoice->recipient_name ?? '' }}" required class="form-control" placeholder="Ex: Lucas Ferreira Ltda" style="height: 48px; font-weight: 500;">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">CPF / CNPJ <span style="color:var(--red);">*</span></label>
-                                    <input type="text" name="recipient_document" id="recipient_document" value="{{ $invoice->recipient_document ?? '' }}" required class="form-control" placeholder="00.000.000/0001-00" style="height: 48px;">
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                                <div class="form-group">
-                                    <label class="form-label">E-mail para Faturamento</label>
-                                    <input type="email" name="recipient_email" id="recipient_email" value="{{ $invoice->recipient_email ?? '' }}" class="form-control" placeholder="financeiro@empresa.com">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Telefone de Contato</label>
-                                    <input type="text" name="recipient_phone" id="recipient_phone" value="{{ $invoice->recipient_phone ?? '' }}" class="form-control" placeholder="(00) 00000-0000">
-                                </div>
-                            </div>
-
-                            <div class="mt-8 pt-8" style="border-top: 1px solid var(--border);">
-                                <h4 class="text-xs font-bold mb-6" style="text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;">Endereço de Entrega</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-[1.2fr_0.8fr] gap-6">
-                                    <div class="form-group">
-                                        <label class="form-label">Logradouro / Número</label>
-                                        <input type="text" name="recipient_address" id="recipient_address" value="{{ $invoice->recipient_address ?? '' }}" class="form-control" placeholder="Rua, Número, Bairro">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">CEP</label>
-                                        <input type="text" name="recipient_zip" id="recipient_zip" value="{{ $invoice->recipient_zip ?? '' }}" class="form-control" placeholder="00000-000">
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-1 md:grid-cols-[1.2fr_0.8fr] gap-6 mt-6">
-                                    <div class="form-group">
-                                        <label class="form-label">Cidade</label>
-                                        <input type="text" name="recipient_city" id="recipient_city" value="{{ $invoice->recipient_city ?? '' }}" class="form-control">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Estado (UF)</label>
-                                        <input type="text" name="recipient_state" id="recipient_state" value="{{ $invoice->recipient_state ?? '' }}" maxlength="2" class="form-control text-center" placeholder="UF">
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="flex flex-col">
+                            <h3 class="m-0" style="font-family:'Outfit'; font-weight: 800; letter-spacing: -0.01em; font-size: 1.2rem; line-height: 1.2;">Dados Gerais e Destinatário</h3>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.15rem;">SÉRIE 001 | NF-e Nº {{ $invoice->number ?? $number }}</span>
                         </div>
                     </div>
-                </div>
-
-                {{-- Protocolo (Right Column) --}}
-                <div class="flex flex-col gap-6 lg:gap-10">
-                    {{-- General Info Card --}}
-                    <div class="card" style="border: 1px solid var(--accent-subtle);">
-                        <div class="card-header" style="background: var(--accent-subtle);">
-                            <div class="flex items-center gap-2">
-                                <div style="width:36px; height:36px; background:var(--accent); color:var(--accent-fg); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1rem;">
-                                    <i class="fa-solid fa-file-invoice-dollar"></i>
-                                </div>
-                                <h3 class="m-0" style="font-family:'Outfit'; font-weight: 800;">Protocolo da NF</h3>
+                    <div class="flex gap-2 relative items-center flex-wrap" style="max-width: 100%;">
+                        <div class="relative" style="min-width: 200px;">
+                            <div style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.8rem; z-index: 1;">
+                                <i class="fa-solid fa-magnifying-glass"></i>
                             </div>
-                            <div class="badge badge-info text-xs p-1 px-3">SÉRIE 001</div>
+                            <select id="customer-select" class="form-control customer-select" style="width: 100%; max-width: 280px; font-size: 0.85rem; height: 42px; padding: 0 1rem 0 2.2rem; border-radius: var(--r-md); background: var(--bg-base);" onchange="fillCustomerData(this)">
+                                <option value="">Vincular Cliente...</option>
+                                @foreach($customers as $c)
+                                    <option value="{{ $c->id }}" 
+                                            data-name="{{ $c->name }}" 
+                                            data-document="{{ $c->document }}" 
+                                            data-email="{{ $c->email }}" 
+                                            data-phone="{{ $c->phone }}" 
+                                            data-address="{{ $c->address }}"
+                                            data-city="{{ $c->city }}"
+                                            data-state="{{ $c->state }}"
+                                            data-zip="{{ $c->zip_code }}">
+                                        {{ $c->name }} ({{ $c->document }})
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
-                        <div class="card-body p-8 sm:p-6">
-                            <div class="form-group">
-                                <label class="form-label">Número da NF (Sequencial)</label>
-                                <input type="text" value="{{ $invoice->number ?? $number }}" readonly class="form-control" style="background: var(--bg-hover); font-family: 'Outfit'; font-weight: 800; font-size: 1.5rem; color: var(--accent); border-style: dashed; text-align: center;">
-                            </div>
-                            
-                            <div class="grid grid-cols-1 gap-4 mt-6">
-                                <div class="form-group">
-                                    <label class="form-label">Tipo de Operação</label>
-                                    <select name="type" required class="form-control" style="font-weight: 600;">
-                                        <option value="saida" {{ (isset($invoice) && $invoice->type === 'saida') ? 'selected' : '' }}>↑ Saída (Venda/Remessa)</option>
-                                        <option value="entrada" {{ (isset($invoice) && $invoice->type === 'entrada') ? 'selected' : '' }}>↓ Entrada (Compra/Devolução)</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">Data de Emissão</label>
-                                    <input type="date" name="issued_at" value="{{ isset($invoice) ? $invoice->issued_at->format('Y-m-d') : date('Y-m-d') }}" class="form-control">
-                                </div>
+                        <button type="button" onclick="toggleCustomerModal()" class="btn btn-secondary" style="padding: 0 0.75rem; height: 42px;" title="Cadastrar novo cliente">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-8 sm:p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                        {{-- Linha 1: Dados do Protocolo --}}
+                        <div class="form-group">
+                            <label class="form-label">Número da NF (Sequencial)</label>
+                            <input type="text" value="{{ $invoice->number ?? $number }}" readonly class="form-control text-center" style="background: var(--bg-hover); font-family: 'Outfit'; font-weight: 800; color: var(--accent); height: 48px; border-style: dashed;">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Tipo de Operação</label>
+                            <select name="type" required class="form-control" style="font-weight: 600; height: 48px;">
+                                <option value="saida" {{ (isset($invoice) && $invoice->type === 'saida') ? 'selected' : '' }}>↑ Saída (Venda/Remessa)</option>
+                                <option value="entrada" {{ (isset($invoice) && $invoice->type === 'entrada') ? 'selected' : '' }}>↓ Entrada (Compra/Devolução)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Data de Emissão</label>
+                            <input type="date" name="issued_at" value="{{ isset($invoice) ? $invoice->issued_at->format('Y-m-d') : date('Y-m-d') }}" class="form-control" style="height: 48px;">
+                        </div>
 
-                                <div class="form-group">
-                                    <label class="form-label">Vencimento Financeiro</label>
-                                    <input type="date" name="due_date" value="{{ isset($invoice) && $invoice->due_date ? $invoice->due_date->format('Y-m-d') : '' }}" class="form-control">
-                                </div>
+                        <div class="form-group">
+                            <label class="form-label">Vencimento Financeiro</label>
+                            <input type="date" name="due_date" value="{{ isset($invoice) && $invoice->due_date ? $invoice->due_date->format('Y-m-d') : '' }}" class="form-control" style="height: 48px;">
+                        </div>
 
-                                <div class="form-group">
-                                    <label class="form-label">Forma de Recebimento</label>
-                                    <select name="payment_method" required class="form-control">
-                                        @foreach(['pix' => 'PIX (Instantâneo)', 'boleto' => 'Boleto Bancário', 'dinheiro' => 'Dinheiro / Espécie', 'cartao_credito' => 'Cartão de Crédito', 'cartao_debito' => 'Cartão de Débito'] as $val => $lab)
-                                            <option value="{{ $val }}" {{ (isset($invoice) && $invoice->payment_method === $val) ? 'selected' : '' }}>{{ $lab }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                        <div class="form-group">
+                            <label class="form-label">Forma de Recebimento</label>
+                            <select name="payment_method" required class="form-control" style="height: 48px;">
+                                @foreach(['pix' => 'PIX (Instantâneo)', 'boleto' => 'Boleto Bancário', 'dinheiro' => 'Dinheiro / Espécie', 'cartao_credito' => 'Cartão de Crédito', 'cartao_debito' => 'Cartão de Débito'] as $val => $lab)
+                                    <option value="{{ $val }}" {{ (isset($invoice) && $invoice->payment_method === $val) ? 'selected' : '' }}>{{ $lab }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                                <div class="form-group">
-                                     <label class="form-label">Fornecedor Associado (Opcional)</label>
-                                     <div style="display:flex; gap:0.4rem;">
-                                         <select name="supplier_id" class="form-control" style="flex:1;">
-                                             <option value="">Nenhum fornecedor vinculado</option>
-                                             @foreach($suppliers as $s)
-                                                 <option value="{{ $s->id }}" {{ (isset($invoice) && $invoice->supplier_id == $s->id) ? 'selected' : '' }}>{{ $s->name }}</option>
-                                             @endforeach
-                                         </select>
-                                         <button type="button" class="btn btn-secondary" data-open-supplier-modal style="padding:0 .75rem;" title="Novo Fornecedor">
-                                             <i class="fa-solid fa-plus"></i>
-                                         </button>
-                                     </div>
-                                 </div>
-                            </div>
+                        {{-- Linha 2: Dados do Destinatário --}}
+                        <div class="form-group lg:col-span-2">
+                            <label class="form-label">Nome / Razão Social <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="recipient_name" id="recipient_name" value="{{ $invoice->recipient_name ?? '' }}" required class="form-control" placeholder="Ex: Lucas Ferreira Ltda" style="height: 48px; font-weight: 500;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CPF / CNPJ <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="recipient_document" id="recipient_document" value="{{ $invoice->recipient_document ?? '' }}" required class="form-control" placeholder="00.000.000/0001-00" style="height: 48px;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">E-mail para Faturamento</label>
+                            <input type="email" name="recipient_email" id="recipient_email" value="{{ $invoice->recipient_email ?? '' }}" class="form-control" placeholder="financeiro@empresa.com" style="height: 48px;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Telefone de Contato</label>
+                            <input type="text" name="recipient_phone" id="recipient_phone" value="{{ $invoice->recipient_phone ?? '' }}" class="form-control" placeholder="(00) 00000-0000" style="height: 48px;">
+                        </div>
+
+                        {{-- Linha 3: Fornecedor e Endereço --}}
+                        <div class="form-group lg:col-span-2">
+                             <label class="form-label">Fornecedor Associado (Opcional)</label>
+                             <div style="display:flex; gap:0.4rem;">
+                                 <select name="supplier_id" class="form-control" style="flex:1; height: 48px;">
+                                     <option value="">Nenhum fornecedor vinculado</option>
+                                     @foreach($suppliers as $s)
+                                         <option value="{{ $s->id }}" {{ (isset($invoice) && $invoice->supplier_id == $s->id) ? 'selected' : '' }}>{{ $s->name }}</option>
+                                     @endforeach
+                                 </select>
+                                 <button type="button" class="btn btn-secondary" data-open-supplier-modal style="padding:0 .75rem; height: 48px;" title="Novo Fornecedor">
+                                     <i class="fa-solid fa-plus"></i>
+                                 </button>
+                             </div>
+                         </div>
+                        <div class="form-group lg:col-span-3">
+                            <label class="form-label">Logradouro / Número</label>
+                            <input type="text" name="recipient_address" id="recipient_address" value="{{ $invoice->recipient_address ?? '' }}" class="form-control" placeholder="Rua, Número, Bairro" style="height: 48px;">
+                        </div>
+
+                        {{-- Linha 4: Restante do Endereço --}}
+                        <div class="form-group">
+                            <label class="form-label">CEP</label>
+                            <input type="text" name="recipient_zip" id="recipient_zip" value="{{ $invoice->recipient_zip ?? '' }}" class="form-control" placeholder="00000-000" style="height: 48px;">
+                        </div>
+                        <div class="form-group lg:col-span-3">
+                            <label class="form-label">Cidade</label>
+                            <input type="text" name="recipient_city" id="recipient_city" value="{{ $invoice->recipient_city ?? '' }}" class="form-control" style="height: 48px;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Estado (UF)</label>
+                            <input type="text" name="recipient_state" id="recipient_state" value="{{ $invoice->recipient_state ?? '' }}" maxlength="2" class="form-control text-center" placeholder="UF" style="height: 48px;">
                         </div>
                     </div>
                 </div>

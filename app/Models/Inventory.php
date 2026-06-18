@@ -20,11 +20,15 @@ class Inventory extends Model
         'entry_date',
         'lot_number',
         'expiry_date',
+        'checked_quantity',
+        'conference_status',
+        'conference_notes',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'remaining_quantity' => 'integer',
+        'checked_quantity' => 'integer',
         'entry_date' => 'datetime',
         'expiry_date' => 'date',
         'created_at' => 'datetime',

@@ -101,7 +101,7 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <input type="number" name="items[{{ $item->id }}][quantity]" required min="0.001" step="0.001" value="{{ $item->quantity }}" class="form-input">
+                                    <input type="number" name="items[{{ $item->id }}][quantity]" required min="0" step="0.001" value="{{ $item->checked_quantity ?? $item->quantity }}" class="form-input">
                                 </td>
                             </tr>
                         @endforeach

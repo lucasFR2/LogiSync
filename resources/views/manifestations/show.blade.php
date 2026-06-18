@@ -150,11 +150,18 @@
 
                     @if($manifestation->manifestation_status == 'confirmada' && $manifestation->entry_status == 'pending')
                         <hr style="margin:1.5rem 0; border-color:var(--border);">
-                        <form action="{{ route('inventory.bulkCreate', $manifestation) }}" method="GET">
-                            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:1rem;">
-                                <i class="fa-solid fa-dolly"></i> Importar para Estoque
-                            </button>
-                        </form>
+                        @if(in_array($manifestation->conference_status, ['Conferida', 'Divergente']))
+                            <form action="{{ route('inventory.bulkCreate', $manifestation) }}" method="GET">
+                                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:1rem;">
+                                    <i class="fa-solid fa-dolly"></i> Importar para Estoque
+                                </button>
+                            </form>
+                        @else
+                            <div style="padding:1rem; background:var(--bg-hover); border:1px dashed var(--border); border-radius:var(--r-md); text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600; line-height:1.4;">
+                                <i class="fa-solid fa-lock" style="margin-right:0.35rem; color:var(--orange);"></i>
+                                Importação bloqueada. Realize a conferência interativa primeiro.
+                            </div>
+                        @endif
                     @elseif($manifestation->entry_status == 'imported')
                         <hr style="margin:1.5rem 0; border-color:var(--border);">
                         <div style="text-align:center; color:var(--green); font-weight:600;">

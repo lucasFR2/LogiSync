@@ -29,28 +29,6 @@ class RoleController extends Controller
         return view('roles.create', compact('permissions'));
     }
 
-    public function edit(Role $role)
-    {
-        $permissions = Permission::select('id', 'name', 'label', 'group')
-            ->orderBy('group')
-            ->orderBy('label')
-            ->get()
-            ->groupBy('group');
-        
-        $rolePermissions = $role->permissions->pluck('id')->toArray();
-        return view('roles.edit', compact('role'));
-    }
-
-    public function create()
-    {
-        $permissions = Permission::select('id', 'name', 'label', 'group')
-            ->orderBy('group')
-            ->orderBy('label')
-            ->get()
-            ->groupBy('group');
-        return view('roles.create', compact('permissions', 'rolePermissions'));
-    }
-
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -95,12 +73,21 @@ class RoleController extends Controller
             'permissions.*'=> 'exists:permissions,id',
         ]);
 
+        // Evita alterar o nome do cargo 'Administrador'
+        if ($role->name === 'Administrador') {
+            $validated['name'] = 'Administrador';
+        }
+
         $role->update([
             'name' => $validated['name'],
             'description' => $validated['description'],
         ]);
 
-        $role->permissions()->sync($validated['permissions'] ?? []);
+        // O cargo 'Administrador' possui acesso total por padrão e seus checkboxes vêm desabilitados no form,
+        // logo, não deve ter suas permissões sobrescritas (o que as removeria completamente).
+        if ($role->name !== 'Administrador') {
+            $role->permissions()->sync($validated['permissions'] ?? []);
+        }
 
         Logger::log('update_role', "O usuário alterou o cargo: {$role->name} e suas permissões.");
 

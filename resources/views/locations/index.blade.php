@@ -32,7 +32,25 @@
                 <p class="text-sm text-muted m-0">Gerencie corredores, colunas e níveis.</p>
             </div>
         </div>
+
+        {{-- Search Input --}}
+        <div style="flex:1; max-width:300px; margin:0 1rem;">
+            <form method="GET" action="{{ route('locations.index') }}">
+                <div style="position:relative;">
+                    <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.9rem;"></i>
+                    <input type="text" name="search" value="{{ $search ?? '' }}"
+                           placeholder="Buscar localização..."
+                           class="form-input" style="padding-left:2.5rem; width:100%;">
+                </div>
+            </form>
+        </div>
+
         <div class="flex gap-3">
+            @if($search)
+                <a href="{{ route('locations.index') }}" class="btn btn-secondary" title="Limpar busca">
+                    <i class="fa-solid fa-times"></i>
+                </a>
+            @endif
             <button onclick="document.getElementById('modal-bulk').style.display='flex'" class="btn btn-secondary">
                 <i class="fa-solid fa-layer-group"></i> Gerador em Lote
             </button>
@@ -119,11 +137,17 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7">
+                        <td colspan="9">
                             <div class="empty-state" style="padding:5rem 2rem; text-align:center;">
                                 <i class="fa-solid fa-map-pin" style="font-size:3rem; color:var(--text-muted); margin-bottom:1.5rem;"></i>
-                                <h3>Nenhuma localização cadastrada</h3>
-                                <p>Crie localizações manualmente ou use o gerador em lote.</p>
+                                @if($search)
+                                    <h3>Nenhuma localização encontrada</h3>
+                                    <p>Nenhum resultado corresponde à busca "{{ $search }}".</p>
+                                    <a href="{{ route('locations.index') }}" class="btn btn-secondary mt-4">Limpar busca</a>
+                                @else
+                                    <h3>Nenhuma localização cadastrada</h3>
+                                    <p>Crie localizações manualmente ou use o gerador em lote.</p>
+                                @endif
                             </div>
                         </td>
                     </tr>

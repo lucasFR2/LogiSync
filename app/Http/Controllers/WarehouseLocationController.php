@@ -7,15 +7,28 @@ use Illuminate\Http\Request;
 
 class WarehouseLocationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $locations = WarehouseLocation::withCount('products')
-            ->orderBy('aisle')
+        $search = $request->query('search');
+
+        $query = WarehouseLocation::withCount('products');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('full_code', 'like', "%{$search}%")
+                  ->orWhere('aisle', 'like', "%{$search}%")
+                  ->orWhere('column', 'like', "%{$search}%")
+                  ->orWhere('level', 'like', "%{$search}%");
+            });
+        }
+
+        $locations = $query->orderBy('aisle')
             ->orderBy('column')
             ->orderBy('level')
-            ->paginate(50);
+            ->paginate(50)
+            ->withQueryString();
 
-        return view('locations.index', compact('locations'));
+        return view('locations.index', compact('locations', 'search'));
     }
 
     public function store(Request $request)

@@ -91,7 +91,15 @@ class ProductController extends Controller implements HasMiddleware
         // Preserve all query parameters for pagination
         $products = $query->paginate(15)->withQueryString();
 
-        return view('products.index', array_merge($request->all(), compact('products')));
+        return view('products.index', [
+            'products' => $products,
+            'search' => $search,
+            'filterBy' => $filterBy,
+            'status_filter' => $status,
+            'price_min' => $priceMin,
+            'price_max' => $priceMax,
+            'stock_filter' => $stockFilter,
+        ]);
     }
     
 
@@ -132,13 +140,15 @@ class ProductController extends Controller implements HasMiddleware
     public function storeInventory(Request $request)
     {
         $validated = $request->validate([
-            'product_id'  => 'required|exists:products,id',
-            'quantity'    => 'required|integer|min:1',
-            'notes'       => 'nullable|string|max:500',
-            'entry_date'  => 'nullable|date',
-            'lot_number'  => 'nullable|string|max:100',
-            'expiry_date' => 'nullable|date',
-            'supplier_id' => 'nullable|exists:suppliers,id',
+            'product_id'       => 'required|exists:products,id',
+            'quantity'         => 'required|integer|min:1',
+            'checked_quantity' => 'required|integer|min:0',
+            'notes'            => 'nullable|string|max:500',
+            'entry_date'       => 'nullable|date',
+            'lot_number'       => 'nullable|string|max:100',
+            'expiry_date'      => 'nullable|date',
+            'supplier_id'      => 'nullable|exists:suppliers,id',
+            'conference_notes' => 'nullable|string|max:1000',
         ]);
 
         DB::transaction(function() use ($validated) {
@@ -152,13 +162,17 @@ class ProductController extends Controller implements HasMiddleware
                 $entryDate = now();
             }
 
+            $conferenceStatus = $validated['checked_quantity'] == $validated['quantity'] ? 'confirmada' : 'divergente';
+
             Inventory::create(array_merge($validated, [
-                'entry_date' => $entryDate,
-                'user_id'    => auth()->id(),
-                'type'       => 'entrada',
-                'status'     => 'confirmada',
+                'entry_date'         => $entryDate,
+                'user_id'            => auth()->id(),
+                'type'               => 'entrada',
+                'status'             => 'confirmada',
+                'remaining_quantity' => $validated['checked_quantity'],
+                'conference_status'  => $conferenceStatus,
             ]));
-            $product->increment('quantity', $validated['quantity']);
+            $product->increment('quantity', $validated['checked_quantity']);
         });
 
         return redirect()->route('inventory.index')->with('success', 'Entrada de estoque registrada com sucesso!');
@@ -168,6 +182,10 @@ class ProductController extends Controller implements HasMiddleware
     {
         if ($manifestation->entry_status === 'imported') {
             return redirect()->route('manifestations.show', $manifestation)->with('error', 'Esta Nota Fiscal já foi importada.');
+        }
+
+        if (!in_array($manifestation->conference_status, ['Conferida', 'Divergente'])) {
+            return redirect()->route('manifestations.show', $manifestation)->with('error', 'Realize a conferência física da NF-e antes de processar a entrada.');
         }
 
         $manifestation->load('items');
@@ -183,10 +201,14 @@ class ProductController extends Controller implements HasMiddleware
             return redirect()->route('manifestations.show', $manifestation)->with('error', 'Esta Nota Fiscal já foi importada.');
         }
 
+        if (!in_array($manifestation->conference_status, ['Conferida', 'Divergente'])) {
+            return redirect()->route('manifestations.show', $manifestation)->with('error', 'Realize a conferência física da NF-e antes de processar a entrada.');
+        }
+
         $request->validate([
             'items' => 'required|array',
             'items.*.product_id' => 'required|string', // Can be numeric ID or 'new'
-            'items.*.quantity' => 'required|numeric|min:0.001',
+            'items.*.quantity' => 'required|numeric|min:0',
         ]);
 
         $items = $request->input('items', []);
@@ -201,7 +223,7 @@ class ProductController extends Controller implements HasMiddleware
                     'new_name' => 'nullable|string|max:255',
                     'new_barcode' => 'nullable|string|max:20|regex:/^[0-9]{1,20}$/',
                     'new_category' => 'nullable|string|max:100',
-                    'quantity' => 'required|numeric|min:0.001',
+                    'quantity' => 'required|numeric|min:0',
                 ], [
                     'new_barcode.regex' => 'Código de barras deve conter apenas números',
                 ]);
@@ -234,73 +256,82 @@ class ProductController extends Controller implements HasMiddleware
 
         try {
             DB::transaction(function () use ($request, $manifestation) {
-            foreach ($request->items as $itemId => $data) {
-                $qty = (float) $data['quantity'];
-                
-                if ($data['product_id'] === 'new') {
-                    // Automagic creation of product based on XML item and user inputs
+                foreach ($request->items as $itemId => $data) {
+                    $qty = (float) $data['quantity'];
+                    
                     $xmlItem = $manifestation->items()->find($itemId);
                     if (!$xmlItem) {
                         throw ValidationException::withMessages([
                             "items.$itemId" => ['Item da NF-e inválido.'],
                         ]);
                     }
-                    $lastProduct = Product::where('sku', 'like', 'SKU-%')->latest('id')->first();
-                    $nextNumber = 1;
-                    if ($lastProduct && preg_match('/^SKU-(\d+)$/', $lastProduct->sku, $matches)) {
-                        $nextNumber = intval($matches[1]) + 1;
-                    }
-                    $sku = 'SKU-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+                    
+                    if ($data['product_id'] === 'new') {
+                        $lastProduct = Product::where('sku', 'like', 'SKU-%')->latest('id')->first();
+                        $nextNumber = 1;
+                        if ($lastProduct && preg_match('/^SKU-(\d+)$/', $lastProduct->sku, $matches)) {
+                            $nextNumber = intval($matches[1]) + 1;
+                        }
+                        $sku = 'SKU-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
-                    $product = Product::create([
-                        'name' => $data['new_name'] ?? $xmlItem->description,
-                        'sku' => $sku,
-                        'barcode' => $data['new_barcode'] ?? $xmlItem->barcode,
-                        'description' => 'Produto importado via NF-e ' . $manifestation->number,
-                        'unit_price' => $xmlItem->unit_price,
-                        'purchase_price' => $xmlItem->unit_price,
-                        'cost_price' => $xmlItem->unit_price,
-                        'quantity' => 0, // will be incremented
-                        'reorder_level' => 10,
-                        'unit' => $xmlItem->unit,
-                        'category' => $data['new_category'] ?? 'Importado Automático',
-                        'supplier_id' => $manifestation->supplier_id,
-                        'status' => 'ativo',
-                        
-                        // Taxes fields mapped from XML
-                        'ncm'                => $xmlItem->ncm,
-                        'cfop_default'       => $xmlItem->cfop,
-                        'iss_rate'           => $xmlItem->iss_rate,
-                        'pis_rate'           => $xmlItem->pis_rate,
-                        'cofins_rate'        => $xmlItem->cofins_rate,
-                        'csll_rate'          => $xmlItem->csll_rate,
-                        'irpj_rate'          => $xmlItem->irpj_rate,
-                        'cpp_rate'           => $xmlItem->cpp_rate,
-                        'ipi_rate'           => $xmlItem->ipi_rate,
-                        'icms_rate'          => $xmlItem->icms_rate,
-                        'icms_cst'           => $xmlItem->icms_cst,
-                        'icms_orig'          => $xmlItem->icms_orig,
-                        'icms_st_rate'       => $xmlItem->icms_st_rate,
-                        'icms_st_mva'        => $xmlItem->icms_st_mva,
-                        'icms_st_cst'        => $xmlItem->icms_st_cst,
-                        'ibs_rate'           => $xmlItem->ibs_rate,
-                        'cbs_rate'           => $xmlItem->cbs_rate,
-                        'is_rate'            => $xmlItem->is_rate,
-                        'icms_red_bc'        => $xmlItem->icms_red_bc,
-                        'icms_mod_bc'        => $xmlItem->icms_mod_bc,
-                    ]);
-                } else {
-                    $product = Product::findOrFail($data['product_id']);
-                }
+                        $product = Product::create([
+                            'name' => $data['new_name'] ?? $xmlItem->description,
+                            'sku' => $sku,
+                            'barcode' => $data['new_barcode'] ?? $xmlItem->barcode,
+                            'description' => 'Produto importado via NF-e ' . $manifestation->number,
+                            'unit_price' => $xmlItem->unit_price,
+                            'purchase_price' => $xmlItem->unit_price,
+                            'cost_price' => $xmlItem->unit_price,
+                            'quantity' => 0, // will be incremented
+                            'reorder_level' => 10,
+                            'unit' => $xmlItem->unit,
+                            'category' => $data['new_category'] ?? 'Importado Automático',
+                            'supplier_id' => $manifestation->supplier_id,
+                            'status' => 'ativo',
+                            
+                            // Taxes fields mapped from XML
+                            'ncm'                => $xmlItem->ncm,
+                            'cfop_default'       => $xmlItem->cfop,
+                            'iss_rate'           => $xmlItem->iss_rate,
+                            'pis_rate'           => $xmlItem->pis_rate,
+                            'cofins_rate'        => $xmlItem->cofins_rate,
+                            'csll_rate'          => $xmlItem->csll_rate,
+                            'irpj_rate'          => $xmlItem->irpj_rate,
+                            'cpp_rate'           => $xmlItem->cpp_rate,
+                            'ipi_rate'           => $xmlItem->ipi_rate,
+                            'icms_rate'          => $xmlItem->icms_rate,
+                            'icms_cst'           => $xmlItem->icms_cst,
+                            'icms_orig'          => $xmlItem->icms_orig,
+                            'icms_st_rate'       => $xmlItem->icms_st_rate,
+                            'icms_st_mva'        => $xmlItem->icms_st_mva,
+                            'icms_st_cst'        => $xmlItem->icms_st_cst,
+                            'ibs_rate'           => $xmlItem->ibs_rate,
+                            'cbs_rate'           => $xmlItem->cbs_rate,
+                            'is_rate'            => $xmlItem->is_rate,
+                            'icms_red_bc'        => $xmlItem->icms_red_bc,
+                            'icms_mod_bc'        => $xmlItem->icms_mod_bc,
+                        ]);
+                    } else {
+                        $product = Product::findOrFail($data['product_id']);
+                    }
+
+                    $originalQty = (float) $xmlItem->quantity;
+                    $conferenceStatus = abs($qty - $originalQty) < 0.001 ? 'confirmada' : 'divergente';
 
                     Inventory::create([
-                        'product_id' => $product->id,
-                        'quantity' => $qty,
-                        'notes' => 'Entrada via NF-e ' . $manifestation->number,
-                        'supplier_id' => $manifestation->supplier_id,
-                        'user_id' => auth()->id(),
-                        'type' => 'entrada',
-                        'status' => 'confirmada',
+                        'product_id'         => $product->id,
+                        'quantity'           => $originalQty,
+                        'checked_quantity'   => $qty,
+                        'remaining_quantity' => $qty,
+                        'notes'              => 'Entrada via NF-e ' . $manifestation->number,
+                        'supplier_id'        => $manifestation->supplier_id,
+                        'user_id'            => auth()->id(),
+                        'type'               => 'entrada',
+                        'status'             => 'confirmada',
+                        'conference_status'  => $conferenceStatus,
+                        'conference_notes'   => abs($qty - $originalQty) < 0.001 
+                            ? 'Importado via XML sem divergências.' 
+                            : "Importado via XML com divergência (XML: {$originalQty}, Recebido: {$qty}).",
                     ]);
 
                     $product->increment('quantity', $qty);
@@ -577,6 +608,7 @@ class ProductController extends Controller implements HasMiddleware
     public function printLabels(Request $request)
     {
         $ids = $request->input('product_ids');
+        $quantities = $request->input('quantities', []);
 
         $query = Product::where('status', 'ativo');
 
@@ -591,9 +623,18 @@ class ProductController extends Controller implements HasMiddleware
             $query->where('quantity', '>', 0);
         }
 
-        $products = $query->orderBy('name')->get();
+        $dbProducts = $query->orderBy('name')->get();
 
-        if ($products->isEmpty()) {
+        $products = [];
+        foreach ($dbProducts as $product) {
+            $qty = isset($quantities[$product->id]) ? intval($quantities[$product->id]) : 1;
+            if ($qty < 1) $qty = 1;
+            for ($i = 0; $i < $qty; $i++) {
+                $products[] = $product;
+            }
+        }
+
+        if (empty($products)) {
             return redirect()->back()->with('error', 'Nenhum produto encontrado para gerar etiquetas.');
         }
 

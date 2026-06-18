@@ -33,7 +33,8 @@ class InventoryController extends Controller
         $products = \App\Models\Product::select('id', 'name', 'barcode', 'quantity')
             ->orderBy('name')
             ->get();
-        return view('inventory.create', compact('products'));
+        $suppliers = \App\Models\Supplier::select('id', 'name')->orderBy('name')->get();
+        return view('inventory.create', compact('products', 'suppliers'));
     }
 
     /**
@@ -42,18 +43,31 @@ class InventoryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity'   => 'required|integer|min:1|max:9999999',
-            'notes'      => 'nullable|string|max:500',
-            'entry_date' => 'nullable|date',
+            'product_id'       => 'required|exists:products,id',
+            'quantity'         => 'required|integer|min:1|max:9999999',
+            'checked_quantity' => 'required|integer|min:0|max:9999999',
+            'supplier_id'      => 'nullable|exists:suppliers,id',
+            'lot_number'       => 'nullable|string|max:100',
+            'expiry_date'      => 'nullable|date',
+            'notes'            => 'nullable|string|max:500',
+            'conference_notes' => 'nullable|string|max:1000',
+            'entry_date'       => 'nullable|date',
         ]);
 
         $product = \App\Models\Product::findOrFail($validated['product_id']);
 
         $inventoryData = [
-            'product_id' => $product->id,
-            'quantity'   => $validated['quantity'],
-            'notes'      => $validated['notes'] ?? null,
+            'product_id'         => $product->id,
+            'quantity'           => $validated['quantity'],
+            'checked_quantity'   => $validated['checked_quantity'],
+            'remaining_quantity' => $validated['checked_quantity'],
+            'supplier_id'        => $validated['supplier_id'] ?? null,
+            'lot_number'         => $validated['lot_number'] ?? null,
+            'expiry_date'        => $validated['expiry_date'] ?? null,
+            'notes'              => $validated['notes'] ?? null,
+            'conference_status'  => $validated['checked_quantity'] == $validated['quantity'] ? 'confirmada' : 'divergente',
+            'conference_notes'   => $validated['conference_notes'] ?? null,
+            'user_id'            => auth()->id(),
         ];
 
         $dt = null;
@@ -76,9 +90,13 @@ class InventoryController extends Controller
             $inventory->save();
         }
 
-        $product->increment('quantity', $validated['quantity']);
+        $product->increment('quantity', $validated['checked_quantity']);
 
-        Logger::log('inventory_create', "O usuário registrou uma entrada de {$validated['quantity']} unidades para o produto: {$product->name}");
+        $logMsg = "O usuário registrou uma entrada manual de {$validated['quantity']} unidades (conferidas: {$validated['checked_quantity']}) para o produto: {$product->name}";
+        if ($inventoryData['conference_status'] === 'divergente') {
+            $logMsg .= " [DIVERGENTE]";
+        }
+        Logger::log('inventory_create', $logMsg);
 
         return redirect()->route('inventory.index')
             ->with('success', 'Entrada registrada com sucesso.');
