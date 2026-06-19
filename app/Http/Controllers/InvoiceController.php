@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Carrier;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Product;
@@ -60,9 +61,11 @@ class InvoiceController extends Controller
         $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
         $customers = Customer::orderBy('name')->get(['id', 'name', 'document', 'email', 'phone', 'address', 'city', 'state', 'zip_code']);
 
+        $carriers  = \App\Models\Carrier::orderBy('name')->get(['id','name','cnpj','state_registration','street','number','city','state','vehicle_plate','vehicle_uf']);
+
         $invoice = null; // Garante que a variável existe na view
 
-        return view('invoices.create', compact('number', 'products', 'suppliers', 'customers', 'invoice'));
+        return view('invoices.create', compact('number', 'products', 'suppliers', 'customers', 'carriers', 'invoice'));
     }
 
     /**
@@ -123,7 +126,9 @@ class InvoiceController extends Controller
         $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
         $customers = Customer::orderBy('name')->get(['id', 'name', 'document', 'email', 'phone', 'address', 'city', 'state', 'zip_code']);
 
-        return view('invoices.create', compact('invoice', 'products', 'suppliers', 'customers'));
+        $carriers  = \App\Models\Carrier::orderBy('name')->get(['id','name','cnpj','state_registration','street','number','city','state','vehicle_plate','vehicle_uf']);
+
+        return view('invoices.create', compact('invoice', 'products', 'suppliers', 'customers', 'carriers'));
     }
 
     /**

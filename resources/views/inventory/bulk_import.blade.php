@@ -50,19 +50,24 @@
                                 </td>
                                 <td>
                                     <!-- Select product to map -->
-                                    <select name="items[{{ $item->id }}][product_id]" required class="form-select" style="width:100%;" onchange="toggleNewProductFields({{ $item->id }}, this.value)">
-                                        <option value="">-- Selecione o Produto --</option>
-                                        <option value="new" style="font-weight:bold; color:var(--accent);">+ Cadastrar Automaticamente (Novo Produto)</option>
-                                        @foreach($products as $prod)
-                                            <!-- Simple auto-match simulation: If the XML description contains the product name -->
-                                            @php
-                                                $autoMatch = stripos($item->description, $prod->name) !== false;
-                                            @endphp
-                                            <option value="{{ $prod->id }}" {{ $autoMatch ? 'selected' : '' }}>
-                                                {{ $prod->name }} (Estoque: {{ $prod->quantity }} {{ $prod->unit }})
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                                        <select name="items[{{ $item->id }}][product_id]" id="product-select-{{ $item->id }}" required class="form-select bulk-product-select" style="flex:1;" onchange="toggleNewProductFields({{ $item->id }}, this.value)">
+                                            <option value="">-- Selecione o Produto --</option>
+                                            <option value="new" style="font-weight:bold; color:var(--accent);">+ Cadastrar Automaticamente (Novo Produto)</option>
+                                            @foreach($products as $prod)
+                                                <!-- Simple auto-match simulation: If the XML description contains the product name -->
+                                                @php
+                                                    $autoMatch = stripos($item->description, $prod->name) !== false;
+                                                @endphp
+                                                <option value="{{ $prod->id }}" {{ $autoMatch ? 'selected' : '' }}>
+                                                    {{ $prod->name }} (Estoque: {{ $prod->quantity }} {{ $prod->unit }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <button type="button" class="btn btn-secondary btn-open-bulk-product-picker" data-item-id="{{ $item->id }}" style="padding:0 0.75rem; height:42px;" title="Buscar produto (lupa)">
+                                            <i class="fa-solid fa-magnifying-glass"></i>
+                                        </button>
+                                    </div>
 
                                     <!-- Hidden fields for new product -->
                                     <div id="new_product_fields_{{ $item->id }}" style="display:none; flex-direction:column; gap:0.5rem; margin-top:0.75rem; padding-top:0.75rem; border-top:1px dashed var(--border);">
@@ -118,6 +123,7 @@
     </form>
 </div>
 @include('partials.category_quick_create')
+@include('partials.product_picker')
 @endsection
 
 @push('scripts')

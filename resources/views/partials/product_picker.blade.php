@@ -229,8 +229,9 @@
     searchInp.addEventListener('input', function() {
         const query = this.value.toLowerCase().trim();
         let visibleCount = 0;
+        const currentRows = document.querySelectorAll('#product-picker-table .product-row');
 
-        tableRows.forEach(row => {
+        currentRows.forEach(row => {
             const name = row.dataset.name;
             const barcode = row.dataset.barcode;
             const category = row.dataset.category;
@@ -283,6 +284,18 @@
             const rowIdx = btn.dataset.row;
             const card = document.getElementById(`item-card-${rowIdx}`);
             const selectEl = card ? card.querySelector('.product-select') : null;
+            window.activeProductSelectTarget = selectEl;
+            openModal();
+        }
+    });
+
+    // Open triggers — click on magnifier glass in bulk import rows (inventory/bulk_import)
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-open-bulk-product-picker');
+        if (btn) {
+            e.preventDefault();
+            const itemId = btn.dataset.itemId;
+            const selectEl = document.getElementById(`product-select-${itemId}`);
             window.activeProductSelectTarget = selectEl;
             openModal();
         }

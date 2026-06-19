@@ -50,12 +50,12 @@
 
                     <div class="form-group">
                         <label class="form-label">CNPJ</label>
-                        <input type="text" name="cnpj" value="{{ old('cnpj') }}" placeholder="00.000.000/0001-00" class="form-input" style="font-family:monospace;">
+                        <input type="text" name="cnpj" value="{{ old('cnpj') }}" data-mask="cnpj" placeholder="00.000.000/0001-00" class="form-input" style="font-family:monospace;">
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Inscrição Estadual (IE)</label>
-                        <input type="text" name="state_registration" value="{{ old('state_registration') }}" placeholder="Ex: 123.456.789.110" class="form-input">
+                        <input type="text" name="state_registration" value="{{ old('state_registration') }}" placeholder="000.000.000.000" class="form-input" style="font-family:monospace;" oninput="carrierMaskIE(this)">
                     </div>
 
                     <div class="form-group">
@@ -65,7 +65,7 @@
 
                     <div class="form-group">
                         <label class="form-label">Telefone</label>
-                        <input type="tel" name="phone" value="{{ old('phone') }}" placeholder="(11) 99999-9999" class="form-input">
+                        <input type="tel" name="phone" value="{{ old('phone') }}" data-mask="phone" placeholder="(11) 99999-9999" class="form-input">
                     </div>
 
                     <div class="form-group" style="grid-column: 1/-1;">
@@ -101,7 +101,7 @@
 
                     <div class="form-group">
                         <label class="form-label">Placa Padrão</label>
-                        <input type="text" name="vehicle_plate" value="{{ old('vehicle_plate') }}" placeholder="ABC-1234" class="form-input" style="font-family:monospace; text-transform:uppercase;" maxlength="8">
+                        <input type="text" name="vehicle_plate" id="carrier-plate" value="{{ old('vehicle_plate') }}" placeholder="ABC-1234" class="form-input" style="font-family:monospace; text-transform:uppercase;" maxlength="8" oninput="carrierMaskPlate(this)">
                     </div>
 
                     <div class="form-group">
@@ -126,8 +126,8 @@
                     <div class="form-group">
                         <label class="form-label">CEP</label>
                         <div style="display:flex; gap:0.5rem;">
-                            <input type="text" name="zip_code" id="carrier-zip" value="{{ old('zip_code') }}" placeholder="00000-000" class="form-input" style="font-family:monospace; flex:1;" onblur="carrierFetchCep(this.value)">
-                            <button type="button" onclick="carrierFetchCep(document.getElementById('carrier-zip').value)" class="btn btn-secondary" style="white-space:nowrap; flex-shrink:0;">
+                            <input type="text" name="zip_code" id="carrier-zip" value="{{ old('zip_code') }}" data-mask="cep" placeholder="00000-000" class="form-input" style="font-family:monospace; flex:1;" onblur="carrierFetchCep(document.getElementById('carrier-zip').mask ? document.getElementById('carrier-zip').mask.unmaskedValue : this.value)">
+                            <button type="button" onclick="carrierFetchCep(document.getElementById('carrier-zip').mask ? document.getElementById('carrier-zip').mask.unmaskedValue : document.getElementById('carrier-zip').value)" class="btn btn-secondary" style="white-space:nowrap; flex-shrink:0;">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                             </button>
                         </div>
@@ -181,6 +181,21 @@
 </div>
 
 <script>
+function carrierMaskIE(input) {
+    let v = input.value.replace(/[^\d.]/g, '');
+    input.value = v;
+}
+
+function carrierMaskPlate(input) {
+    let v = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    // Detecta placa Mercosul: AAA0A00 ou antiga: AAA0000
+    if (v.length > 3) {
+        // Após 3 letras, separa com hífen
+        v = v.substring(0, 3) + '-' + v.substring(3, 7);
+    }
+    input.value = v;
+}
+
 async function carrierFetchCep(cep) {
     const raw = (cep || '').replace(/\D/g, '');
     if (raw.length !== 8) return;
@@ -193,8 +208,16 @@ async function carrierFetchCep(cep) {
             document.getElementById('carrier-city').value         = data.localidade || '';
             const st = document.getElementById('carrier-state');
             if (st) st.value = data.uf || '';
+            document.getElementById('carrier-zip').focus();
+            document.getElementById('carrier-zip').blur();
         }
     } catch (_) {}
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Formata placa se já tiver valor (old())
+    const plateEl = document.getElementById('carrier-plate');
+    if (plateEl && plateEl.value) carrierMaskPlate(plateEl);
+});
 </script>
 @endsection

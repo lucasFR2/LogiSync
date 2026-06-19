@@ -234,25 +234,33 @@
                             <i class="fa-solid fa-magnifying-glass mr-1" style="color:var(--text-muted);"></i>
                             Vincular Transportadora Cadastrada
                         </label>
-                        <div style="display:flex; gap:0.75rem; align-items:center;">
-                            <select id="carrier-select" name="carrier_id" class="form-select" style="flex:1; max-width:400px;" onchange="fillCarrierData(this)">
-                                <option value="">— Selecionar transportadora do cadastro... —</option>
-                                @foreach($carriers ?? [] as $carrier)
-                                    <option value="{{ $carrier->id }}"
-                                        data-name="{{ $carrier->name }}"
-                                        data-cnpj="{{ $carrier->cnpj }}"
-                                        data-state_reg="{{ $carrier->state_registration }}"
-                                        data-street="{{ $carrier->street }}"
-                                        data-number="{{ $carrier->number }}"
-                                        data-city="{{ $carrier->city }}"
-                                        data-state="{{ $carrier->state }}"
-                                        data-plate="{{ $carrier->vehicle_plate }}"
-                                        data-uf="{{ $carrier->vehicle_uf }}"
-                                        {{ isset($invoice) && $invoice->carrier_id == $carrier->id ? 'selected' : '' }}>
-                                        {{ $carrier->name }}{{ $carrier->cnpj ? ' — ' . $carrier->cnpj : '' }}
-                                    </option>
-                                @endforeach
-                            </select>
+                        <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; width:100%;">
+                            <div style="display:flex; gap:0.5rem; align-items:center; flex:1; max-width:480px;">
+                                <select id="carrier-select" name="carrier_id" class="form-select carrier-select" style="flex:1;" onchange="fillCarrierData(this)">
+                                    <option value="">— Selecionar transportadora do cadastro... —</option>
+                                    @foreach($carriers ?? [] as $carrier)
+                                        <option value="{{ $carrier->id }}"
+                                            data-name="{{ $carrier->name }}"
+                                            data-cnpj="{{ $carrier->cnpj }}"
+                                            data-state_reg="{{ $carrier->state_registration }}"
+                                            data-street="{{ $carrier->street }}"
+                                            data-number="{{ $carrier->number }}"
+                                            data-city="{{ $carrier->city }}"
+                                            data-state="{{ $carrier->state }}"
+                                            data-plate="{{ $carrier->vehicle_plate }}"
+                                            data-uf="{{ $carrier->vehicle_uf }}"
+                                            {{ isset($invoice) && $invoice->carrier_id == $carrier->id ? 'selected' : '' }}>
+                                            {{ $carrier->name }}{{ $carrier->cnpj ? ' — ' . $carrier->cnpj : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button type="button" id="btn-open-carrier-picker" class="btn btn-secondary" style="padding:0 0.75rem; height:42px;" title="Buscar transportadora">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </button>
+                                <button type="button" onclick="toggleCarrierModal()" class="btn btn-secondary" style="padding:0 0.75rem; height:42px;" title="Cadastrar nova transportadora">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
                             <span style="font-size:0.8rem; color:var(--text-muted);">ou preencha manualmente abaixo</span>
                         </div>
                     </div>
@@ -269,6 +277,7 @@
                             <label class="form-label text-xs">CNPJ da Transportadora</label>
                             <input type="text" name="carrier_cnpj" id="carrier_cnpj" class="form-control"
                                    placeholder="00.000.000/0001-00" style="font-family:monospace;"
+                                   data-mask="cnpj"
                                    value="{{ $invoice->carrier_cnpj ?? '' }}">
                         </div>
                         <div class="form-group" style="margin-bottom:0;">
@@ -297,6 +306,7 @@
                             <label class="form-label text-xs">Placa do Veículo</label>
                             <input type="text" name="vehicle_plate" id="vehicle_plate" class="form-control"
                                    placeholder="ABC-1234" style="font-family:monospace; text-transform:uppercase;" maxlength="8"
+                                   oninput="invoiceMaskPlate(this)"
                                    value="{{ $invoice->vehicle_plate ?? '' }}">
                         </div>
                         <div class="form-group" style="margin-bottom:0;">
@@ -1297,6 +1307,46 @@ function fillCustomerData(sel) {
     document.getElementById('recipient_zip').value = opt.dataset.zip || '';
 }
 
+function fillCarrierData(sel) {
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt || !opt.value) return;
+    fillCarrierFieldsManually({
+        name:     opt.dataset.name     || '',
+        cnpj:     opt.dataset.cnpj     || '',
+        stateReg: opt.dataset.state_reg || '',
+        street:   opt.dataset.street   || '',
+        number:   opt.dataset.number   || '',
+        city:     opt.dataset.city     || '',
+        state:    opt.dataset.state    || '',
+        plate:    opt.dataset.plate    || '',
+        uf:       opt.dataset.uf       || '',
+    });
+}
+
+function fillCarrierFieldsManually({ name, cnpj, stateReg, street, number, city, state, plate, uf }) {
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+    set('carrier_name',     name);
+    set('carrier_cnpj',     cnpj);
+    set('carrier_state_reg', stateReg);
+    set('carrier_address',  street ? (number ? street + ', ' + number : street) : '');
+    set('carrier_city',     city);
+    const ufSel = document.getElementById('vehicle_uf');
+    if (ufSel) ufSel.value = uf || '';
+    // Format plate
+    const plateEl = document.getElementById('vehicle_plate');
+    if (plateEl) {
+        let v = (plate || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (v.length > 3) v = v.substring(0, 3) + '-' + v.substring(3, 7);
+        plateEl.value = v;
+    }
+}
+
+function invoiceMaskPlate(input) {
+    let v = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (v.length > 3) v = v.substring(0, 3) + '-' + v.substring(3, 7);
+    input.value = v;
+}
+
 // Initialize
 @if(isset($invoice))
     @foreach($invoice->items as $item)
@@ -1402,4 +1452,6 @@ setTimeout(() => {
 @include('partials.supplier_quick_create')
 @include('partials.product_picker')
 @include('partials.customer_picker')
+@include('partials.carrier_quick_create')
+@include('partials.carrier_picker')
 @endsection

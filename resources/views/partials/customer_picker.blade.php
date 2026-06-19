@@ -215,8 +215,9 @@
     searchInp.addEventListener('input', function() {
         const query = this.value.toLowerCase().trim();
         let visibleCount = 0;
+        const currentRows = document.querySelectorAll('#customer-picker-table .customer-row');
 
-        tableRows.forEach(row => {
+        currentRows.forEach(row => {
             const name = row.dataset.name;
             const documentNum = row.dataset.document;
             const email = row.dataset.email;

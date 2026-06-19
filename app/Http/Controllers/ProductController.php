@@ -189,7 +189,9 @@ class ProductController extends Controller implements HasMiddleware
         }
 
         $manifestation->load('items');
-        $products = Product::select('id', 'name', 'barcode')->orderBy('name')->get();
+        $products = Product::select('id', 'name', 'barcode', 'unit_price', 'quantity', 'unit', 'category')
+            ->orderBy('name')
+            ->get();
         $categories = \App\Models\Category::with('subcategories')->whereNull('parent_id')->orderBy('name')->get();
 
         return view('inventory.bulk_import', compact('manifestation', 'products', 'categories'));

@@ -380,6 +380,7 @@ async function submitQuickCustomer() {
             // Adiciona ao(s) select(s) de cliente e aciona change
             document.querySelectorAll('.customer-select').forEach(sel => {
                 const opt = new Option(data.name, data.id);
+                opt.setAttribute('data-name',               data.name || '');
                 opt.setAttribute('data-document',           data.document || '');
                 opt.setAttribute('data-email',              data.email || '');
                 opt.setAttribute('data-phone',              data.phone || '');
@@ -395,6 +396,44 @@ async function submitQuickCustomer() {
                 sel.value = data.id;
                 sel.dispatchEvent(new Event('change'));
             });
+
+            // Adiciona ao customer-picker se existir
+            const pickerTableBody = document.querySelector('#customer-picker-table tbody');
+            if (pickerTableBody) {
+                const newRow = document.createElement('tr');
+                newRow.className = 'customer-row';
+                newRow.setAttribute('data-id', data.id);
+                newRow.setAttribute('data-name', (data.name || '').toLowerCase());
+                newRow.setAttribute('data-document', (data.document || '').toLowerCase());
+                newRow.setAttribute('data-email', (data.email || '').toLowerCase());
+                newRow.setAttribute('data-city', (data.city || '').toLowerCase());
+                
+                newRow.innerHTML = `
+                    <td>
+                        <div style="font-weight:700; color:var(--text-primary);">${data.name}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); font-family:monospace; margin-top:2px;">
+                            Doc: ${data.document || 'Sem documento'}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-weight:500; color:var(--text-secondary);">${data.email || 'Sem e-mail'}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
+                            Tel: ${data.phone || 'Sem telefone'}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge" style="background:var(--bg-hover); color:var(--text-secondary); font-size:0.75rem; font-weight:600;">
+                            ${data.city || 'Sem cidade'} ${data.state ? '/ ' + data.state : ''}
+                        </span>
+                    </td>
+                    <td style="text-align: center;">
+                        <button type="button" class="btn btn-primary btn-sm btn-select-customer" data-id="${data.id}" style="padding:0.4rem 0.8rem; font-size:0.8rem; justify-content:center; width:100%;">
+                            Selecionar
+                        </button>
+                    </td>
+                `;
+                pickerTableBody.appendChild(newRow);
+            }
 
             toggleCustomerModal();
             form.reset();
