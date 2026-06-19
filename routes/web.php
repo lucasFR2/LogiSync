@@ -7,6 +7,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\CarrierController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -78,6 +79,12 @@ Route::middleware('auth')->group(function () {
         Route::resource('customers', CustomerController::class);
     });
 
+    // ============ TRANSPORTADORAS ============
+    Route::middleware('permission:transportadoras.gerenciar')->group(function () {
+        Route::resource('carriers', CarrierController::class);
+        Route::get('/carriers/list', [CarrierController::class, 'list'])->name('carriers.list');
+    });
+
     // ============ NOTAS FISCAIS ============
     Route::middleware('permission:notas_fiscais.emitir')->group(function () {
         Route::get('invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
@@ -98,6 +105,7 @@ Route::middleware('auth')->group(function () {
         Route::put('invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
         Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
         Route::post('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
+        Route::post('invoices/{invoice}/conclude', [InvoiceController::class, 'conclude'])->name('invoices.conclude');
     });
 
     // ============ MANIFESTAÇÕES ============

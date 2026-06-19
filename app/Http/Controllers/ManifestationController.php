@@ -167,53 +167,101 @@ class ManifestationController extends Controller implements HasMiddleware
             foreach ($infNFe->det as $det) {
                 $prod = $det->prod;
                 $imposto = $det->imposto ?? null;
+                
                 $icms = $imposto->ICMS ?? null;
                 $icmsNode = null;
                 if ($icms) {
-                    foreach (['ICMS00', 'ICMS10', 'ICMS20', 'ICMS70', 'ICMS90'] as $nodeName) {
-                        if (isset($icms->{$nodeName})) {
-                            $icmsNode = $icms->{$nodeName};
+                    foreach ($icms->children() as $child) {
+                        $nodeName = $child->getName();
+                        if (str_starts_with($nodeName, 'ICMS')) {
+                            $icmsNode = $child;
                             break;
                         }
                     }
                 }
                 
-                $ipi = $imposto->IPI->IPITrib ?? null;
-                $pis = $imposto->PIS->PISAliq ?? null;
-                $cofins = $imposto->COFINS->COFINSAliq ?? null;
+                $ipiNode = null;
+                if (isset($imposto->IPI)) {
+                    foreach ($imposto->IPI->children() as $child) {
+                        if (in_array($child->getName(), ['IPITrib', 'IPINT', 'IPINaoTrib', 'IPIOutr'])) {
+                            $ipiNode = $child;
+                            break;
+                        }
+                    }
+                }
+                $ipi_rate = 0;
+                $ipi_cst = '50';
+                if ($ipiNode) {
+                    $ipi_cst = isset($ipiNode->CST) ? (string) $ipiNode->CST : '50';
+                    $ipi_rate = isset($ipiNode->pIPI) ? (float) $ipiNode->pIPI : 0;
+                }
+
+                $pisNode = null;
+                if (isset($imposto->PIS)) {
+                    foreach ($imposto->PIS->children() as $child) {
+                        $pisNode = $child;
+                        break;
+                    }
+                }
+                $pis_rate = 0;
+                $pis_cst = '01';
+                if ($pisNode) {
+                    $pis_cst = isset($pisNode->CST) ? (string) $pisNode->CST : '01';
+                    $pis_rate = isset($pisNode->pPIS) ? (float) $pisNode->pPIS : 0;
+                }
+
+                $cofinsNode = null;
+                if (isset($imposto->COFINS)) {
+                    foreach ($imposto->COFINS->children() as $child) {
+                        $cofinsNode = $child;
+                        break;
+                    }
+                }
+                $cofins_rate = 0;
+                $cofins_cst = '01';
+                if ($cofinsNode) {
+                    $cofins_cst = isset($cofinsNode->CST) ? (string) $cofinsNode->CST : '01';
+                    $cofins_rate = isset($cofinsNode->pCOFINS) ? (float) $cofinsNode->pCOFINS : 0;
+                }
+
                 $issqn = $imposto->ISSQN ?? null;
                 $retencoes = $imposto->retencoes ?? null;
                 $reforma = $imposto->reforma2026 ?? null;
 
+                $productCode = isset($prod->cProd) ? (string) $prod->cProd : null;
+                $cest = isset($prod->CEST) ? (string) $prod->CEST : null;
+
                 $invoice->items()->create([
-                    'description' => (string) $prod->xProd,
-                    'barcode'     => isset($prod->cEAN) && (string)$prod->cEAN != 'SEM GTIN' ? (string)$prod->cEAN : null,
-                    'ncm'         => (string) $prod->NCM,
-                    'cfop'        => (string) $prod->CFOP,
-                    'unit'        => (string) $prod->uCom,
-                    'quantity'    => (float) $prod->qCom,
-                    'unit_price'  => (float) $prod->vUnCom,
-                    'total_price' => (float) $prod->vProd,
+                    'product_code' => $productCode,
+                    'cest'         => $cest,
+                    'description'  => (string) $prod->xProd,
+                    'barcode'      => isset($prod->cEAN) && (string)$prod->cEAN != 'SEM GTIN' ? (string)$prod->cEAN : null,
+                    'ncm'          => (string) $prod->NCM,
+                    'cfop'         => (string) $prod->CFOP,
+                    'unit'         => (string) $prod->uCom,
+                    'quantity'     => (float) $prod->qCom,
+                    'unit_price'   => (float) $prod->vUnCom,
+                    'total_price'  => (float) $prod->vProd,
                     
                     // Taxes
                     'icms_orig'    => $icmsNode ? (int) $icmsNode->orig : 0,
-                    'icms_cst'     => $icmsNode ? (string) $icmsNode->CST : '00',
+                    'icms_cst'     => $icmsNode ? (string) ($icmsNode->CST ?? ($icmsNode->CSOSN ?? '00')) : '00',
                     'icms_mod_bc'  => $icmsNode ? (int) ($icmsNode->modBC ?? 3) : 3,
                     'icms_red_bc'  => $icmsNode ? (float) ($icmsNode->pRedBC ?? 0) : 0,
                     'icms_rate'    => $icmsNode ? (float) ($icmsNode->pICMS ?? 0) : 0,
                     
-                    'icms_st_cst'  => $icmsNode ? (string) ($icmsNode->CST ?? '10') : '10',
+                    'icms_st_cst'  => $icmsNode ? (string) ($icmsNode->CST ?? ($icmsNode->CSOSN ?? '10')) : '10',
                     'icms_st_rate' => $icmsNode ? (float) ($icmsNode->pICMSST ?? 0) : 0,
                     'icms_st_mva'  => $icmsNode ? (float) ($icmsNode->pMVAST ?? 0) : 0,
                     
-                    'ipi_cst'      => $ipi ? (string) $ipi->CST : '50',
-                    'ipi_rate'     => $ipi ? (float) $ipi->pIPI : 0,
+                    'ipi_cst'      => $ipi_cst,
+                    'ipi_rate'     => $ipi_rate,
                     
-                    'pis_cst'      => $pis ? (string) $pis->CST : '01',
-                    'pis_rate'     => $pis ? (float) $pis->pPIS : 0,
+                    'pis_cst'      => $pis_cst,
+                    'pis_rate'     => $pis_rate,
                     
-                    'cofins_cst'   => $cofins ? (string) $cofins->CST : '01',
-                    'cofins_rate'  => $cofins ? (float) $cofins->pCOFINS : 0,
+                    'cofins_cst'   => $cofins_cst,
+                    'cofins_rate'  => $cofins_rate,
                     
                     'iss_cst'      => $issqn ? (string) ($issqn->cSitTrib ?? '01') : '01',
                     'iss_rate'     => $issqn ? (float) ($issqn->vAliq ?? 0) : 0,
@@ -284,6 +332,8 @@ class ManifestationController extends Controller implements HasMiddleware
             $total += $totalItem;
             
             $invoice->items()->create([
+                'product_code' => 'PROD-' . str_pad($i, 3, '0', STR_PAD_LEFT),
+                'cest'         => '0100100',
                 'description' => 'Produto Simulado ' . $i . ' (Fallback)',
                 'barcode'     => (string) rand(7890000000000, 7899999999999),
                 'ncm'         => '12345678',
@@ -366,6 +416,7 @@ class ManifestationController extends Controller implements HasMiddleware
             $xml .= "          <cEAN>{$barcode}</cEAN>\n";
             $xml .= "          <xProd>Produto Fictício {$i} - Importação em Lote</xProd>\n";
             $xml .= "          <NCM>12345678</NCM>\n";
+            $xml .= "          <CEST>0100100</CEST>\n";
             $xml .= "          <CFOP>5102</CFOP>\n";
             $xml .= "          <uCom>UN</uCom>\n";
             $xml .= "          <qCom>" . number_format($qty, 4, '.', '') . "</qCom>\n";

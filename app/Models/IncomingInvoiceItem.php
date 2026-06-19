@@ -13,7 +13,7 @@ class IncomingInvoiceItem extends Model
         'iss_rate', 'pis_rate', 'cofins_rate', 'csll_rate', 'irpj_rate', 'cpp_rate', 'ipi_rate',
         'icms_rate', 'icms_cst', 'icms_orig', 'icms_st_rate', 'icms_st_mva', 'icms_st_cst',
         'ibs_rate', 'cbs_rate', 'is_rate', 'icms_red_bc', 'icms_mod_bc',
-        'checked_quantity'
+        'checked_quantity', 'cest'
     ];
 
     protected $casts = [

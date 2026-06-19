@@ -110,13 +110,24 @@ class InvoiceService
                 ];
 
                 if ($isEmitting && !empty($item['product_id'])) {
-                    $this->handleStockMovement($item['product_id'], $qty, $data['type'], $invoiceNumber);
+                    if ($data['type'] !== 'saida') {
+                        $this->handleStockMovement($item['product_id'], $qty, $data['type'], $invoiceNumber);
+                    }
                 }
+            }
+
+            $sumIcmsSt = 0;
+            $sumIpi = 0;
+            $sumIi = 0;
+            foreach ($itemsData as $itemRow) {
+                $sumIcmsSt += (float) ($itemRow['icms_st_value'] ?? 0);
+                $sumIpi += (float) ($itemRow['ipi_value'] ?? 0);
+                $sumIi += (float) ($itemRow['ii_value'] ?? 0);
             }
 
             $discount   = (float) ($data['discount'] ?? 0);
             $shipping   = (float) ($data['shipping'] ?? 0);
-            $grandTotal = $subtotal - $discount + $shipping;
+            $grandTotal = $subtotal - $discount + $shipping + $sumIcmsSt + $sumIpi + $sumIi;
 
             $invoiceData = array_merge($data, [
                 'status'   => $isEmitting ? 'emitida' : 'rascunho',
@@ -136,6 +147,31 @@ class InvoiceService
             }
 
             $invoice->items()->createMany($itemsData);
+
+            return $invoice;
+        });
+    }
+
+    public function concludeInvoice(Invoice $invoice)
+    {
+        if ($invoice->status === 'concluída') {
+            return $invoice;
+        }
+
+        return DB::transaction(function () use ($invoice) {
+            $invoice->update(['status' => 'concluída']);
+
+            foreach ($invoice->items as $item) {
+                if ($invoice->type === 'saida' && !empty($item->product_id)) {
+                    // Allocate stock using WMS FIFO logic
+                    FIFOStockService::allocateFIFOStock(
+                        Product::findOrFail($item->product_id),
+                        $item->quantity,
+                        $invoice->number,
+                        Auth::id()
+                    );
+                }
+            }
 
             return $invoice;
         });

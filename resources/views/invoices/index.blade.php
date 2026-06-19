@@ -43,6 +43,7 @@
                     <option value="">Status: Todos</option>
                     <option value="rascunho" {{ request('status') == 'rascunho' ? 'selected' : '' }}>Rascunho</option>
                     <option value="emitida" {{ request('status') == 'emitida' ? 'selected' : '' }}>Emitida</option>
+                    <option value="concluída" {{ request('status') == 'concluída' ? 'selected' : '' }}>Concluída</option>
                     <option value="cancelada" {{ request('status') == 'cancelada' ? 'selected' : '' }}>Cancelada</option>
                 </select>
 
@@ -126,6 +127,7 @@
                                     $statusStyle = [
                                         'rascunho' => ['bg' => 'var(--orange-bg)', 'color' => 'var(--orange)'],
                                         'emitida' => ['bg' => 'var(--green-bg)', 'color' => 'var(--green)'],
+                                        'concluída' => ['bg' => 'var(--green-bg)', 'color' => 'var(--green)'],
                                         'cancelada' => ['bg' => 'var(--red-bg)', 'color' => 'var(--red)']
                                     ][$invoice->status] ?? ['bg' => 'var(--bg-hover)', 'color' => 'var(--text-muted)'];
                                 @endphp

@@ -60,6 +60,25 @@ class CustomerController extends Controller implements HasMiddleware
         $customer = Customer::create($validated);
         Logger::log('create_customer_record', "O usuário cadastrou o cliente: {$customer->name} (#{$customer->id})");
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'id'                 => $customer->id,
+                'name'               => $customer->name,
+                'document'           => $customer->document,
+                'email'              => $customer->email,
+                'phone'              => $customer->phone,
+                'address'            => $customer->address,
+                'number'             => $customer->number,
+                'complement'         => $customer->complement,
+                'neighborhood'       => $customer->neighborhood,
+                'city'               => $customer->city,
+                'state'              => $customer->state,
+                'zip_code'           => $customer->zip_code,
+                'state_registration' => $customer->state_registration,
+                'type'               => $customer->type,
+            ]);
+        }
+
         return redirect()->route('customers.index')->with('success', 'Cliente cadastrado com sucesso.');
     }
 

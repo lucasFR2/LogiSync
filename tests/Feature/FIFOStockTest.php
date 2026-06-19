@@ -124,3 +124,67 @@ test('fifo allocation throws exception on insufficient stock', function () {
     expect(fn () => FIFOStockService::allocateFIFOStock($product, 10, 'REF-TEST-FAIL', $user->id))
         ->toThrow(\Exception::class, "Estoque insuficiente");
 });
+
+test('outbound invoice does not reduce stock upon emission, but does so upon conclusion', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    // Create a product with some initial stock
+    $product = Product::create([
+        'name'          => 'Produto Outbound Test',
+        'sku'           => 'SKU-OUT-TEST',
+        'barcode'       => '1111111111111',
+        'unit_price'    => 20.00,
+        'quantity'      => 0, // starts empty
+        'reorder_level' => 5,
+        'status'        => 'ativo',
+    ]);
+
+    // Add 20 units of stock
+    Inventory::create([
+        'product_id'         => $product->id,
+        'quantity'           => 20,
+        'remaining_quantity' => 20,
+        'type'               => 'entrada',
+        'status'             => 'confirmada',
+        'entry_date'         => now(),
+        'user_id'            => $user->id,
+    ]);
+    $product->update(['quantity' => 20]);
+
+    // Process an exit invoice
+    $invoiceService = app(\App\Services\InvoiceService::class);
+    $data = [
+        'number'            => 'NF-2026-00001',
+        'series'            => '001',
+        'type'              => 'saida',
+        'recipient_name'    => 'Cliente Teste',
+        'recipient_document'=> '000.000.000-00',
+        'items'             => [
+            [
+                'product_id'  => $product->id,
+                'description' => $product->name,
+                'quantity'    => 5,
+                'unit_price'  => 20.00,
+                'discount'    => 0,
+            ]
+        ]
+    ];
+
+    // Emit the invoice
+    $invoice = $invoiceService->processInvoice($data, null, true);
+
+    $product->refresh();
+    // Stock should still be 20 because it was not concluded yet
+    expect($product->quantity)->toBe(20);
+    expect($invoice->status)->toBe('emitida');
+
+    // Now conclude the invoice
+    $invoiceService->concludeInvoice($invoice);
+
+    $product->refresh();
+    // Stock should now be 15
+    expect($product->quantity)->toBe(15);
+    expect($invoice->status)->toBe('concluída');
+});
+

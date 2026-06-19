@@ -16,16 +16,25 @@ class Invoice extends Model
         'subtotal', 'discount', 'shipping', 'total',
         'payment_method', 'notes', 'due_date', 'issued_at',
         'user_id', 'supplier_id', 'conference_status', 'conferred_by', 'conferred_at', 'conference_notes',
+        // Transportadora
+        'carrier_id', 'carrier_name', 'carrier_cnpj', 'carrier_state_reg',
+        'carrier_address', 'carrier_city', 'carrier_state',
+        'cargo_type', 'freight_account', 'vehicle_plate', 'vehicle_uf',
+        // Volumes
+        'vol_quantity', 'vol_species', 'vol_brand', 'vol_number',
+        'vol_gross_weight', 'vol_net_weight',
     ];
 
     protected $casts = [
-        'subtotal'      => 'decimal:2',
-        'discount'      => 'decimal:2',
-        'shipping'      => 'decimal:2',
-        'total'         => 'decimal:2',
-        'due_date'      => 'date',
-        'issued_at'     => 'date',
-        'conferred_at'  => 'datetime',
+        'subtotal'          => 'decimal:2',
+        'discount'          => 'decimal:2',
+        'shipping'          => 'decimal:2',
+        'total'             => 'decimal:2',
+        'due_date'          => 'date',
+        'issued_at'         => 'date',
+        'conferred_at'      => 'datetime',
+        'vol_gross_weight'  => 'decimal:3',
+        'vol_net_weight'    => 'decimal:3',
     ];
 
     public function items(): HasMany
@@ -48,6 +57,23 @@ class Invoice extends Model
         return $this->belongsTo(Supplier::class);
     }
 
+    public function carrier(): BelongsTo
+    {
+        return $this->belongsTo(Carrier::class);
+    }
+
+    public function freightAccountLabel(): string
+    {
+        return match ($this->freight_account) {
+            '0'     => '0 - Emitente',
+            '1'     => '1 - Destinatário',
+            '2'     => '2 - Terceiros',
+            '3'     => '3 - Remetente',
+            '9'     => '9 - Sem Frete',
+            default => $this->freight_account ?? '0 - Emitente',
+        };
+    }
+
     /**
      * Gera o próximo número de NF sequencial
      */
@@ -63,6 +89,7 @@ class Invoice extends Model
         return match ($this->status) {
             'rascunho'  => 'Rascunho',
             'emitida'   => 'Emitida',
+            'concluída' => 'Concluída',
             'cancelada' => 'Cancelada',
             default     => $this->status,
         };
@@ -72,7 +99,8 @@ class Invoice extends Model
     {
         return match ($this->status) {
             'rascunho'  => 'yellow',
-            'emitida'   => 'green',
+            'emitida'   => 'blue',
+            'concluída' => 'green',
             'cancelada' => 'red',
             default     => 'gray',
         };

@@ -91,6 +91,9 @@
                                 @endforeach
                             </select>
                         </div>
+                        <button type="button" id="btn-open-customer-picker" class="btn btn-secondary" style="padding: 0 0.75rem; height: 42px;" title="Buscar cliente (lupa)">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
                         <button type="button" onclick="toggleCustomerModal()" class="btn btn-secondary" style="padding: 0 0.75rem; height: 42px;" title="Cadastrar novo cliente">
                             <i class="fa-solid fa-plus"></i>
                         </button>
@@ -213,7 +216,168 @@
                     {{-- Dynamically generated --}}
                 </div>
 
+                {{-- ══ CARD: TRANSPORTADOR / VOLUMES ══ --}}
+                <div class="p-6 sm:p-4" style="border-top: 1px solid var(--border);">
+                    <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1.25rem;">
+                        <div style="width:32px; height:32px; background:var(--accent-subtle); color:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                            <i class="fa-solid fa-truck"></i>
+                        </div>
+                        <h4 style="margin:0; font-family:'Outfit'; font-size:1rem; font-weight:800; color:var(--text-primary);">
+                            Transportador / Volumes Transportados
+                        </h4>
+                        <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Seção 6 da NF Modelo 1</span>
+                    </div>
+
+                    {{-- Busca de transportadora cadastrada --}}
+                    <div style="margin-bottom:1.5rem; padding:1rem; background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--r-md);">
+                        <label class="form-label" style="margin-bottom:0.5rem;">
+                            <i class="fa-solid fa-magnifying-glass mr-1" style="color:var(--text-muted);"></i>
+                            Vincular Transportadora Cadastrada
+                        </label>
+                        <div style="display:flex; gap:0.75rem; align-items:center;">
+                            <select id="carrier-select" name="carrier_id" class="form-select" style="flex:1; max-width:400px;" onchange="fillCarrierData(this)">
+                                <option value="">— Selecionar transportadora do cadastro... —</option>
+                                @foreach($carriers ?? [] as $carrier)
+                                    <option value="{{ $carrier->id }}"
+                                        data-name="{{ $carrier->name }}"
+                                        data-cnpj="{{ $carrier->cnpj }}"
+                                        data-state_reg="{{ $carrier->state_registration }}"
+                                        data-street="{{ $carrier->street }}"
+                                        data-number="{{ $carrier->number }}"
+                                        data-city="{{ $carrier->city }}"
+                                        data-state="{{ $carrier->state }}"
+                                        data-plate="{{ $carrier->vehicle_plate }}"
+                                        data-uf="{{ $carrier->vehicle_uf }}"
+                                        {{ isset($invoice) && $invoice->carrier_id == $carrier->id ? 'selected' : '' }}>
+                                        {{ $carrier->name }}{{ $carrier->cnpj ? ' — ' . $carrier->cnpj : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <span style="font-size:0.8rem; color:var(--text-muted);">ou preencha manualmente abaixo</span>
+                        </div>
+                    </div>
+
+                    {{-- LINHA 1: Nome, CNPJ, IE, Endereço --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" style="margin-bottom:1rem;">
+                        <div class="form-group" style="margin-bottom:0; grid-column: span 2;">
+                            <label class="form-label text-xs">Nome / Razão Social da Transportadora</label>
+                            <input type="text" name="carrier_name" id="carrier_name" class="form-control"
+                                   placeholder="Ex: Transportes Rápidos Ltda"
+                                   value="{{ $invoice->carrier_name ?? '' }}">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label text-xs">CNPJ da Transportadora</label>
+                            <input type="text" name="carrier_cnpj" id="carrier_cnpj" class="form-control"
+                                   placeholder="00.000.000/0001-00" style="font-family:monospace;"
+                                   value="{{ $invoice->carrier_cnpj ?? '' }}">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label text-xs">Inscrição Estadual</label>
+                            <input type="text" name="carrier_state_reg" id="carrier_state_reg" class="form-control"
+                                   placeholder="IE"
+                                   value="{{ $invoice->carrier_state_reg ?? '' }}">
+                        </div>
+                    </div>
+
+                    {{-- LINHA 2: Endereço, Cidade, Frete por Conta, Placa, UF --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4" style="margin-bottom:1.5rem;">
+                        <div class="form-group" style="margin-bottom:0; grid-column: span 2;">
+                            <label class="form-label text-xs">Endereço</label>
+                            <input type="text" name="carrier_address" id="carrier_address" class="form-control"
+                                   placeholder="Rua, Nº"
+                                   value="{{ $invoice->carrier_address ?? '' }}">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label text-xs">Cidade</label>
+                            <input type="text" name="carrier_city" id="carrier_city" class="form-control"
+                                   placeholder="Cidade"
+                                   value="{{ $invoice->carrier_city ?? '' }}">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label text-xs">Placa do Veículo</label>
+                            <input type="text" name="vehicle_plate" id="vehicle_plate" class="form-control"
+                                   placeholder="ABC-1234" style="font-family:monospace; text-transform:uppercase;" maxlength="8"
+                                   value="{{ $invoice->vehicle_plate ?? '' }}">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label text-xs">UF Placa</label>
+                            <select name="vehicle_uf" id="vehicle_uf" class="form-select">
+                                <option value="">UF</option>
+                                @foreach(['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'] as $uf)
+                                    <option value="{{ $uf }}" {{ (isset($invoice) && $invoice->vehicle_uf === $uf) ? 'selected' : '' }}>{{ $uf }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- LINHA 3: Frete por conta + Tipo de carga --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" style="margin-bottom:1.5rem;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label text-xs">Frete por Conta de</label>
+                            <select name="freight_account" id="freight_account" class="form-select">
+                                <option value="0" {{ (!isset($invoice) || $invoice->freight_account == '0') ? 'selected' : '' }}>0 — Emitente</option>
+                                <option value="1" {{ (isset($invoice) && $invoice->freight_account == '1') ? 'selected' : '' }}>1 — Destinatário</option>
+                                <option value="2" {{ (isset($invoice) && $invoice->freight_account == '2') ? 'selected' : '' }}>2 — Terceiros</option>
+                                <option value="3" {{ (isset($invoice) && $invoice->freight_account == '3') ? 'selected' : '' }}>3 — Remetente</option>
+                                <option value="9" {{ (isset($invoice) && $invoice->freight_account == '9') ? 'selected' : '' }}>9 — Sem Frete</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label text-xs">Tipo de Carga</label>
+                            <input type="text" name="cargo_type" id="cargo_type" class="form-control"
+                                   placeholder="Ex: Carga Geral, Fracionado, Perigosa..."
+                                   value="{{ $invoice->cargo_type ?? '' }}">
+                        </div>
+                    </div>
+
+                    {{-- LINHA 4: VOLUMES --}}
+                    <div style="border-top: 1px dashed var(--border); padding-top:1.25rem; margin-top:0.5rem;">
+                        <p style="font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); margin:0 0 1rem 0;">
+                            <i class="fa-solid fa-boxes-stacked mr-1"></i> Volumes Transportados
+                        </p>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label class="form-label text-xs">Quantidade</label>
+                                <input type="number" name="vol_quantity" id="vol_quantity" class="form-control text-right"
+                                       placeholder="0" min="0"
+                                       value="{{ $invoice->vol_quantity ?? '' }}">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label class="form-label text-xs">Espécie</label>
+                                <input type="text" name="vol_species" id="vol_species" class="form-control"
+                                       placeholder="VOLUMES, CAIXAS..."
+                                       value="{{ $invoice->vol_species ?? 'VOLUMES' }}">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label class="form-label text-xs">Marca</label>
+                                <input type="text" name="vol_brand" id="vol_brand" class="form-control"
+                                       placeholder="Marca"
+                                       value="{{ $invoice->vol_brand ?? '' }}">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label class="form-label text-xs">Número</label>
+                                <input type="text" name="vol_number" id="vol_number" class="form-control"
+                                       placeholder="Numeração"
+                                       value="{{ $invoice->vol_number ?? '' }}">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label class="form-label text-xs">Peso Bruto (kg)</label>
+                                <input type="number" name="vol_gross_weight" id="vol_gross_weight" class="form-control text-right"
+                                       step="0.001" placeholder="0,000"
+                                       value="{{ $invoice->vol_gross_weight ?? '' }}">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label class="form-label text-xs">Peso Líquido (kg)</label>
+                                <input type="number" name="vol_net_weight" id="vol_net_weight" class="form-control text-right"
+                                       step="0.001" placeholder="0,000"
+                                       value="{{ $invoice->vol_net_weight ?? '' }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Footer Summary --}}
+
                 <div class="p-8 sm:p-6 bg-hover grid grid-cols-1 lg:grid-cols-[1fr_1.2fr_1fr] gap-6 lg:gap-10 items-start" style="border-top: 1px solid var(--border);">
                     <div class="form-group w-full">
                         <label class="form-label" style="opacity: 0.7; font-weight:700;">Observações Adicionais (Impressas na NF)</label>
@@ -517,12 +681,27 @@ function calcTotals(manualOverride = false) {
         if (!manualOverride) {
             // Apply standard bases equal to item total
             const redIcms = parseVal(icmsRedBcInput);
-            icmsBaseInput.value = (total * (1 - redIcms/100)).toFixed(2);
-            
-            const mva = parseVal(stMvaInput);
-            stBaseInput.value = (total * (1 + mva/100)).toFixed(2);
-            
+            const icmsBase = total * (1 - redIcms/100);
+            icmsBaseInput.value = icmsBase.toFixed(2);
+
+            const icmsRate = parseVal(icmsRateInput);
+            const icmsVal = icmsBase * icmsRate / 100;
+            icmsValInput.value = icmsVal.toFixed(2);
+
+            const ipiRate = parseVal(ipiRateInput);
+            const ipiVal = total * ipiRate / 100;
             ipiBaseInput.value = total.toFixed(2);
+            ipiValInput.value = ipiVal.toFixed(2);
+
+            const mva = parseVal(stMvaInput);
+            // ST Base includes product total + IPI
+            const stBase = (total + ipiVal) * (1 + mva/100);
+            stBaseInput.value = stBase.toFixed(2);
+
+            const stRate = parseVal(stRateInput);
+            const stValCalculated = (stBase * stRate / 100) - icmsVal;
+            stValInput.value = Math.max(0, stValCalculated).toFixed(2);
+            
             pisBaseInput.value = total.toFixed(2);
             cofinsBaseInput.value = total.toFixed(2);
             issBaseInput.value = total.toFixed(2);
@@ -534,15 +713,6 @@ function calcTotals(manualOverride = false) {
             isBaseInput.value = total.toFixed(2);
             iiBaseInput.value = total.toFixed(2);
 
-            // Calculations based on base and rate
-            const icmsVal = parseVal(icmsBaseInput) * parseVal(icmsRateInput) / 100;
-            icmsValInput.value = icmsVal.toFixed(2);
-
-            // ICMS ST = (Base ST * Aliquot ST / 100) - ICMS Próprio
-            const stValCalculated = (parseVal(stBaseInput) * parseVal(stRateInput) / 100) - icmsVal;
-            stValInput.value = Math.max(0, stValCalculated).toFixed(2);
-
-            ipiValInput.value = (parseVal(ipiBaseInput) * parseVal(ipiRateInput) / 100).toFixed(2);
             pisValInput.value = (parseVal(pisBaseInput) * parseVal(pisRateInput) / 100).toFixed(2);
             cofinsValInput.value = (parseVal(cofinsBaseInput) * parseVal(cofinsRateInput) / 100).toFixed(2);
             issValInput.value = (parseVal(issBaseInput) * parseVal(issRateInput) / 100).toFixed(2);
@@ -596,7 +766,8 @@ function calcTotals(manualOverride = false) {
 
     const discountTotal = parseVal(document.getElementById('discount-input'));
     const shippingTotal = parseVal(document.getElementById('shipping-input'));
-    const grandTotal = subtotal - discountTotal + shippingTotal;
+    // Brazilian NFe total includes ICMS ST, IPI and II taxes
+    const grandTotal = subtotal - discountTotal + shippingTotal + sumIcmsSt + sumIpi + sumIi;
     
     document.getElementById('subtotal-display').textContent = fmtBR(subtotal);
     document.getElementById('total-display').textContent = fmtBR(grandTotal);
@@ -617,9 +788,17 @@ function addItem(data = {}) {
         <div class="p-4 bg-hover flex justify-between items-center" style="border-bottom: 1px solid var(--border);">
             <div class="flex items-center gap-4 flex-wrap" style="flex: 1;">
                 <span class="badge badge-secondary" style="font-family:'Outfit'; font-weight:800; font-size: 0.9rem; padding:0.4rem 0.6rem;">Item #${i + 1}</span>
-                <div style="flex: 1; min-width: 250px; max-width: 320px;">
+                <div style="flex: 1; min-width: 250px; max-width: 320px; display: flex; gap: 0.4rem; align-items: center;">
                     <input type="hidden" name="items[${i}][product_id]" class="product-id-input" value="${data.product_id || ''}">
-                    ${selectHtml.replace(/class="product-select/g, `name="items[${i}][product_id_select]" class="product-select form-control w-full`)}
+                    <input type="text" id="invoice-product-display-${i}" readonly class="form-control" style="flex: 1; height: 36px; background: var(--bg-hover); cursor: pointer; font-size: 0.85rem;" placeholder="Selecionar produto..." onclick="document.querySelector('.btn-open-invoice-product-picker[data-row=\'${i}\']').click()">
+                    
+                    <div style="display: none;">
+                        ${selectHtml.replace(/class="product-select/g, `name="items[${i}][product_id_select]" class="product-select form-control w-full`)}
+                    </div>
+                    
+                    <button type="button" class="btn btn-secondary btn-open-invoice-product-picker" data-row="${i}" style="padding: 0 0.65rem; height: 36px;" title="Buscar produto (lupa)">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
                 </div>
                 {{-- Quick badges showing active rates --}}
                 <div class="flex gap-2 flex-wrap" id="tax-badges-${i}">
@@ -746,7 +925,7 @@ function addItem(data = {}) {
                     </div>
                     <div class="form-group">
                         <label class="form-label text-xs font-semibold">Alíquota ICMS (%)</label>
-                        <input type="number" step="0.01" name="items[${i}][icms_rate]" class="form-input form-control text-right icms-rate-input" value="${data.icms_rate !== undefined ? data.icms_rate : 18}" oninput="calcTotals()">
+                        <input type="number" step="0.01" name="items[${i}][icms_rate]" class="form-input form-control text-right icms-rate-input" value="${(data.icms_rate !== undefined && data.icms_rate !== '') ? data.icms_rate : 18}" oninput="calcTotals()">
                     </div>
                     <div class="form-group col-span-1 md:col-span-2">
                         <label class="form-label text-xs font-semibold">Valor do ICMS (R$)</label>
@@ -826,7 +1005,7 @@ function addItem(data = {}) {
                     </div>
                     <div class="form-group">
                         <label class="form-label text-xs">Alíquota PIS (%)</label>
-                        <input type="number" step="0.01" name="items[${i}][pis_rate]" class="form-input form-control text-right pis-rate-input" value="${data.pis_rate !== undefined ? data.pis_rate : 1.65}" oninput="calcTotals()">
+                        <input type="number" step="0.01" name="items[${i}][pis_rate]" class="form-input form-control text-right pis-rate-input" value="${(data.pis_rate !== undefined && data.pis_rate !== '') ? data.pis_rate : 1.65}" oninput="calcTotals()">
                     </div>
                     <div class="form-group">
                         <label class="form-label text-xs">Valor PIS (R$)</label>
@@ -849,7 +1028,7 @@ function addItem(data = {}) {
                     </div>
                     <div class="form-group">
                         <label class="form-label text-xs">Alíquota COFINS (%)</label>
-                        <input type="number" step="0.01" name="items[${i}][cofins_rate]" class="form-input form-control text-right cofins-rate-input" value="${data.cofins_rate !== undefined ? data.cofins_rate : 7.6}" oninput="calcTotals()">
+                        <input type="number" step="0.01" name="items[${i}][cofins_rate]" class="form-input form-control text-right cofins-rate-input" value="${(data.cofins_rate !== undefined && data.cofins_rate !== '') ? data.cofins_rate : 7.6}" oninput="calcTotals()">
                     </div>
                     <div class="form-group">
                         <label class="form-label text-xs">Valor COFINS (R$)</label>
@@ -945,7 +1124,7 @@ function addItem(data = {}) {
                     </div>
                     <div class="form-group">
                         <label class="form-label text-xs">Alíquota IBS (%)</label>
-                        <input type="number" step="0.01" name="items[${i}][ibs_rate]" class="form-input form-control text-right ibs-rate-input" value="${data.ibs_rate !== undefined ? data.ibs_rate : 0.1}" oninput="calcTotals()">
+                        <input type="number" step="0.01" name="items[${i}][ibs_rate]" class="form-input form-control text-right ibs-rate-input" value="${(data.ibs_rate !== undefined && data.ibs_rate !== '') ? data.ibs_rate : 0.1}" oninput="calcTotals()">
                     </div>
                     <div class="form-group">
                         <label class="form-label text-xs">Valor IBS (R$)</label>
@@ -963,7 +1142,7 @@ function addItem(data = {}) {
                     </div>
                     <div class="form-group">
                         <label class="form-label text-xs">Alíquota CBS (%)</label>
-                        <input type="number" step="0.01" name="items[${i}][cbs_rate]" class="form-input form-control text-right cbs-rate-input" value="${data.cbs_rate !== undefined ? data.cbs_rate : 0.9}" oninput="calcTotals()">
+                        <input type="number" step="0.01" name="items[${i}][cbs_rate]" class="form-input form-control text-right cbs-rate-input" value="${(data.cbs_rate !== undefined && data.cbs_rate !== '') ? data.cbs_rate : 0.9}" oninput="calcTotals()">
                     </div>
                     <div class="form-group">
                         <label class="form-label text-xs">Valor CBS (R$)</label>
@@ -1023,6 +1202,15 @@ function addItem(data = {}) {
         // Set initial select value if passed in data
         if (data.product_id) {
             sel.value = data.product_id;
+            // Set display product name directly from option dataset to avoid triggering change event
+            // which overrides database values with default values.
+            const opt = sel.options[sel.selectedIndex];
+            if (opt && opt.value) {
+                const displayInp = document.getElementById(`invoice-product-display-${i}`);
+                if (displayInp) {
+                    displayInp.value = opt.getAttribute('data-name') || opt.text || '';
+                }
+            }
         }
     }
 
@@ -1031,7 +1219,7 @@ function addItem(data = {}) {
         window.initMasks(card);
     }
 
-    calcTotals();
+    calcTotals(Object.keys(data).length > 0);
 }
 
 function fillProductData(sel) {
@@ -1039,47 +1227,58 @@ function fillProductData(sel) {
     const opt = sel.options[sel.selectedIndex];
     if (!card) return;
     
+    const index = card.id.replace('item-card-', '');
+    const displayInp = document.getElementById(`invoice-product-display-${index}`);
+    
     if (!opt || !opt.value) {
         card.querySelector('.product-id-input').value = '';
+        if (displayInp) displayInp.value = '';
         return;
     }
     
     card.querySelector('.product-id-input').value = opt.value;
-    card.querySelector('.desc-input').value = opt.dataset.name || '';
-    card.querySelector('.price-input').value = opt.dataset.price || 0;
-    card.querySelector('.unit-input').value = opt.dataset.unit || 'un';
+    card.querySelector('.desc-input').value = opt.getAttribute('data-name') || '';
+    card.querySelector('.price-input').value = opt.getAttribute('data-price') || 0;
+    card.querySelector('.unit-input').value = opt.getAttribute('data-unit') || 'un';
+    if (displayInp) displayInp.value = opt.getAttribute('data-name') || '';
     
-    // Auto-fill NCM, CFOP, CEST
-    if (opt.dataset.ncm) card.querySelector('[name$="[ncm]"]').value = opt.dataset.ncm;
-    if (opt.dataset.cfop) card.querySelector('[name$="[cfop]"]').value = opt.dataset.cfop;
+    // Auto-fill NCM, CFOP
+    card.querySelector('[name$="[ncm]"]').value = opt.getAttribute('data-ncm') || '';
+    card.querySelector('[name$="[cfop]"]').value = opt.getAttribute('data-cfop') || '';
+    
+    // Safely get attribute value helper
+    const getVal = (attr, fallback) => {
+        const val = opt.getAttribute('data-' + attr);
+        return (val !== null && val !== '') ? val : fallback;
+    };
     
     // Auto-fill ICMS Rates & CST
-    if (opt.dataset.icms_rate) card.querySelector('.icms-rate-input').value = opt.dataset.icms_rate;
-    if (opt.dataset.icms_cst) card.querySelector('.icms-cst-input').value = opt.dataset.icms_cst;
-    if (opt.dataset.icms_orig) card.querySelector('.orig-input').value = opt.dataset.icms_orig;
-    if (opt.dataset.icms_red_bc !== undefined) card.querySelector('.icms-red-bc-input').value = opt.dataset.icms_red_bc;
-    if (opt.dataset.icms_mod_bc !== undefined) card.querySelector('.icms-mod-bc-input').value = opt.dataset.icms_mod_bc;
+    card.querySelector('.icms-rate-input').value = getVal('icms_rate', 18);
+    card.querySelector('.icms-cst-input').value = getVal('icms_cst', '00');
+    card.querySelector('.orig-input').value = getVal('icms_orig', 0);
+    card.querySelector('.icms-red-bc-input').value = getVal('icms_red_bc', 0);
+    card.querySelector('.icms-mod-bc-input').value = getVal('icms_mod_bc', 3);
     
     // Auto-fill ICMS ST Rates & MVA
-    if (opt.dataset.icms_st_rate) card.querySelector('.icms-st-rate-input').value = opt.dataset.icms_st_rate;
-    if (opt.dataset.icms_st_mva) card.querySelector('.icms-st-mva-input').value = opt.dataset.icms_st_mva;
-    if (opt.dataset.icms_st_cst) card.querySelector('.icms-st-cst-input').value = opt.dataset.icms_st_cst;
+    card.querySelector('.icms-st-rate-input').value = getVal('icms_st_rate', 0);
+    card.querySelector('.icms-st-mva-input').value = getVal('icms_st_mva', 0);
+    card.querySelector('.icms-st-cst-input').value = getVal('icms_st_cst', '10');
     
     // Auto-fill PIS, COFINS, IPI & ISS
-    if (opt.dataset.pis_rate) card.querySelector('.pis-rate-input').value = opt.dataset.pis_rate;
-    if (opt.dataset.cofins_rate) card.querySelector('.cofins-rate-input').value = opt.dataset.cofins_rate;
-    if (opt.dataset.ipi_rate) card.querySelector('.ipi-rate-input').value = opt.dataset.ipi_rate;
-    if (opt.dataset.iss_rate) card.querySelector('.iss-rate-input').value = opt.dataset.iss_rate;
+    card.querySelector('.pis-rate-input').value = getVal('pis_rate', 1.65);
+    card.querySelector('.cofins-rate-input').value = getVal('cofins_rate', 7.6);
+    card.querySelector('.ipi-rate-input').value = getVal('ipi_rate', 0);
+    card.querySelector('.iss-rate-input').value = getVal('iss_rate', 0);
     
     // Auto-fill Retencoes (CSLL, IRPJ, CPP)
-    if (opt.dataset.csll_rate) card.querySelector('.csll-rate-input').value = opt.dataset.csll_rate;
-    if (opt.dataset.irpj_rate) card.querySelector('.irpj-rate-input').value = opt.dataset.irpj_rate;
-    if (opt.dataset.cpp_rate) card.querySelector('.cpp-rate-input').value = opt.dataset.cpp_rate;
-
+    card.querySelector('.csll-rate-input').value = getVal('csll_rate', 0);
+    card.querySelector('.irpj-rate-input').value = getVal('irpj_rate', 0);
+    card.querySelector('.cpp-rate-input').value = getVal('cpp_rate', 0);
+ 
     // Auto-fill Reforma 2026 (IBS, CBS, IS)
-    if (opt.dataset.ibs_rate) card.querySelector('.ibs-rate-input').value = opt.dataset.ibs_rate;
-    if (opt.dataset.cbs_rate) card.querySelector('.cbs-rate-input').value = opt.dataset.cbs_rate;
-    if (opt.dataset.is_rate) card.querySelector('.is-rate-input').value = opt.dataset.is_rate;
+    card.querySelector('.ibs-rate-input').value = getVal('ibs_rate', 0.1);
+    card.querySelector('.cbs-rate-input').value = getVal('cbs_rate', 0.9);
+    card.querySelector('.is-rate-input').value = getVal('is_rate', 0);
 
     calcTotals();
 }
@@ -1107,80 +1306,80 @@ function fillCustomerData(sel) {
             ncm: "{{ $item->ncm }}",
             cfop: "{{ $item->cfop }}",
             unit: "{{ $item->unit }}",
-            quantity: {{ $item->quantity }},
-            unit_price: {{ $item->unit_price }},
-            discount: {{ $item->discount }},
+            quantity: "{{ $item->quantity }}",
+            unit_price: "{{ $item->unit_price }}",
+            discount: "{{ $item->discount }}",
             
             icms_cst: "{{ $item->icms_cst }}",
-            icms_orig: {{ $item->icms_orig }},
-            icms_mod_bc: {{ $item->icms_mod_bc }},
-            icms_red_bc: {{ $item->icms_red_bc }},
-            icms_base: {{ $item->icms_base }},
-            icms_rate: {{ $item->icms_rate }},
-            icms_value: {{ $item->icms_value }},
+            icms_orig: "{{ $item->icms_orig }}",
+            icms_mod_bc: "{{ $item->icms_mod_bc }}",
+            icms_red_bc: "{{ $item->icms_red_bc }}",
+            icms_base: "{{ $item->icms_base }}",
+            icms_rate: "{{ $item->icms_rate }}",
+            icms_value: "{{ $item->icms_value }}",
 
             icms_st_cst: "{{ $item->icms_st_cst }}",
-            icms_st_mva: {{ $item->icms_st_mva }},
-            icms_st_base: {{ $item->icms_st_base }},
-            icms_st_rate: {{ $item->icms_st_rate }},
-            icms_st_value: {{ $item->icms_st_value }},
+            icms_st_mva: "{{ $item->icms_st_mva }}",
+            icms_st_base: "{{ $item->icms_st_base }}",
+            icms_st_rate: "{{ $item->icms_st_rate }}",
+            icms_st_value: "{{ $item->icms_st_value }}",
 
             ipi_cst: "{{ $item->ipi_cst }}",
             ipi_enq: "{{ $item->ipi_enq }}",
-            ipi_base: {{ $item->ipi_base }},
-            ipi_rate: {{ $item->ipi_rate }},
-            ipi_value: {{ $item->ipi_value }},
+            ipi_base: "{{ $item->ipi_base }}",
+            ipi_rate: "{{ $item->ipi_rate }}",
+            ipi_value: "{{ $item->ipi_value }}",
 
             pis_cst: "{{ $item->pis_cst }}",
-            pis_base: {{ $item->pis_base }},
-            pis_rate: {{ $item->pis_rate }},
-            pis_value: {{ $item->pis_value }},
+            pis_base: "{{ $item->pis_base }}",
+            pis_rate: "{{ $item->pis_rate }}",
+            pis_value: "{{ $item->pis_value }}",
 
             cofins_cst: "{{ $item->cofins_cst }}",
-            cofins_base: {{ $item->cofins_base }},
-            cofins_rate: {{ $item->cofins_rate }},
-            cofins_value: {{ $item->cofins_value }},
+            cofins_base: "{{ $item->cofins_base }}",
+            cofins_rate: "{{ $item->cofins_rate }}",
+            cofins_value: "{{ $item->cofins_value }}",
 
             iss_cst: "{{ $item->iss_cst }}",
-            iss_base: {{ $item->iss_base }},
-            iss_rate: {{ $item->iss_rate }},
-            iss_value: {{ $item->iss_value }},
+            iss_base: "{{ $item->iss_base }}",
+            iss_rate: "{{ $item->iss_rate }}",
+            iss_value: "{{ $item->iss_value }}",
 
             csll_cst: "{{ $item->csll_cst }}",
-            csll_base: {{ $item->csll_base }},
-            csll_rate: {{ $item->csll_rate }},
-            csll_value: {{ $item->csll_value }},
+            csll_base: "{{ $item->csll_base }}",
+            csll_rate: "{{ $item->csll_rate }}",
+            csll_value: "{{ $item->csll_value }}",
 
             irpj_cst: "{{ $item->irpj_cst }}",
-            irpj_base: {{ $item->irpj_base }},
-            irpj_rate: {{ $item->irpj_rate }},
-            irpj_value: {{ $item->irpj_value }},
+            irpj_base: "{{ $item->irpj_base }}",
+            irpj_rate: "{{ $item->irpj_rate }}",
+            irpj_value: "{{ $item->irpj_value }}",
 
             cpp_cst: "{{ $item->cpp_cst }}",
-            cpp_base: {{ $item->cpp_base }},
-            cpp_rate: {{ $item->cpp_rate }},
-            cpp_value: {{ $item->cpp_value }},
+            cpp_base: "{{ $item->cpp_base }}",
+            cpp_rate: "{{ $item->cpp_rate }}",
+            cpp_value: "{{ $item->cpp_value }}",
 
             ibs_cst: "{{ $item->ibs_cst }}",
-            ibs_base: {{ $item->ibs_base }},
-            ibs_rate: {{ $item->ibs_rate }},
-            ibs_value: {{ $item->ibs_value }},
+            ibs_base: "{{ $item->ibs_base }}",
+            ibs_rate: "{{ $item->ibs_rate }}",
+            ibs_value: "{{ $item->ibs_value }}",
 
             cbs_cst: "{{ $item->cbs_cst }}",
-            cbs_base: {{ $item->cbs_base }},
-            cbs_rate: {{ $item->cbs_rate }},
-            cbs_value: {{ $item->cbs_value }},
+            cbs_base: "{{ $item->cbs_base }}",
+            cbs_rate: "{{ $item->cbs_rate }}",
+            cbs_value: "{{ $item->cbs_value }}",
 
             is_cst: "{{ $item->is_cst }}",
-            is_base: {{ $item->is_base }},
-            is_rate: {{ $item->is_rate }},
-            is_value: {{ $item->is_value }},
+            is_base: "{{ $item->is_base }}",
+            is_rate: "{{ $item->is_rate }}",
+            is_value: "{{ $item->is_value }}",
 
-            ii_base: {{ $item->ii_base }},
-            ii_rate: {{ $item->ii_rate }},
-            ii_value: {{ $item->ii_value }},
-            ii_desp: {{ $item->ii_desp }},
-            ii_iof: {{ $item->ii_iof }}
+            ii_base: "{{ $item->ii_base }}",
+            ii_rate: "{{ $item->ii_rate }}",
+            ii_value: "{{ $item->ii_value }}",
+            ii_desp: "{{ $item->ii_desp }}",
+            ii_iof: "{{ $item->ii_iof }}"
         });
     @endforeach
 @else
@@ -1201,4 +1400,6 @@ setTimeout(() => {
 @endpush
 @include('partials.customer_quick_create')
 @include('partials.supplier_quick_create')
+@include('partials.product_picker')
+@include('partials.customer_picker')
 @endsection

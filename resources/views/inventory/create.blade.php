@@ -44,17 +44,24 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label class="form-label">Produto <span style="color:var(--red);">*</span></label>
-                        <select name="product_id" id="productSelect" required class="form-select" style="width:100%;">
+                        <div style="display:flex; gap:0.5rem;">
+                            <input type="hidden" name="product_id" id="productSelect" required value="{{ old('product_id') }}">
+                            <input type="text" id="productSelect_display" readonly class="form-input" style="flex:1; background:var(--bg-hover); cursor:pointer;" placeholder="Clique para pesquisar e selecionar o produto..." onclick="document.getElementById('btn-open-product-picker').click()">
+                            <button type="button" class="btn btn-secondary" id="btn-open-product-picker" style="padding:0 0.85rem;" title="Buscar produto (lupa)">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                        <select id="productSelectHidden" style="display:none;">
                             <option value="">— Selecionar produto —</option>
                             @foreach($products as $p)
                                 <option value="{{ $p->id }}"
+                                    data-name="{{ $p->name }}"
                                     data-stock="{{ $p->quantity }}"
                                     data-unit="{{ $p->unit ?? 'un' }}"
                                     data-price="{{ number_format($p->unit_price, 2, ',', '.') }}"
                                     data-category="{{ $p->category ?? '—' }}"
                                     data-supplier="{{ $p->supplier?->name ?? '—' }}"
-                                    data-location="{{ $p->location?->full_code ?? $p->warehouse_location ?? '—' }}"
-                                    {{ old('product_id') == $p->id ? 'selected' : '' }}>
+                                    data-location="{{ $p->location?->full_code ?? $p->warehouse_location ?? '—' }}">
                                     {{ $p->name }} ({{ $p->barcode ?? 'Sem Código' }})
                                 </option>
                             @endforeach
@@ -189,12 +196,15 @@
 </div>
 
 @include('partials.supplier_quick_create')
+@include('partials.product_picker')
 @endsection
 
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const sel  = document.getElementById('productSelect');
+    const sel  = document.getElementById('productSelectHidden');
+    const displayInp = document.getElementById('productSelect_display');
+    const inputVal = document.getElementById('productSelect');
     const card = document.getElementById('productInfoCard');
     const dateInput = document.getElementById('entry_date_input');
     
@@ -209,7 +219,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     sel.addEventListener('change', function() {
         const opt = this.options[this.selectedIndex];
-        if (!opt.value) { card.style.display = 'none'; return; }
+        if (!opt || !opt.value) { card.style.display = 'none'; return; }
+
+        displayInp.value = opt.dataset.name || opt.text;
+        inputVal.value = opt.value;
 
         document.getElementById('pi_stock').textContent    = (opt.dataset.stock || '0') + ' ' + (opt.dataset.unit || 'un');
         document.getElementById('pi_price').textContent    = 'R$ ' + (opt.dataset.price || '0,00');
@@ -220,7 +233,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Trigger on page load if old value present
-    if (sel.value) sel.dispatchEvent(new Event('change'));
+    if (inputVal && inputVal.value) {
+        sel.value = inputVal.value;
+        sel.dispatchEvent(new Event('change'));
+    }
 
     // Conference Live Verification
     const qtyInput = document.querySelector('input[name="quantity"]');

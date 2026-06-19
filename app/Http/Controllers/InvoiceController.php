@@ -270,7 +270,40 @@ class InvoiceController extends Controller
 
         Logger::log('confer_invoice_workflow', "O usuário realizou a conferência interativa da NF #{$invoice->number} com status: {$status}");
 
+        if ($status === 'Conferida' && $invoice->status === 'emitida' && $invoice->type === 'saida') {
+            $this->invoiceService->concludeInvoice($invoice);
+        }
+
         return redirect()->route('invoices.show', $invoice)
-                         ->with('success', "Conferência finalizada com status: {$status}");
+                          ->with('success', "Conferência finalizada com status: {$status}" . ($status === 'Conferida' ? " e estoque baixado!" : ""));
+    }
+
+    /**
+     * Concluir faturamento e dar baixa no estoque
+     */
+    public function conclude(Invoice $invoice)
+    {
+        if ($invoice->type !== 'saida') {
+            return redirect()->back()->with('error', 'Apenas notas de saída podem ser concluídas.');
+        }
+
+        if ($invoice->status === 'concluída') {
+            return redirect()->back()->with('error', 'Esta nota já está concluída.');
+        }
+
+        if ($invoice->status !== 'emitida') {
+            return redirect()->back()->with('error', 'Apenas notas emitidas podem ser concluídas.');
+        }
+
+        try {
+            $this->invoiceService->concludeInvoice($invoice);
+
+            Logger::log('conclude_invoice', "O faturamento da NF #{$invoice->number} foi concluído manualmente.");
+
+            return redirect()->route('invoices.show', $invoice)
+                             ->with('success', 'Nota fiscal concluída e estoque baixado com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erro ao concluir nota: ' . $e->getMessage());
+        }
     }
 }

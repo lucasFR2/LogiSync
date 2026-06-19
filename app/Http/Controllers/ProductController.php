@@ -292,6 +292,7 @@ class ProductController extends Controller implements HasMiddleware
                             // Taxes fields mapped from XML
                             'ncm'                => $xmlItem->ncm,
                             'cfop_default'       => $xmlItem->cfop,
+                            'cest'               => $xmlItem->cest,
                             'iss_rate'           => $xmlItem->iss_rate,
                             'pis_rate'           => $xmlItem->pis_rate,
                             'cofins_rate'        => $xmlItem->cofins_rate,
@@ -313,6 +314,37 @@ class ProductController extends Controller implements HasMiddleware
                         ]);
                     } else {
                         $product = Product::findOrFail($data['product_id']);
+                        $product->update([
+                            'ncm'                => $xmlItem->ncm,
+                            'cfop_default'       => $xmlItem->cfop,
+                            'cest'               => $xmlItem->cest,
+                            'iss_rate'           => $xmlItem->iss_rate,
+                            'pis_rate'           => $xmlItem->pis_rate,
+                            'cofins_rate'        => $xmlItem->cofins_rate,
+                            'csll_rate'          => $xmlItem->csll_rate,
+                            'irpj_rate'          => $xmlItem->irpj_rate,
+                            'cpp_rate'           => $xmlItem->cpp_rate,
+                            'ipi_rate'           => $xmlItem->ipi_rate,
+                            'icms_rate'          => $xmlItem->icms_rate,
+                            'icms_cst'           => $xmlItem->icms_cst,
+                            'icms_orig'          => $xmlItem->icms_orig,
+                            'icms_st_rate'       => $xmlItem->icms_st_rate,
+                            'icms_st_mva'        => $xmlItem->icms_st_mva,
+                            'icms_st_cst'        => $xmlItem->icms_st_cst,
+                            'ibs_rate'           => $xmlItem->ibs_rate,
+                            'cbs_rate'           => $xmlItem->cbs_rate,
+                            'is_rate'            => $xmlItem->is_rate,
+                            'icms_red_bc'        => $xmlItem->icms_red_bc,
+                            'icms_mod_bc'        => $xmlItem->icms_mod_bc,
+                            // Also update pricing and cost
+                            'purchase_price'     => $xmlItem->unit_price,
+                            'cost_price'         => $xmlItem->unit_price,
+                            'unit_price'         => $xmlItem->unit_price,
+                        ]);
+                        // If barcode is empty but XML has barcode, update it
+                        if (empty($product->barcode) && !empty($xmlItem->barcode)) {
+                            $product->update(['barcode' => $xmlItem->barcode]);
+                        }
                     }
 
                     $originalQty = (float) $xmlItem->quantity;
