@@ -150,15 +150,52 @@
 
                     @if($manifestation->manifestation_status == 'confirmada' && $manifestation->entry_status == 'pending')
                         <hr style="margin:1.5rem 0; border-color:var(--border);">
-                        <form action="{{ route('inventory.bulkCreate', $manifestation) }}" method="GET">
-                            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:1rem;">
-                                <i class="fa-solid fa-dolly"></i> Importar para Estoque
-                            </button>
-                        </form>
+                        @if(in_array($manifestation->conference_status, ['Conferida', 'Divergente']))
+                            <form action="{{ route('inventory.bulkCreate', $manifestation) }}" method="GET">
+                                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:1rem;">
+                                    <i class="fa-solid fa-dolly"></i> Importar para Estoque
+                                </button>
+                            </form>
+                        @else
+                            <div style="padding:1rem; background:var(--bg-hover); border:1px dashed var(--border); border-radius:var(--r-md); text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600; line-height:1.4;">
+                                <i class="fa-solid fa-lock" style="margin-right:0.35rem; color:var(--orange);"></i>
+                                Importação bloqueada. Realize a conferência interativa primeiro.
+                            </div>
+                        @endif
                     @elseif($manifestation->entry_status == 'imported')
                         <hr style="margin:1.5rem 0; border-color:var(--border);">
                         <div style="text-align:center; color:var(--green); font-weight:600;">
                             <i class="fa-solid fa-check-circle"></i> Estoque Atualizado
+                        </div>
+                    @endif
+
+                    {{-- Interactive Conference Button --}}
+                    <hr style="margin:1.5rem 0; border-color:var(--border);">
+                    <a href="{{ route('manifestations.confer-workflow', $manifestation) }}" class="btn btn-secondary" style="width:100%; justify-content:center; padding:0.85rem; background:var(--accent-subtle); color:var(--accent); border-color:var(--accent-subtle); font-weight:700;">
+                        <i class="fa-solid fa-barcode" style="margin-right:0.5rem;"></i> Iniciar Conferência Interativa
+                    </a>
+                    @if($manifestation->conference_status && $manifestation->conference_status !== 'Pendente')
+                        <div style="text-align:center; margin-top:0.75rem;">
+                            @php
+                                $confColor = match($manifestation->conference_status) {
+                                    'Conferida' => 'var(--green)',
+                                    'Divergente' => 'var(--red)',
+                                    default => 'var(--orange)',
+                                };
+                                $confBg = match($manifestation->conference_status) {
+                                    'Conferida' => 'var(--green-bg)',
+                                    'Divergente' => 'var(--red-bg)',
+                                    default => 'var(--orange-bg)',
+                                };
+                                $confIcon = match($manifestation->conference_status) {
+                                    'Conferida' => 'fa-circle-check',
+                                    'Divergente' => 'fa-circle-xmark',
+                                    default => 'fa-clock',
+                                };
+                            @endphp
+                            <span class="badge" style="background:{{ $confBg }}; color:{{ $confColor }}; font-weight:700; padding:0.4rem 0.8rem; font-size:0.85rem;">
+                                <i class="fa-solid {{ $confIcon }}" style="margin-right:0.35rem;"></i> {{ $manifestation->conference_status }}
+                            </span>
                         </div>
                     @endif
                 </div>

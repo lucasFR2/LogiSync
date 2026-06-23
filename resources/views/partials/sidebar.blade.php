@@ -11,6 +11,7 @@
         ['route' => 'manifestations.index','icon' => 'fa-file-invoice',            'label' => 'Manifestação',  'permission' => 'manifestacoes.gerenciar'],
         ['route' => 'suppliers.index',     'icon' => 'fa-address-book',            'label' => 'Fornecedores',  'permission' => 'fornecedores.gerenciar'],
         ['route' => 'customers.index',     'icon' => 'fa-users',                   'label' => 'Clientes',      'permission' => 'clientes.gerenciar'],
+        ['route' => 'carriers.index',      'icon' => 'fa-truck',                   'label' => 'Transportadoras','permission' => 'transportadoras.gerenciar'],
         ['route' => 'employees.index',     'icon' => 'fa-users-gear',              'label' => 'Gestão de Funcionários', 'permission' => 'usuarios.gerenciar'],
         ['route' => 'logs.index',          'icon' => 'fa-list-check',              'label' => 'Logs do Sistema',       'permission' => 'logs.visualizar'],
         ['route' => 'roles.index',         'icon' => 'fa-id-card-clip',            'label' => 'Cargos e Funções',      'permission' => 'cargos.gerenciar'],

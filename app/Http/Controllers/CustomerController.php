@@ -40,22 +40,44 @@ class CustomerController extends Controller implements HasMiddleware
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'document' => 'required|string|max:30|unique:customers,document',
-            'type' => 'required|in:individual,company',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:30',
+            'name'               => 'required|string|max:255',
+            'document'           => 'required|string|max:30|unique:customers,document',
+            'type'               => 'required|in:individual,company',
+            'email'              => 'nullable|email|max:255',
+            'phone'              => 'nullable|string|max:30',
             'state_registration' => 'nullable|string|max:30',
-            'address' => 'nullable|string|max:255',
-            'number' => 'nullable|string|max:20',
-            'neighborhood' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:100',
-            'state' => 'nullable|string|max:2',
-            'zip_code' => 'nullable|string|max:15',
+            'address'            => 'nullable|string|max:255',
+            'number'             => 'nullable|string|max:20',
+            'complement'         => 'nullable|string|max:255',
+            'neighborhood'       => 'nullable|string|max:255',
+            'city'               => 'nullable|string|max:100',
+            'state'              => 'nullable|string|max:2',
+            'zip_code'           => 'nullable|string|max:15',
+            'birth_date'         => 'nullable|date',
+            'gender'             => 'nullable|string|in:Masculino,Feminino,Outro,Preferiu não informar',
         ]);
 
         $customer = Customer::create($validated);
         Logger::log('create_customer_record', "O usuário cadastrou o cliente: {$customer->name} (#{$customer->id})");
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'id'                 => $customer->id,
+                'name'               => $customer->name,
+                'document'           => $customer->document,
+                'email'              => $customer->email,
+                'phone'              => $customer->phone,
+                'address'            => $customer->address,
+                'number'             => $customer->number,
+                'complement'         => $customer->complement,
+                'neighborhood'       => $customer->neighborhood,
+                'city'               => $customer->city,
+                'state'              => $customer->state,
+                'zip_code'           => $customer->zip_code,
+                'state_registration' => $customer->state_registration,
+                'type'               => $customer->type,
+            ]);
+        }
 
         return redirect()->route('customers.index')->with('success', 'Cliente cadastrado com sucesso.');
     }
@@ -73,18 +95,21 @@ class CustomerController extends Controller implements HasMiddleware
     public function update(Request $request, Customer $customer)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'document' => 'required|string|max:30|unique:customers,document,' . $customer->id,
-            'type' => 'required|in:individual,company',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:30',
+            'name'               => 'required|string|max:255',
+            'document'           => 'required|string|max:30|unique:customers,document,' . $customer->id,
+            'type'               => 'required|in:individual,company',
+            'email'              => 'nullable|email|max:255',
+            'phone'              => 'nullable|string|max:30',
             'state_registration' => 'nullable|string|max:30',
-            'address' => 'nullable|string|max:255',
-            'number' => 'nullable|string|max:20',
-            'neighborhood' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:100',
-            'state' => 'nullable|string|max:2',
-            'zip_code' => 'nullable|string|max:15',
+            'address'            => 'nullable|string|max:255',
+            'number'             => 'nullable|string|max:20',
+            'complement'         => 'nullable|string|max:255',
+            'neighborhood'       => 'nullable|string|max:255',
+            'city'               => 'nullable|string|max:100',
+            'state'              => 'nullable|string|max:2',
+            'zip_code'           => 'nullable|string|max:15',
+            'birth_date'         => 'nullable|date',
+            'gender'             => 'nullable|string|in:Masculino,Feminino,Outro,Preferiu não informar',
         ]);
 
         $customer->update($validated);

@@ -10,6 +10,7 @@ class Inventory extends Model
     protected $fillable = [
         'product_id',
         'quantity',
+        'remaining_quantity',
         'type',
         'reference',
         'notes',
@@ -19,15 +20,33 @@ class Inventory extends Model
         'entry_date',
         'lot_number',
         'expiry_date',
+        'checked_quantity',
+        'conference_status',
+        'conference_notes',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
+        'remaining_quantity' => 'integer',
+        'checked_quantity' => 'integer',
         'entry_date' => 'datetime',
         'expiry_date' => 'date',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($inventory) {
+            // Se for entrada e a quantidade restante não foi explicitamente definida,
+            // define a quantidade restante inicial igual à quantidade da movimentação.
+            if ($inventory->type === 'entrada' && !isset($inventory->remaining_quantity)) {
+                $inventory->remaining_quantity = $inventory->quantity;
+            }
+        });
+    }
 
     /**
      * Relationship: Uma entrada pertence a um produto

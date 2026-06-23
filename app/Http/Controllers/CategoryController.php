@@ -20,13 +20,16 @@ class CategoryController extends Controller implements HasMiddleware
 
     public function index(Request $request)
     {
-        $query = Category::query();
+        $query = Category::with('parent');
 
         if ($request->has('search')) {
             $search = $request->input('search');
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhereHas('parent', function($pq) use ($search) {
+                      $pq->where('name', 'like', "%{$search}%");
+                  });
             });
         }
 
@@ -36,7 +39,8 @@ class CategoryController extends Controller implements HasMiddleware
 
     public function create()
     {
-        return view('categories.create');
+        $parentCategories = Category::whereNull('parent_id')->orderBy('name')->get();
+        return view('categories.create', compact('parentCategories'));
     }
 
     public function store(Request $request)
@@ -44,10 +48,12 @@ class CategoryController extends Controller implements HasMiddleware
         $validated = $request->validate([
             'name'        => 'required|string|max:100|unique:categories,name',
             'description' => 'nullable|string|max:500',
+            'parent_id'   => 'nullable|exists:categories,id',
         ], [
             'name.required' => 'O nome da categoria é obrigatório',
             'name.unique'   => 'Já existe uma categoria com esse nome',
             'name.max'      => 'O nome da categoria não pode exceder 100 caracteres',
+            'parent_id.exists' => 'O grupo selecionado é inválido',
         ]);
 
         $category = Category::create($validated);
@@ -59,7 +65,11 @@ class CategoryController extends Controller implements HasMiddleware
 
     public function edit(Category $category)
     {
-        return view('categories.edit', compact('category'));
+        $parentCategories = Category::whereNull('parent_id')
+            ->where('id', '!=', $category->id)
+            ->orderBy('name')
+            ->get();
+        return view('categories.edit', compact('category', 'parentCategories'));
     }
 
     public function update(Request $request, Category $category)
@@ -67,9 +77,11 @@ class CategoryController extends Controller implements HasMiddleware
         $validated = $request->validate([
             'name'        => 'required|string|max:100|unique:categories,name,' . $category->id,
             'description' => 'nullable|string|max:500',
+            'parent_id'   => 'nullable|exists:categories,id',
         ], [
             'name.required' => 'O nome da categoria é obrigatório',
             'name.unique'   => 'Já existe uma categoria com esse nome',
+            'parent_id.exists' => 'O grupo selecionado é inválido',
         ]);
 
         $category->update($validated);
@@ -98,9 +110,11 @@ class CategoryController extends Controller implements HasMiddleware
         $validated = $request->validate([
             'name'        => 'required|string|max:100|unique:categories,name',
             'description' => 'nullable|string|max:500',
+            'parent_id'   => 'nullable|exists:categories,id',
         ], [
             'name.required' => 'O nome da categoria é obrigatório',
             'name.unique'   => 'Já existe uma categoria com esse nome',
+            'parent_id.exists' => 'O grupo selecionado é inválido',
         ]);
 
         $category = Category::create($validated);
@@ -110,6 +124,8 @@ class CategoryController extends Controller implements HasMiddleware
             'success'     => true,
             'id'          => $category->id,
             'name'        => $category->name,
+            'parent_id'   => $category->parent_id,
+            'parent_name' => $category->parent ? $category->parent->name : null,
             'description' => $category->description ?? '',
             'message'     => 'Categoria criada com sucesso!',
         ]);

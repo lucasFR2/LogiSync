@@ -5,7 +5,7 @@
 @section('page-subtitle', 'Atualize os dados da categoria')
 
 @section('content')
-<div style="max-width:600px;">
+<div class="w-full">
 
     @if($errors->any())
         <div class="alert alert-error mb-6">
@@ -37,6 +37,19 @@
                     </label>
                     <input type="text" name="name" value="{{ old('name', $category->name) }}"
                            placeholder="Ex: Eletrônicos" required class="form-input" autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Grupo da Categoria (Opcional)</label>
+                    <select name="parent_id" class="form-select">
+                        <option value="">-- Sem Grupo (Grupo Principal) --</option>
+                        @foreach($parentCategories as $parent)
+                            <option value="{{ $parent->id }}" {{ old('parent_id', $category->parent_id) == $parent->id ? 'selected' : '' }}>
+                                {{ $parent->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <small style="color:var(--text-muted);">Defina o grupo principal para mover esta categoria como um subgrupo.</small>
                 </div>
 
                 <div class="form-group">

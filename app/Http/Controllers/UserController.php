@@ -46,6 +46,12 @@ class UserController extends Controller
         return redirect()->route('register');
     }
 
+    public function show(User $user)
+    {
+        $user->load(['role:id,name', 'permissions']);
+        return view('users.show', compact('user'));
+    }
+
     public function edit(User $user)
     {
         $roles = Role::select('id', 'name', 'description')
@@ -65,21 +71,23 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $data = $request->validate([
-            'name'         => 'required|string|max:255',
-            'email'        => 'required|email|unique:users,email,' . $user->id,
-            'role_id'      => 'required|integer|exists:roles,id',
-            'cpf'          => 'required|string|max:14|unique:users,cpf,' . $user->id,
-            'rg'           => 'required|string|max:12',
-            'phone'        => 'required|string|max:20',
-            'zip_code'     => 'required|string|max:10',
-            'address'      => 'required|string|max:255',
-            'number'       => 'required|string|max:20',
-            'neighborhood' => 'required|string|max:100',
-            'city'         => 'required|string|max:100',
-            'state'        => 'required|string|max:2',
-            'password'     => 'nullable|min:8|confirmed',
-            'permissions'  => 'nullable|array',
-            'permissions.*'=> 'exists:permissions,id',
+            'name'           => 'required|string|max:255',
+            'email'          => 'required|email|unique:users,email,' . $user->id,
+            'role_id'        => 'required|integer|exists:roles,id',
+            'cpf'            => 'required|string|max:14|unique:users,cpf,' . $user->id,
+            'rg'             => 'required|string|max:12',
+            'phone'          => 'required|string|max:20',
+            'zip_code'       => 'required|string|max:10',
+            'address'        => 'required|string|max:255',
+            'number'         => 'required|string|max:20',
+            'complement'     => 'nullable|string|max:255',
+            'neighborhood'   => 'required|string|max:100',
+            'city'           => 'required|string|max:100',
+            'state'          => 'required|string|max:2',
+            'password'       => 'nullable|min:8|confirmed',
+            'permissions'    => 'nullable|array',
+            'permissions.*'  => 'exists:permissions,id',
+            'admission_date' => 'required|date',
         ]);
 
         if ($request->filled('password')) {

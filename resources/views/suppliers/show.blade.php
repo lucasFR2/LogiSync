@@ -5,7 +5,7 @@
 @section('page-subtitle', 'Detalhes do fornecedor')
 
 @section('content')
-<div style="max-width:720px;">
+<div class="w-full">
     <div class="card anim-entrance">
         <div class="card-header">
             <div style="display:flex; align-items:center; gap:0.75rem;">
@@ -75,6 +75,10 @@
                 <div style="grid-column: 1 / span 2;">
                     <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">Logradouro</div>
                     <div style="font-size:1.1rem; color:var(--text-primary);">{{ $supplier->street ?? '—' }}{{ $supplier->number ? ', ' . $supplier->number : '' }}</div>
+                </div>
+                <div>
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">Complemento</div>
+                    <div style="font-size:1.1rem; color:var(--text-primary); font-style:{{ $supplier->complement ? 'normal' : 'italic' }};">{{ $supplier->complement ?? '—' }}</div>
                 </div>
                 <div>
                     <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">Bairro</div>

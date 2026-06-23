@@ -43,6 +43,7 @@
                     <option value="">Status: Todos</option>
                     <option value="rascunho" {{ request('status') == 'rascunho' ? 'selected' : '' }}>Rascunho</option>
                     <option value="emitida" {{ request('status') == 'emitida' ? 'selected' : '' }}>Emitida</option>
+                    <option value="concluída" {{ request('status') == 'concluída' ? 'selected' : '' }}>Concluída</option>
                     <option value="cancelada" {{ request('status') == 'cancelada' ? 'selected' : '' }}>Cancelada</option>
                 </select>
 
@@ -76,6 +77,7 @@
                         <th>Destinatário</th>
                         <th>Data Emissão</th>
                         <th style="text-align: right;">Valor Total</th>
+                        <th style="text-align: center;">Conferência</th>
                         <th style="text-align: center;">Status</th>
                         <th style="text-align: center; width: 140px;">Ações</th>
                     </tr>
@@ -110,9 +112,22 @@
                             </td>
                             <td style="text-align: center;">
                                 @php
+                                    $confStyle = [
+                                        'Pendente' => ['bg' => 'var(--orange-bg)', 'color' => 'var(--orange)', 'icon' => 'fa-clock'],
+                                        'Conferida' => ['bg' => 'var(--green-bg)', 'color' => 'var(--green)', 'icon' => 'fa-circle-check'],
+                                        'Divergente' => ['bg' => 'var(--red-bg)', 'color' => 'var(--red)', 'icon' => 'fa-circle-xmark']
+                                    ][$invoice->conference_status] ?? ['bg' => 'var(--orange-bg)', 'color' => 'var(--orange)', 'icon' => 'fa-clock'];
+                                @endphp
+                                <span class="badge" style="background: {{ $confStyle['bg'] }}; color: {{ $confStyle['color'] }}; font-weight: 700; font-size: 0.75rem;">
+                                    <i class="fa-solid {{ $confStyle['icon'] }} mr-1"></i> {{ $invoice->conference_status ?? 'Pendente' }}
+                                </span>
+                            </td>
+                            <td style="text-align: center;">
+                                @php
                                     $statusStyle = [
                                         'rascunho' => ['bg' => 'var(--orange-bg)', 'color' => 'var(--orange)'],
                                         'emitida' => ['bg' => 'var(--green-bg)', 'color' => 'var(--green)'],
+                                        'concluída' => ['bg' => 'var(--green-bg)', 'color' => 'var(--green)'],
                                         'cancelada' => ['bg' => 'var(--red-bg)', 'color' => 'var(--red)']
                                     ][$invoice->status] ?? ['bg' => 'var(--bg-hover)', 'color' => 'var(--text-muted)'];
                                 @endphp

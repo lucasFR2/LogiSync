@@ -5,7 +5,7 @@
 @section('page-subtitle', $customer->name)
 
 @section('content')
-<div style="max-width:800px;">
+<div class="w-full">
     <div class="card anim-entrance">
         <div class="card-header">
             <div style="display:flex; align-items:center; gap:0.75rem;">
@@ -52,6 +52,16 @@
                     <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">Inscrição Estadual</div>
                     <div style="font-size:1.1rem; color:var(--text-primary);">{{ $customer->state_registration ?? '—' }}</div>
                 </div>
+                <div>
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">Data de Nascimento</div>
+                    <div style="font-size:1.1rem; color:var(--text-primary); font-weight:600;">
+                        {{ $customer->birth_date ? $customer->birth_date->format('d/m/Y') : '—' }}
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">Sexo</div>
+                    <div style="font-size:1.1rem; color:var(--text-primary); font-weight:600;">{{ $customer->gender ?? '—' }}</div>
+                </div>
             </div>
 
             <div style="height:1px; background:var(--border);"></div>
@@ -85,6 +95,10 @@
                 <div style="grid-column: 1 / span 2;">
                     <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">Endereço</div>
                     <div style="font-size:1.1rem; color:var(--text-primary);">{{ $customer->address ?? '—' }}{{ $customer->number ? ', ' . $customer->number : '' }}</div>
+                </div>
+                <div>
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">Complemento</div>
+                    <div style="font-size:1.1rem; color:var(--text-primary); font-style:{{ $customer->complement ? 'normal' : 'italic' }};">{{ $customer->complement ?? '—' }}</div>
                 </div>
                 <div>
                     <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">Bairro</div>

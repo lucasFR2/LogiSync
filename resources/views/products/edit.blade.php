@@ -9,7 +9,7 @@
 <style>
     .status-radio-label:has(input:checked) {
         background: var(--accent);
-        color: white;
+        color: var(--accent-fg);
         box-shadow: var(--shadow-md);
     }
     .status-radio-label:not(:has(input:checked)):hover {
@@ -29,7 +29,7 @@
 @endpush
 
 @section('content')
-<div style="max-width:1100px; margin: 0 auto;">
+<div class="w-full">
 
     @if($errors->any())
         <div class="alert alert-error mb-6">
@@ -98,9 +98,19 @@
                                     <select name="category" class="form-select" style="flex:1;">
                                         <option value="">-- Selecione --</option>
                                         @foreach($categories as $cat)
-                                            <option value="{{ $cat->name }}" {{ old('category', $product->category) == $cat->name ? 'selected' : '' }}>
-                                                {{ $cat->name }}
-                                            </option>
+                                            @if($cat->subcategories->count() > 0)
+                                                <optgroup label="{{ $cat->name }}">
+                                                    @foreach($cat->subcategories as $sub)
+                                                        <option value="{{ $sub->name }}" {{ old('category', $product->category) == $sub->name ? 'selected' : '' }}>
+                                                            {{ $sub->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </optgroup>
+                                            @else
+                                                <option value="{{ $cat->name }}" {{ old('category', $product->category) == $cat->name ? 'selected' : '' }}>
+                                                    {{ $cat->name }}
+                                                </option>
+                                            @endif
                                         @endforeach
                                     </select>
                                     <button type="button" class="btn btn-secondary" data-open-category-modal style="padding:0 .75rem;">
@@ -149,20 +159,20 @@
                 </div>
 
                 {{-- Pricing Dashboard --}}
-                <div class="price-calc-card">
-                    <div style="background:var(--accent); color:white; padding:1.25rem 2rem; display:flex; justify-content:space-between; align-items:center;">
+                <div class="price-calc-card" style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--r-lg);">
+                    <div style="background:var(--bg-hover); color:var(--text-primary); border-bottom:1px solid var(--border); padding:1.25rem 2rem; display:flex; justify-content:space-between; align-items:center;">
                         <div style="display:flex; align-items:center; gap:0.75rem;">
-                            <i class="fa-solid fa-calculator" style="font-size:1.25rem;"></i>
-                            <h3 style="font-family:'Outfit'; margin:0; font-size:1.15rem; font-weight:700;">Atualizar Formação de Preço</h3>
+                            <i class="fa-solid fa-calculator" style="font-size:1.25rem; color:var(--accent);"></i>
+                            <h3 style="font-family:'Outfit'; margin:0; font-size:1.15rem; font-weight:700; color:var(--text-primary);">Atualizar Formação de Preço</h3>
                         </div>
                         <div style="display:flex; gap:2rem;">
                             <div style="text-align:right;">
-                                <div style="font-size:0.7rem; opacity:0.7; text-transform:uppercase;">Margem s/ Venda</div>
-                                <div id="mrg_venda_badge" style="font-weight:800; font-family:'Outfit'; font-size:1.1rem;">0,00%</div>
+                                <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Margem s/ Venda</div>
+                                <div id="mrg_venda_badge" style="font-weight:800; font-family:'Outfit'; font-size:1.1rem; color:var(--text-primary);">0,00%</div>
                             </div>
                             <div style="text-align:right;">
-                                <div style="font-size:0.7rem; opacity:0.7; text-transform:uppercase;">Markup</div>
-                                <div id="mrg_custo_badge" style="font-weight:800; font-family:'Outfit'; font-size:1.1rem;">{{ number_format($product->margin_percent, 2, ',', '.') }}%</div>
+                                <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Markup</div>
+                                <div id="mrg_custo_badge" style="font-weight:800; font-family:'Outfit'; font-size:1.1rem; color:var(--text-primary);">{{ number_format($product->margin_percent, 2, ',', '.') }}%</div>
                             </div>
                         </div>
                     </div>
@@ -171,7 +181,7 @@
                         <div class="flex flex-mobile-col gap-6 items-start">
                             <div style="flex:1; width:100%;">
                                 <div style="margin-bottom:0.75rem; display:flex; align-items:center; gap:0.5rem; color:var(--text-secondary);">
-                                    <span style="background:var(--accent); color:white; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:800;">1</span>
+                                    <span style="background:var(--accent); color:var(--accent-fg); width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:800;">1</span>
                                     <span style="font-weight:700; font-size:0.8rem; text-transform:uppercase;">Investimento</span>
                                 </div>
                                 <div class="form-group">
@@ -184,7 +194,7 @@
 
                             <div style="flex:1.5; width:100%; background:var(--bg-hover); padding:1rem; border-radius:var(--r-md);">
                                 <div style="margin-bottom:0.75rem; display:flex; align-items:center; gap:0.5rem; color:var(--text-secondary);">
-                                    <span style="background:var(--accent); color:white; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:800;">2</span>
+                                    <span style="background:var(--accent); color:var(--accent-fg); width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:800;">2</span>
                                     <span style="font-weight:700; font-size:0.8rem; text-transform:uppercase;">Encargos / Impostos</span>
                                 </div>
                                 <div class="grid grid-2 gap-4">
@@ -209,9 +219,9 @@
 
                             <div class="hidden md:flex" style="margin-top:2.5rem; font-size:1.2rem; color:var(--border-strong);"><i class="fa-solid fa-equals"></i></div>
 
-                            <div style="flex:1; width:100%; border:2px solid var(--accent-subtle); padding:1rem; border-radius:var(--r-md); background:white; text-align:center;">
+                            <div style="flex:1; width:100%; border:2px solid var(--accent-subtle); padding:1rem; border-radius:var(--r-md); background:var(--bg-elevated); text-align:center;">
                                 <div style="margin-bottom:0.75rem; display:flex; align-items:center; gap:0.5rem; color:var(--text-secondary); justify-content:center;">
-                                    <span style="background:var(--accent); color:white; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:800;">3</span>
+                                    <span style="background:var(--accent); color:var(--accent-fg); width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:800;">3</span>
                                     <span style="font-weight:700; font-size:0.8rem; text-transform:uppercase;">Custo Real</span>
                                 </div>
                                 <div id="real_cost_display" style="font-size:1.5rem; font-weight:800; font-family:'Outfit'; color:var(--accent);">R$ {{ number_format($product->cost_price, 2, ',', '.') }}</div>
@@ -228,12 +238,164 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" style="font-weight:700; color:var(--green);">Preço Venda Final (R$)</label>
-                                    <input type="number" step="0.01" name="unit_price" id="unit_price" value="{{ old('unit_price', $product->unit_price) }}" class="form-input price-calc" style="font-size:1.1rem; font-weight:800; border-color:var(--green); background:white;">
+                                    <input type="number" step="0.01" name="unit_price" id="unit_price" value="{{ old('unit_price', $product->unit_price) }}" class="form-input price-calc" style="font-size:1.1rem; font-weight:800; border-color:var(--green);">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" style="opacity:0.8;">Preço Atacado / Promo</label>
                                     <input type="number" step="0.01" name="wholesale_price" id="wholesale_price" value="{{ old('wholesale_price', $product->wholesale_price) }}" class="form-input" placeholder="Opcional">
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                </div>
+ 
+                {{-- Card Fiscais 2026 --}}
+                <div class="card p-6" style="border: 1px solid var(--border); background: var(--bg-surface);">
+                    <h3 style="font-family:'Outfit'; font-size:1.15rem; color:var(--accent); margin-bottom:1.5rem; display:flex; align-items:center; gap:0.65rem; font-weight: 700;">
+                        <i class="fa-solid fa-scale-balanced"></i> Informações Fiscais Padrão (Reforma 2026)
+                    </h3>
+                    
+                    <div class="grid grid-3 grid-mobile-1 gap-6 mb-6">
+                        <div class="form-group">
+                            <label class="form-label">NCM (Nomenclatura Comum Mercosul)</label>
+                            <input type="text" name="ncm" value="{{ old('ncm', $product->ncm) }}" placeholder="Ex: 8528.52.20" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CFOP Padrão de Saída</label>
+                            <input type="text" name="cfop_default" value="{{ old('cfop_default', $product->cfop_default ?? '5.102') }}" placeholder="Ex: 5.102" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CEST (Substituição Tributária)</label>
+                            <input type="text" name="cest" value="{{ old('cest', $product->cest) }}" placeholder="Ex: 21.002.00" class="form-input">
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                        <h4 style="font-family:'Outfit'; font-size:1rem; color:var(--text-secondary); margin-bottom:1rem; font-weight: 600;">Regra de ICMS & ICMS ST</h4>
+                        <div class="grid grid-4 grid-mobile-1 gap-4">
+                            <div class="form-group">
+                                <label class="form-label">Origem do Produto</label>
+                                <select name="icms_orig" class="form-select">
+                                    <option value="0" {{ old('icms_orig', $product->icms_orig) == 0 ? 'selected' : '' }}>0 - Nacional</option>
+                                    <option value="1" {{ old('icms_orig', $product->icms_orig) == 1 ? 'selected' : '' }}>1 - Estrangeira - Importação Direta</option>
+                                    <option value="2" {{ old('icms_orig', $product->icms_orig) == 2 ? 'selected' : '' }}>2 - Estrangeira - Adquirida no mercado interno</option>
+                                    <option value="3" {{ old('icms_orig', $product->icms_orig) == 3 ? 'selected' : '' }}>3 - Nacional - Conteúdo de Importação > 40%</option>
+                                    <option value="4" {{ old('icms_orig', $product->icms_orig) == 4 ? 'selected' : '' }}>4 - Nacional - Produção Básica</option>
+                                    <option value="5" {{ old('icms_orig', $product->icms_orig) == 5 ? 'selected' : '' }}>5 - Nacional - Conteúdo de Importação <= 40%</option>
+                                    <option value="6" {{ old('icms_orig', $product->icms_orig) == 6 ? 'selected' : '' }}>6 - Estrangeira - Importação Direta (Sem Similar)</option>
+                                    <option value="7" {{ old('icms_orig', $product->icms_orig) == 7 ? 'selected' : '' }}>7 - Estrangeira - Adquirida no mercado interno (Sem Similar)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">CST/CSOSN ICMS</label>
+                                <select name="icms_cst" class="form-select">
+                                    <option value="00" {{ old('icms_cst', $product->icms_cst) == '00' ? 'selected' : '' }}>00 - Tributada integralmente</option>
+                                    <option value="10" {{ old('icms_cst', $product->icms_cst) == '10' ? 'selected' : '' }}>10 - Tributada e com cobrança de ST</option>
+                                    <option value="20" {{ old('icms_cst', $product->icms_cst) == '20' ? 'selected' : '' }}>20 - Com redução de BC</option>
+                                    <option value="30" {{ old('icms_cst', $product->icms_cst) == '30' ? 'selected' : '' }}>30 - Isenta ou não tributada e com cobrança de ST</option>
+                                    <option value="40" {{ old('icms_cst', $product->icms_cst) == '40' ? 'selected' : '' }}>40 - Isenta</option>
+                                    <option value="41" {{ old('icms_cst', $product->icms_cst) == '41' ? 'selected' : '' }}>41 - Não tributada</option>
+                                    <option value="50" {{ old('icms_cst', $product->icms_cst) == '50' ? 'selected' : '' }}>50 - Suspensão</option>
+                                    <option value="51" {{ old('icms_cst', $product->icms_cst) == '51' ? 'selected' : '' }}>51 - Diferimento</option>
+                                    <option value="60" {{ old('icms_cst', $product->icms_cst) == '60' ? 'selected' : '' }}>60 - ICMS cobrado anteriormente por ST</option>
+                                    <option value="70" {{ old('icms_cst', $product->icms_cst) == '70' ? 'selected' : '' }}>70 - Com redução de BC e cobrança de ST</option>
+                                    <option value="90" {{ old('icms_cst', $product->icms_cst) == '90' ? 'selected' : '' }}>90 - Outras</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Alíquota ICMS (%)</label>
+                                <input type="number" step="0.01" name="icms_rate" value="{{ old('icms_rate', $product->icms_rate) }}" class="form-input" placeholder="Ex: 18">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Alíquota ICMS ST (%)</label>
+                                <input type="number" step="0.01" name="icms_st_rate" value="{{ old('icms_st_rate', $product->icms_st_rate) }}" class="form-input" placeholder="Ex: 12">
+                        </div>
+                        <div class="grid grid-4 grid-mobile-1 gap-4 mt-4">
+                            <div class="form-group">
+                                <label class="form-label">Margem MVA ST (%)</label>
+                                <input type="number" step="0.01" name="icms_st_mva" value="{{ old('icms_st_mva', $product->icms_st_mva) }}" class="form-input" placeholder="Ex: 40">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">CST ICMS ST</label>
+                                <select name="icms_st_cst" class="form-select">
+                                    <option value="10" {{ old('icms_st_cst', $product->icms_st_cst) == '10' ? 'selected' : '' }}>10 - Tributada com cobrança de ST</option>
+                                    <option value="30" {{ old('icms_st_cst', $product->icms_st_cst) == '30' ? 'selected' : '' }}>30 - Isenta/Não Trib. com cobrança de ST</option>
+                                    <option value="70" {{ old('icms_st_cst', $product->icms_st_cst) == '70' ? 'selected' : '' }}>70 - Redução de BC com cobrança de ST</option>
+                                    <option value="90" {{ old('icms_st_cst', $product->icms_st_cst) == '90' ? 'selected' : '' }}>90 - Outros com cobrança de ST</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Modalidade Determinação BC</label>
+                                <select name="icms_mod_bc" class="form-select">
+                                    <option value="3" {{ old('icms_mod_bc', $product->icms_mod_bc) == 3 ? 'selected' : '' }}>3 - Valor da operação</option>
+                                    <option value="0" {{ old('icms_mod_bc', $product->icms_mod_bc) == 0 ? 'selected' : '' }}>0 - Margem Valor Agregado (%)</option>
+                                    <option value="1" {{ old('icms_mod_bc', $product->icms_mod_bc) == 1 ? 'selected' : '' }}>1 - Pauta (Valor)</option>
+                                    <option value="2" {{ old('icms_mod_bc', $product->icms_mod_bc) == 2 ? 'selected' : '' }}>2 - Preço Tabelado Máx. (Valor)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Redução de BC (%)</label>
+                                <input type="number" step="0.01" name="icms_red_bc" value="{{ old('icms_red_bc', $product->icms_red_bc) }}" class="form-input" placeholder="Ex: 20">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 1.5rem;">
+                        <h4 style="font-family:'Outfit'; font-size:1rem; color:var(--text-secondary); margin-bottom:1rem; font-weight: 600;">PIS, COFINS, IPI & ISS</h4>
+                        <div class="grid grid-4 grid-mobile-1 gap-4">
+                            <div class="form-group">
+                                <label class="form-label">Alíquota PIS (%)</label>
+                                <input type="number" step="0.01" name="pis_rate" value="{{ old('pis_rate', $product->pis_rate) }}" class="form-input" placeholder="Ex: 1.65">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Alíquota COFINS (%)</label>
+                                <input type="number" step="0.01" name="cofins_rate" value="{{ old('cofins_rate', $product->cofins_rate) }}" class="form-input" placeholder="Ex: 7.6">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Alíquota IPI (%)</label>
+                                <input type="number" step="0.01" name="ipi_rate" value="{{ old('ipi_rate', $product->ipi_rate) }}" class="form-input" placeholder="Ex: 5">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Alíquota ISS (%)</label>
+                                <input type="number" step="0.01" name="iss_rate" value="{{ old('iss_rate', $product->iss_rate) }}" class="form-input" placeholder="Ex: 3">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 1.5rem;">
+                        <h4 style="font-family:'Outfit'; font-size:1rem; color:var(--text-secondary); margin-bottom:1rem; font-weight: 600;">Retenções Federais (CSLL, IRPJ, CPP)</h4>
+                        <div class="grid grid-3 grid-mobile-1 gap-4">
+                            <div class="form-group">
+                                <label class="form-label">Alíquota CSLL (%)</label>
+                                <input type="number" step="0.01" name="csll_rate" value="{{ old('csll_rate', $product->csll_rate) }}" class="form-input" placeholder="Ex: 9">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Alíquota IRPJ (%)</label>
+                                <input type="number" step="0.01" name="irpj_rate" value="{{ old('irpj_rate', $product->irpj_rate) }}" class="form-input" placeholder="Ex: 15">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Alíquota CPP (%)</label>
+                                <input type="number" step="0.01" name="cpp_rate" value="{{ old('cpp_rate', $product->cpp_rate) }}" class="form-input" placeholder="Ex: 20">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 1.5rem;">
+                        <h4 style="font-family:'Outfit'; font-size:1rem; color:var(--text-secondary); margin-bottom:1rem; font-weight: 600;">Reforma Tributária 2026 (IBS, CBS & IS)</h4>
+                        <div class="grid grid-3 grid-mobile-1 gap-4">
+                            <div class="form-group">
+                                <label class="form-label">Alíquota IBS (%)</label>
+                                <input type="number" step="0.01" name="ibs_rate" value="{{ old('ibs_rate', $product->ibs_rate) }}" class="form-input" placeholder="Ex: 0.1">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Alíquota CBS (%)</label>
+                                <input type="number" step="0.01" name="cbs_rate" value="{{ old('cbs_rate', $product->cbs_rate) }}" class="form-input" placeholder="Ex: 0.9">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Alíquota IS (Imposto Seletivo) (%)</label>
+                                <input type="number" step="0.01" name="is_rate" value="{{ old('is_rate', $product->is_rate) }}" class="form-input" placeholder="Ex: 1.5">
                             </div>
                         </div>
                     </div>

@@ -7,6 +7,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\CarrierController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -56,6 +57,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('permission:estoque.entradas')->group(function () {
         Route::post('locations', [App\Http\Controllers\WarehouseLocationController::class, 'store'])->name('locations.store');
+        Route::put('locations/{location}', [App\Http\Controllers\WarehouseLocationController::class, 'update'])->name('locations.update');
         Route::delete('locations/{location}', [App\Http\Controllers\WarehouseLocationController::class, 'destroy'])->name('locations.destroy');
         Route::post('locations/generate', [App\Http\Controllers\WarehouseLocationController::class, 'generate'])->name('locations.generate');
     });
@@ -77,6 +79,12 @@ Route::middleware('auth')->group(function () {
         Route::resource('customers', CustomerController::class);
     });
 
+    // ============ TRANSPORTADORAS ============
+    Route::middleware('permission:transportadoras.gerenciar')->group(function () {
+        Route::resource('carriers', CarrierController::class);
+        Route::get('/carriers/list', [CarrierController::class, 'list'])->name('carriers.list');
+    });
+
     // ============ NOTAS FISCAIS ============
     Route::middleware('permission:notas_fiscais.emitir')->group(function () {
         Route::get('invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
@@ -87,6 +95,9 @@ Route::middleware('auth')->group(function () {
         Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
         Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
         Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+        Route::post('invoices/{invoice}/confer', [InvoiceController::class, 'confer'])->name('invoices.confer');
+        Route::get('invoices/{invoice}/confer-workflow', [InvoiceController::class, 'conferWorkflow'])->name('invoices.confer-workflow');
+        Route::post('invoices/{invoice}/confer-save', [InvoiceController::class, 'conferSave'])->name('invoices.confer-save');
     });
 
     Route::middleware('permission:notas_fiscais.editar')->group(function () {
@@ -94,6 +105,7 @@ Route::middleware('auth')->group(function () {
         Route::put('invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
         Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
         Route::post('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
+        Route::post('invoices/{invoice}/conclude', [InvoiceController::class, 'conclude'])->name('invoices.conclude');
     });
 
     // ============ MANIFESTAÇÕES ============
@@ -104,6 +116,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/{manifestation}', [App\Http\Controllers\ManifestationController::class, 'show'])->name('show');
         Route::post('/{manifestation}/manifest', [App\Http\Controllers\ManifestationController::class, 'manifest'])->name('manifest');
         Route::get('/{manifestation}/danfe', [App\Http\Controllers\ManifestationController::class, 'danfe'])->name('danfe');
+        Route::get('/{manifestation}/confer-workflow', [App\Http\Controllers\ManifestationController::class, 'conferWorkflow'])->name('confer-workflow');
+        Route::post('/{manifestation}/confer-save', [App\Http\Controllers\ManifestationController::class, 'conferSave'])->name('confer-save');
     });
 
     // ============ LOGS ============
@@ -113,9 +127,10 @@ Route::middleware('auth')->group(function () {
 
     // ============ ADMINISTRAÇÃO ============
     Route::middleware('permission:cargos.gerenciar')->group(function () {
-        Route::resource('roles', App\Http\Controllers\RoleController::class)->except(['show', 'create', 'edit']);
+        Route::resource('roles', App\Http\Controllers\RoleController::class)->except(['show']);
         Route::get('/admin', fn() => 'Área Admin')->name('admin');
     });
+
 });
 
 Route::get('/', fn() => redirect()->route('login'));

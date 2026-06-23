@@ -9,7 +9,7 @@
 @endpush
 
 @section('content')
-<div style="max-width:860px;">
+<div class="w-full">
 
     @if($errors->any())
         <div class="alert alert-error" style="margin-bottom:1.5rem;">
@@ -44,17 +44,24 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label class="form-label">Produto <span style="color:var(--red);">*</span></label>
-                        <select name="product_id" id="productSelect" required class="form-select" style="width:100%;">
+                        <div style="display:flex; gap:0.5rem;">
+                            <input type="hidden" name="product_id" id="productSelect" required value="{{ old('product_id') }}">
+                            <input type="text" id="productSelect_display" readonly class="form-input" style="flex:1; background:var(--bg-hover); cursor:pointer;" placeholder="Clique para pesquisar e selecionar o produto..." onclick="document.getElementById('btn-open-product-picker').click()">
+                            <button type="button" class="btn btn-secondary" id="btn-open-product-picker" style="padding:0 0.85rem;" title="Buscar produto (lupa)">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                        <select id="productSelectHidden" style="display:none;">
                             <option value="">— Selecionar produto —</option>
                             @foreach($products as $p)
                                 <option value="{{ $p->id }}"
+                                    data-name="{{ $p->name }}"
                                     data-stock="{{ $p->quantity }}"
                                     data-unit="{{ $p->unit ?? 'un' }}"
                                     data-price="{{ number_format($p->unit_price, 2, ',', '.') }}"
                                     data-category="{{ $p->category ?? '—' }}"
                                     data-supplier="{{ $p->supplier?->name ?? '—' }}"
-                                    data-location="{{ $p->location?->full_code ?? $p->warehouse_location ?? '—' }}"
-                                    {{ old('product_id') == $p->id ? 'selected' : '' }}>
+                                    data-location="{{ $p->location?->full_code ?? $p->warehouse_location ?? '—' }}">
                                     {{ $p->name }} ({{ $p->barcode ?? 'Sem Código' }})
                                 </option>
                             @endforeach
@@ -147,6 +154,35 @@
                 </div>
             </div>
 
+            {{-- SECTION 3: Conference Verification --}}
+            <div class="card anim-entrance" style="animation-delay:0.1s;">
+                <div class="card-header">
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        <div style="width:10px; height:24px; background:var(--accent); border-radius:4px;"></div>
+                        <h3 style="margin:0;">3. Conferência de Mercadoria</h3>
+                    </div>
+                </div>
+                <div class="card-body" style="display:flex; flex-direction:column; gap:1.5rem;">
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Quantidade Conferida <span style="color:var(--red);">*</span></label>
+                            <input type="number" name="checked_quantity" value="{{ old('checked_quantity') }}" min="0" required class="form-input" placeholder="Ex: 100">
+                            <small style="color:var(--text-muted);">A quantidade real contada que será adicionada ao estoque.</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Status da Conferência</label>
+                            <div style="padding: 0.75rem; background: var(--bg-hover); border: 1px solid var(--border); border-radius: var(--r-md); font-weight: 700; height: 42px; display: flex; align-items: center;" id="conference_status_badge">
+                                <span class="text-muted">Informe as quantidades acima</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Observações da Conferência</label>
+                        <textarea name="conference_notes" rows="2" class="form-textarea" placeholder="Descreva divergências ou observações do recebimento...">{{ old('conference_notes') }}</textarea>
+                    </div>
+                </div>
+            </div>
+
             {{-- Actions --}}
             <div style="display:flex; gap:1rem; justify-content:flex-end; padding-top:0.5rem;">
                 <a href="{{ route('inventory.index') }}" class="btn btn-secondary">Cancelar</a>
@@ -160,12 +196,15 @@
 </div>
 
 @include('partials.supplier_quick_create')
+@include('partials.product_picker')
 @endsection
 
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const sel  = document.getElementById('productSelect');
+    const sel  = document.getElementById('productSelectHidden');
+    const displayInp = document.getElementById('productSelect_display');
+    const inputVal = document.getElementById('productSelect');
     const card = document.getElementById('productInfoCard');
     const dateInput = document.getElementById('entry_date_input');
     
@@ -180,7 +219,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     sel.addEventListener('change', function() {
         const opt = this.options[this.selectedIndex];
-        if (!opt.value) { card.style.display = 'none'; return; }
+        if (!opt || !opt.value) { card.style.display = 'none'; return; }
+
+        displayInp.value = opt.dataset.name || opt.text;
+        inputVal.value = opt.value;
 
         document.getElementById('pi_stock').textContent    = (opt.dataset.stock || '0') + ' ' + (opt.dataset.unit || 'un');
         document.getElementById('pi_price').textContent    = 'R$ ' + (opt.dataset.price || '0,00');
@@ -191,7 +233,42 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Trigger on page load if old value present
-    if (sel.value) sel.dispatchEvent(new Event('change'));
+    if (inputVal && inputVal.value) {
+        sel.value = inputVal.value;
+        sel.dispatchEvent(new Event('change'));
+    }
+
+    // Conference Live Verification
+    const qtyInput = document.querySelector('input[name="quantity"]');
+    const checkedQtyInput = document.querySelector('input[name="checked_quantity"]');
+    const statusBadge = document.getElementById('conference_status_badge');
+
+    function updateConferenceStatus() {
+        const qty = parseInt(qtyInput.value);
+        const checkedQty = parseInt(checkedQtyInput.value);
+
+        if (isNaN(qty) || isNaN(checkedQty)) {
+            statusBadge.innerHTML = '<span style="color:var(--text-muted);"><i class="fa-solid fa-spinner"></i> Informe as quantidades</span>';
+            statusBadge.style.borderColor = 'var(--border)';
+            statusBadge.style.background = 'var(--bg-hover)';
+            return;
+        }
+
+        if (qty === checkedQty) {
+            statusBadge.innerHTML = '<span style="color:var(--green);"><i class="fa-solid fa-circle-check"></i> Sem Divergência (Confirmada)</span>';
+            statusBadge.style.borderColor = 'var(--green)';
+            statusBadge.style.background = 'var(--green-bg)';
+        } else {
+            statusBadge.innerHTML = '<span style="color:var(--orange);"><i class="fa-solid fa-triangle-exclamation"></i> Divergente</span>';
+            statusBadge.style.borderColor = 'var(--orange)';
+            statusBadge.style.background = 'var(--orange-bg)';
+        }
+    }
+
+    if (qtyInput && checkedQtyInput && statusBadge) {
+        qtyInput.addEventListener('input', updateConferenceStatus);
+        checkedQtyInput.addEventListener('input', updateConferenceStatus);
+    }
 });
 </script>
 @endpush

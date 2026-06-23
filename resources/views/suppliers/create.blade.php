@@ -5,7 +5,7 @@
 @section('page-subtitle', 'Preencha os dados do fornecedor')
 
 @section('content')
-<div style="max-width:720px;">
+<div class="w-full">
 
     @if($errors->any())
         <div class="alert badge-danger" style="margin-bottom:1.5rem; padding:1.25rem; border-radius:var(--r-md); display:flex; align-items:flex-start; gap:1rem;">
@@ -90,6 +90,11 @@
                     <div class="form-group">
                         <label class="form-label">Número</label>
                         <input type="text" name="number" value="{{ old('number') }}" placeholder="Ex: 123" class="form-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Complemento</label>
+                        <input type="text" name="complement" value="{{ old('complement') }}" placeholder="Apto, Bloco, etc." class="form-input">
                     </div>
 
                     <div class="form-group">

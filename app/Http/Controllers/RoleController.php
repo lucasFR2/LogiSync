@@ -16,12 +16,17 @@ class RoleController extends Controller
             ->orderBy('name')
             ->get();
 
+        return view('roles.index', compact('roles'));
+    }
+
+    public function create()
+    {
         $permissions = Permission::select('id', 'name', 'label', 'group')
             ->orderBy('group')
             ->orderBy('label')
             ->get()
             ->groupBy('group');
-        return view('roles.index', compact('roles', 'permissions'));
+        return view('roles.create', compact('permissions'));
     }
 
     public function store(Request $request)
@@ -47,6 +52,18 @@ class RoleController extends Controller
         return redirect()->route('roles.index')->with('success', 'Cargo criado com sucesso!');
     }
 
+    public function edit(Role $role)
+    {
+        $role->load('permissions');
+        $permissions = Permission::select('id', 'name', 'label', 'group')
+            ->orderBy('group')
+            ->orderBy('label')
+            ->get()
+            ->groupBy('group');
+        $rolePermissions = $role->permissions->pluck('id')->toArray();
+        return view('roles.edit', compact('role', 'permissions', 'rolePermissions'));
+    }
+
     public function update(Request $request, Role $role)
     {
         $validated = $request->validate([
@@ -56,12 +73,21 @@ class RoleController extends Controller
             'permissions.*'=> 'exists:permissions,id',
         ]);
 
+        // Evita alterar o nome do cargo 'Administrador'
+        if ($role->name === 'Administrador') {
+            $validated['name'] = 'Administrador';
+        }
+
         $role->update([
             'name' => $validated['name'],
             'description' => $validated['description'],
         ]);
 
-        $role->permissions()->sync($validated['permissions'] ?? []);
+        // O cargo 'Administrador' possui acesso total por padrão e seus checkboxes vêm desabilitados no form,
+        // logo, não deve ter suas permissões sobrescritas (o que as removeria completamente).
+        if ($role->name !== 'Administrador') {
+            $role->permissions()->sync($validated['permissions'] ?? []);
+        }
 
         Logger::log('update_role', "O usuário alterou o cargo: {$role->name} e suas permissões.");
 

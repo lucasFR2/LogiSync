@@ -39,10 +39,88 @@ class StoreInvoiceRequest extends FormRequest
             'items.*.unit'        => 'nullable|string|max:10',
             'items.*.ncm'         => 'nullable|string|max:15',
             'items.*.cfop'        => 'nullable|string|max:10',
-            'items.*.icms_rate'   => 'nullable|numeric|min:0',
-            'items.*.ipi_rate'    => 'nullable|numeric|min:0',
-            'items.*.pis_rate'    => 'nullable|numeric|min:0',
-            'items.*.cofins_rate' => 'nullable|numeric|min:0',
+            
+            // ICMS
+            'items.*.icms_cst'     => 'nullable|string|max:10',
+            'items.*.icms_orig'    => 'nullable|integer',
+            'items.*.icms_mod_bc'  => 'nullable|integer',
+            'items.*.icms_red_bc'  => 'nullable|numeric|min:0',
+            'items.*.icms_base'    => 'nullable|numeric|min:0',
+            'items.*.icms_rate'    => 'nullable|numeric|min:0',
+            'items.*.icms_value'   => 'nullable|numeric|min:0',
+
+            // ICMS ST
+            'items.*.icms_st_cst'  => 'nullable|string|max:10',
+            'items.*.icms_st_mva'  => 'nullable|numeric|min:0',
+            'items.*.icms_st_base' => 'nullable|numeric|min:0',
+            'items.*.icms_st_rate' => 'nullable|numeric|min:0',
+            'items.*.icms_st_value'=> 'nullable|numeric|min:0',
+
+            // IPI
+            'items.*.ipi_cst'      => 'nullable|string|max:10',
+            'items.*.ipi_enq'      => 'nullable|string|max:10',
+            'items.*.ipi_base'     => 'nullable|numeric|min:0',
+            'items.*.ipi_rate'     => 'nullable|numeric|min:0',
+            'items.*.ipi_value'    => 'nullable|numeric|min:0',
+
+            // PIS
+            'items.*.pis_cst'      => 'nullable|string|max:10',
+            'items.*.pis_base'     => 'nullable|numeric|min:0',
+            'items.*.pis_rate'     => 'nullable|numeric|min:0',
+            'items.*.pis_value'    => 'nullable|numeric|min:0',
+
+            // COFINS
+            'items.*.cofins_cst'   => 'nullable|string|max:10',
+            'items.*.cofins_base'  => 'nullable|numeric|min:0',
+            'items.*.cofins_rate'  => 'nullable|numeric|min:0',
+            'items.*.cofins_value' => 'nullable|numeric|min:0',
+
+            // ISS
+            'items.*.iss_cst'      => 'nullable|string|max:10',
+            'items.*.iss_base'     => 'nullable|numeric|min:0',
+            'items.*.iss_rate'     => 'nullable|numeric|min:0',
+            'items.*.iss_value'    => 'nullable|numeric|min:0',
+
+            // CSLL
+            'items.*.csll_cst'     => 'nullable|string|max:10',
+            'items.*.csll_base'    => 'nullable|numeric|min:0',
+            'items.*.csll_rate'    => 'nullable|numeric|min:0',
+            'items.*.csll_value'   => 'nullable|numeric|min:0',
+
+            // IRPJ
+            'items.*.irpj_cst'     => 'nullable|string|max:10',
+            'items.*.irpj_base'    => 'nullable|numeric|min:0',
+            'items.*.irpj_rate'    => 'nullable|numeric|min:0',
+            'items.*.irpj_value'   => 'nullable|numeric|min:0',
+
+            // CPP
+            'items.*.cpp_cst'      => 'nullable|string|max:10',
+            'items.*.cpp_base'     => 'nullable|numeric|min:0',
+            'items.*.cpp_rate'     => 'nullable|numeric|min:0',
+            'items.*.cpp_value'    => 'nullable|numeric|min:0',
+
+            // Reforma 2026
+            'items.*.ibs_cst'      => 'nullable|string|max:10',
+            'items.*.ibs_base'     => 'nullable|numeric|min:0',
+            'items.*.ibs_rate'     => 'nullable|numeric|min:0',
+            'items.*.ibs_value'    => 'nullable|numeric|min:0',
+
+            'items.*.cbs_cst'      => 'nullable|string|max:10',
+            'items.*.cbs_base'     => 'nullable|numeric|min:0',
+            'items.*.cbs_rate'     => 'nullable|numeric|min:0',
+            'items.*.cbs_value'    => 'nullable|numeric|min:0',
+
+            'items.*.is_cst'       => 'nullable|string|max:10',
+            'items.*.is_base'      => 'nullable|numeric|min:0',
+            'items.*.is_rate'      => 'nullable|numeric|min:0',
+            'items.*.is_value'     => 'nullable|numeric|min:0',
+
+            // Importação
+            'items.*.ii_base'      => 'nullable|numeric|min:0',
+            'items.*.ii_rate'      => 'nullable|numeric|min:0',
+            'items.*.ii_value'     => 'nullable|numeric|min:0',
+            'items.*.ii_desp'      => 'nullable|numeric|min:0',
+            'items.*.ii_iof'       => 'nullable|numeric|min:0',
         ];
     }
 }

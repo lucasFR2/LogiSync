@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Carrier;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Product;
@@ -56,13 +57,15 @@ class InvoiceController extends Controller
     public function create()
     {
         $number    = Invoice::nextNumber();
-        $products  = Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode', 'quantity']);
+        $products  = Product::orderBy('name')->get();
         $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
         $customers = Customer::orderBy('name')->get(['id', 'name', 'document', 'email', 'phone', 'address', 'city', 'state', 'zip_code']);
 
+        $carriers  = \App\Models\Carrier::orderBy('name')->get(['id','name','cnpj','state_registration','street','number','city','state','vehicle_plate','vehicle_uf']);
+
         $invoice = null; // Garante que a variável existe na view
 
-        return view('invoices.create', compact('number', 'products', 'suppliers', 'customers', 'invoice'));
+        return view('invoices.create', compact('number', 'products', 'suppliers', 'customers', 'carriers', 'invoice'));
     }
 
     /**
@@ -91,6 +94,7 @@ class InvoiceController extends Controller
     {
         $invoice->load([
             'user:id,name',
+            'conferredBy:id,name',
             'items' => function ($query) {
                 $query->select([
                     'id',
@@ -118,11 +122,13 @@ class InvoiceController extends Controller
         }
 
         $invoice->load('items.product', 'supplier');
-        $products  = Product::orderBy('name')->get(['id', 'name', 'unit_price', 'unit', 'barcode']);
+        $products  = Product::orderBy('name')->get();
         $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
         $customers = Customer::orderBy('name')->get(['id', 'name', 'document', 'email', 'phone', 'address', 'city', 'state', 'zip_code']);
 
-        return view('invoices.create', compact('invoice', 'products', 'suppliers', 'customers'));
+        $carriers  = \App\Models\Carrier::orderBy('name')->get(['id','name','cnpj','state_registration','street','number','city','state','vehicle_plate','vehicle_uf']);
+
+        return view('invoices.create', compact('invoice', 'products', 'suppliers', 'customers', 'carriers'));
     }
 
     /**
@@ -194,5 +200,115 @@ class InvoiceController extends Controller
         $filename = 'NF-' . $invoice->number . '.pdf';
 
         return $pdf->download($filename);
+    }
+
+    /**
+     * Realiza a conferência da nota fiscal
+     */
+    public function confer(Request $request, Invoice $invoice)
+    {
+        $validated = $request->validate([
+            'conference_status' => 'required|in:Pendente,Conferida,Divergente',
+            'conference_notes'  => 'nullable|string|max:1000',
+        ]);
+
+        $invoice->update([
+            'conference_status' => $validated['conference_status'],
+            'conference_notes'  => $validated['conference_notes'],
+            'conferred_by'      => Auth::id(),
+            'conferred_at'      => now(),
+        ]);
+
+        Logger::log('confer_invoice', "O usuário realizou a conferência da NF #{$invoice->number} com status: {$validated['conference_status']}");
+
+        return redirect()->route('invoices.show', $invoice)
+                         ->with('success', 'Conferência da nota fiscal atualizada com sucesso!');
+    }
+
+    /**
+     * Tela de conferência interativa de saída (expedição)
+     */
+    public function conferWorkflow(Invoice $invoice)
+    {
+        $invoice->load(['items.product', 'user:id,name']);
+        return view('invoices.confer', compact('invoice'));
+    }
+
+    /**
+     * Salvar resultado da conferência interativa de saída
+     */
+    public function conferSave(Request $request, Invoice $invoice)
+    {
+        $request->validate([
+            'checked_quantities' => 'required|array',
+            'checked_quantities.*' => 'numeric|min:0',
+        ]);
+
+        $invoice->load('items');
+
+        $hasDivergence = false;
+        $divergences = [];
+
+        foreach ($invoice->items as $item) {
+            $checked = (float) ($request->checked_quantities[$item->id] ?? 0);
+            $item->update(['checked_quantity' => $checked]);
+
+            if (abs($checked - (float)$item->quantity) > 0.001) {
+                $hasDivergence = true;
+                $diff = $checked - (float)$item->quantity;
+                $type = $diff > 0 ? 'EXCESSO' : 'FALTA';
+                $divergences[] = "{$item->description}: {$type} de " . abs($diff) . " " . ($item->unit ?? 'UN');
+            }
+        }
+
+        $status = $hasDivergence ? 'Divergente' : 'Conferida';
+        $notes = $hasDivergence
+            ? "Divergências encontradas:\n" . implode("\n", $divergences)
+            : 'Conferência realizada sem divergências.';
+
+        $invoice->update([
+            'conference_status' => $status,
+            'conference_notes'  => $notes,
+            'conferred_by'      => Auth::id(),
+            'conferred_at'      => now(),
+        ]);
+
+        Logger::log('confer_invoice_workflow', "O usuário realizou a conferência interativa da NF #{$invoice->number} com status: {$status}");
+
+        if ($status === 'Conferida' && $invoice->status === 'emitida' && $invoice->type === 'saida') {
+            $this->invoiceService->concludeInvoice($invoice);
+        }
+
+        return redirect()->route('invoices.show', $invoice)
+                          ->with('success', "Conferência finalizada com status: {$status}" . ($status === 'Conferida' ? " e estoque baixado!" : ""));
+    }
+
+    /**
+     * Concluir faturamento e dar baixa no estoque
+     */
+    public function conclude(Invoice $invoice)
+    {
+        if ($invoice->type !== 'saida') {
+            return redirect()->back()->with('error', 'Apenas notas de saída podem ser concluídas.');
+        }
+
+        if ($invoice->status === 'concluída') {
+            return redirect()->back()->with('error', 'Esta nota já está concluída.');
+        }
+
+        if ($invoice->status !== 'emitida') {
+            return redirect()->back()->with('error', 'Apenas notas emitidas podem ser concluídas.');
+        }
+
+        try {
+            $this->invoiceService->concludeInvoice($invoice);
+
+            Logger::log('conclude_invoice', "O faturamento da NF #{$invoice->number} foi concluído manualmente.");
+
+            return redirect()->route('invoices.show', $invoice)
+                             ->with('success', 'Nota fiscal concluída e estoque baixado com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erro ao concluir nota: ' . $e->getMessage());
+        }
     }
 }
