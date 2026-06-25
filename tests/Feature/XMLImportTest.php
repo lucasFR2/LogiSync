@@ -349,3 +349,107 @@ test('outbound invoice calculates total including IPI and ICMS ST correctly', fu
     // Total should be: subtotal (200.00) + ICMS ST (28.92) + IPI (10.00) = 238.92
     expect($invoice->total)->toBe('238.92');
 });
+
+test('xml import automatically matches existing product and increments stock', function () {
+    $adminRole = Role::create(['name' => 'admin', 'description' => 'Administrator']);
+    $user = User::factory()->create(['role_id' => $adminRole->id]);
+    $this->actingAs($user);
+
+    // Create an existing product with the barcode from the XML
+    $product = Product::create([
+        'name' => 'Produto Existente',
+        'sku' => 'PROD-XML-TEST',
+        'barcode' => '7891234567890',
+        'unit_price' => 10.00,
+        'purchase_price' => 10.00,
+        'cost_price' => 10.00,
+        'quantity' => 5,
+        'reorder_level' => 2,
+        'status' => 'ativo',
+    ]);
+
+    $accessKey = '35260612345678000190550010000012341234567890';
+    $xmlContent = '<?xml version="1.0" encoding="UTF-8"?>
+    <nfeProc versao="4.00" xmlns="http://www.portalfiscal.inf.br/nfe">
+      <NFe>
+        <infNFe Id="NFe' . $accessKey . '" versao="4.00">
+          <ide>
+            <nNF>1234</nNF>
+            <serie>1</serie>
+            <dhEmi>2026-06-18T12:00:00-03:00</dhEmi>
+          </ide>
+          <emit>
+            <CNPJ>12345678000190</CNPJ>
+            <xNome>FORNECEDOR DE TESTE LTDA</xNome>
+          </emit>
+          <dest>
+            <CNPJ>00000000000100</CNPJ>
+            <xNome>LOGISYNC WMS</xNome>
+          </dest>
+          <det nItem="1">
+            <prod>
+              <cProd>PROD-XML-TEST</cProd>
+              <cEAN>7891234567890</cEAN>
+              <xProd>Produto Teste Importacao</xProd>
+              <NCM>85285220</NCM>
+              <CEST>0100100</CEST>
+              <CFOP>5102</CFOP>
+              <uCom>UN</uCom>
+              <qCom>25.0000</qCom>
+              <vUnCom>15.5000</vUnCom>
+              <vProd>387.50</vProd>
+            </prod>
+            <imposto>
+              <ICMS>
+                <ICMS10>
+                  <orig>0</orig>
+                  <CST>10</CST>
+                  <modBC>3</modBC>
+                  <pRedBC>5.00</pRedBC>
+                  <vBC>368.12</vBC>
+                  <pICMS>18.00</pICMS>
+                  <vICMS>66.26</vICMS>
+                  <modBCST>4</modBCST>
+                  <pMVAST>40.00</pMVAST>
+                  <vBCST>515.37</vBCST>
+                  <pICMSST>12.00</pICMSST>
+                  <vICMSST>61.84</vICMSST>
+                </ICMS10>
+              </ICMS>
+            </imposto>
+          </det>
+          <total>
+            <ICMSTot>
+              <vNF>387.50</vNF>
+            </ICMSTot>
+          </total>
+        </infNFe>
+      </NFe>
+    </nfeProc>';
+
+    $file = UploadedFile::fake()->createWithContent('nfe.xml', $xmlContent);
+
+    // Post XML upload
+    $response = $this->post(route('manifestations.uploadXml'), [
+        'xml_file' => $file,
+    ]);
+
+    $response->assertRedirect();
+
+    // Verify invoice is imported
+    $invoice = IncomingInvoice::where('access_key', $accessKey)->first();
+    expect($invoice)->not->toBeNull();
+    expect($invoice->entry_status)->toBe('imported');
+    expect($invoice->conference_status)->toBe('Conferida');
+
+    // Verify stock is incremented: 5 (initial) + 25 (from XML) = 30
+    $product->refresh();
+    expect($product->quantity)->toBe(30);
+
+    // Verify Inventory log is created
+    $log = \App\Models\Inventory::where('product_id', $product->id)->first();
+    expect($log)->not->toBeNull();
+    expect($log->quantity)->toBe(25);
+    expect($log->type)->toBe('entrada');
+    expect($log->status)->toBe('confirmada');
+});

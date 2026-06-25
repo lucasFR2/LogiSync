@@ -148,6 +148,11 @@ class InvoiceService
 
             $invoice->items()->createMany($itemsData);
 
+            $freshInvoice = $invoice->fresh();
+            if ($isEmitting && $freshInvoice && $freshInvoice->type === 'saida' && $freshInvoice->conference_status === 'Conferida') {
+                $this->concludeInvoice($invoice);
+            }
+
             return $invoice;
         });
     }

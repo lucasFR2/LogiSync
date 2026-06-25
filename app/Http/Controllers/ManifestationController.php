@@ -164,6 +164,8 @@ class ManifestationController extends Controller implements HasMiddleware
                 'xml_data' => $xmlString,
             ]);
 
+            $allMatched = true;
+
             foreach ($infNFe->det as $det) {
                 $prod = $det->prod;
                 $imposto = $det->imposto ?? null;
@@ -230,18 +232,80 @@ class ManifestationController extends Controller implements HasMiddleware
 
                 $productCode = isset($prod->cProd) ? (string) $prod->cProd : null;
                 $cest = isset($prod->CEST) ? (string) $prod->CEST : null;
+                $barcode = isset($prod->cEAN) && (string)$prod->cEAN != 'SEM GTIN' ? (string)$prod->cEAN : null;
+                $qty = (float) $prod->qCom;
+
+                // Match product
+                $product = null;
+                if (!empty($barcode)) {
+                    $product = Product::where('barcode', $barcode)->first();
+                }
+                if (!$product && !empty($productCode)) {
+                    $product = Product::where('sku', $productCode)->first();
+                }
+
+                if ($product) {
+                    // Update product details
+                    $product->update([
+                        'ncm'                => (string) $prod->NCM,
+                        'cfop_default'       => (string) $prod->CFOP,
+                        'cest'               => $cest,
+                        'purchase_price'     => (float) $prod->vUnCom,
+                        'cost_price'         => (float) $prod->vUnCom,
+                        'unit_price'         => (float) $prod->vUnCom,
+                        'barcode'            => empty($product->barcode) ? $barcode : $product->barcode,
+                        // Taxes
+                        'iss_rate'           => $issqn ? (float) ($issqn->vAliq ?? 0) : 0,
+                        'pis_rate'           => $pis_rate,
+                        'cofins_rate'        => $cofins_rate,
+                        'csll_rate'          => $retencoes ? (float) $retencoes->pCSLL : 0,
+                        'irpj_rate'          => $retencoes ? (float) $retencoes->pIRPJ : 0,
+                        'cpp_rate'           => $retencoes ? (float) $retencoes->pCPP : 0,
+                        'ipi_rate'           => $ipi_rate,
+                        'icms_rate'          => $icmsNode ? (float) ($icmsNode->pICMS ?? 0) : 0,
+                        'icms_cst'           => $icmsNode ? (string) ($icmsNode->CST ?? ($icmsNode->CSOSN ?? '00')) : '00',
+                        'icms_orig'          => $icmsNode ? (int) $icmsNode->orig : 0,
+                        'icms_st_rate'       => $icmsNode ? (float) ($icmsNode->pICMSST ?? 0) : 0,
+                        'icms_st_mva'        => $icmsNode ? (float) ($icmsNode->pMVAST ?? 0) : 0,
+                        'icms_st_cst'        => $icmsNode ? (string) ($icmsNode->CST ?? ($icmsNode->CSOSN ?? '10')) : '10',
+                        'ibs_rate'           => $reforma ? (float) $reforma->pIBS : 0,
+                        'cbs_rate'           => $reforma ? (float) $reforma->pCBS : 0,
+                        'is_rate'            => $reforma ? (float) $reforma->pIS : 0,
+                        'icms_red_bc'        => $icmsNode ? (float) ($icmsNode->pRedBC ?? 0) : 0,
+                        'icms_mod_bc'        => $icmsNode ? (int) ($icmsNode->modBC ?? 3) : 3,
+                    ]);
+
+                    $product->increment('quantity', $qty);
+
+                    \App\Models\Inventory::create([
+                        'product_id'         => $product->id,
+                        'quantity'           => $qty,
+                        'checked_quantity'   => $qty,
+                        'remaining_quantity' => $qty,
+                        'notes'              => 'Entrada automática via importação de XML ' . $invoice->number,
+                        'supplier_id'        => $invoice->supplier_id,
+                        'user_id'            => auth()->id(),
+                        'type'               => 'entrada',
+                        'status'             => 'confirmada',
+                        'entry_date'         => now(),
+                    ]);
+                } else {
+                    $allMatched = false;
+                }
 
                 $invoice->items()->create([
+                    'product_id'   => $product ? $product->id : null,
                     'product_code' => $productCode,
                     'cest'         => $cest,
                     'description'  => (string) $prod->xProd,
-                    'barcode'      => isset($prod->cEAN) && (string)$prod->cEAN != 'SEM GTIN' ? (string)$prod->cEAN : null,
+                    'barcode'      => $barcode,
                     'ncm'          => (string) $prod->NCM,
                     'cfop'         => (string) $prod->CFOP,
                     'unit'         => (string) $prod->uCom,
-                    'quantity'     => (float) $prod->qCom,
+                    'quantity'     => $qty,
                     'unit_price'   => (float) $prod->vUnCom,
                     'total_price'  => (float) $prod->vProd,
+                    'checked_quantity' => $product ? $qty : 0,
                     
                     // Taxes
                     'icms_orig'    => $icmsNode ? (int) $icmsNode->orig : 0,
@@ -276,13 +340,24 @@ class ManifestationController extends Controller implements HasMiddleware
                 ]);
             }
 
+            if ($allMatched) {
+                $invoice->update([
+                    'entry_status' => 'imported',
+                    'conference_status' => 'Conferida',
+                    'conference_notes' => 'Conferência realizada automaticamente na importação do XML.',
+                    'conferred_by' => auth()->id(),
+                    'conferred_at' => now(),
+                ]);
+            }
+
             DB::commit();
             Logger::log('xml_import', "O usuário importou o XML da NF-e #{$invoice->number} (Chave: {$invoice->access_key})");
             return redirect()->route('manifestations.show', $invoice)->with('success', 'XML processado com sucesso!');
 
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Erro ao processar XML.');
+            return redirect()->back()->with('error', 'Erro ao processar XML: ' . $e->getMessage());
         }
     }
 
@@ -325,23 +400,84 @@ class ManifestationController extends Controller implements HasMiddleware
 
         $numItems = rand(1, 5);
         $total = 0;
+        $allMatched = true;
+
         for ($i=1; $i<=$numItems; $i++) {
             $qty = rand(10, 50);
             $price = rand(10, 100);
             $totalItem = $qty * $price;
             $total += $totalItem;
             
+            $productCode = 'PROD-' . str_pad($i, 3, '0', STR_PAD_LEFT);
+            $barcode = (string) rand(7890000000000, 7899999999999);
+
+            // Match product
+            $product = Product::where('sku', $productCode)->orWhere('barcode', $barcode)->first();
+
+            if ($product) {
+                $product->update([
+                    'purchase_price' => $price,
+                    'cost_price'     => $price,
+                    'unit_price'     => $price,
+                    'barcode'        => empty($product->barcode) ? $barcode : $product->barcode,
+                    'ncm'            => '12345678',
+                    'cfop_default'   => '5102',
+                    'cest'           => '0100100',
+                    'icms_orig'      => 0,
+                    'icms_cst'       => '10',
+                    'icms_mod_bc'    => 3,
+                    'icms_red_bc'    => 10.00,
+                    'icms_rate'      => 18.00,
+                    'icms_st_cst'    => '10',
+                    'icms_st_mva'    => 40.00,
+                    'icms_st_rate'   => 12.00,
+                    'ipi_cst'        => '50',
+                    'ipi_rate'       => 5.00,
+                    'pis_cst'        => '01',
+                    'pis_rate'       => 1.65,
+                    'cofins_cst'     => '01',
+                    'cofins_rate'    => 7.60,
+                    'iss_cst'        => '01',
+                    'iss_rate'       => 3.00,
+                    'csll_rate'      => 9.00,
+                    'irpj_rate'      => 15.00,
+                    'cpp_rate'       => 20.00,
+                    'ibs_rate'       => 0.10,
+                    'cbs_rate'       => 0.90,
+                    'is_rate'        => 1.50,
+                ]);
+
+                $product->increment('quantity', $qty);
+
+                \App\Models\Inventory::create([
+                    'product_id'         => $product->id,
+                    'quantity'           => $qty,
+                    'checked_quantity'   => $qty,
+                    'remaining_quantity' => $qty,
+                    'notes'              => 'Entrada automática via importação de XML ' . $invoice->number,
+                    'supplier_id'        => $invoice->supplier_id,
+                    'user_id'            => auth()->id(),
+                    'type'               => 'entrada',
+                    'status'             => 'confirmada',
+                    'entry_date'         => now(),
+                ]);
+            } else {
+                $allMatched = false;
+            }
+
             $invoice->items()->create([
-                'product_code' => 'PROD-' . str_pad($i, 3, '0', STR_PAD_LEFT),
+                'product_id'   => $product ? $product->id : null,
+                'product_code' => $productCode,
                 'cest'         => '0100100',
                 'description' => 'Produto Simulado ' . $i . ' (Fallback)',
-                'barcode'     => (string) rand(7890000000000, 7899999999999),
+                'barcode'     => $barcode,
                 'ncm'         => '12345678',
                 'cfop'        => '5102',
                 'unit'        => 'UN',
                 'quantity'    => $qty,
                 'unit_price'  => $price,
                 'total_price' => $totalItem,
+                'checked_quantity' => $product ? $qty : 0,
                 
                 // Simulated taxes
                 'icms_orig'    => 0,
@@ -370,6 +506,16 @@ class ManifestationController extends Controller implements HasMiddleware
         }
 
         $invoice->update(['total_amount' => $total]);
+
+        if ($allMatched) {
+            $invoice->update([
+                'entry_status' => 'imported',
+                'conference_status' => 'Conferida',
+                'conference_notes' => 'Conferência realizada automaticamente na importação do XML.',
+                'conferred_by' => auth()->id(),
+                'conferred_at' => now(),
+            ]);
+        }
 
         DB::commit();
         return redirect()->route('manifestations.show', $invoice)->with('success', 'XML simulado importado com sucesso!');

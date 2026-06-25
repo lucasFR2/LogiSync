@@ -221,6 +221,12 @@ class InvoiceController extends Controller
 
         Logger::log('confer_invoice', "O usuário realizou a conferência da NF #{$invoice->number} com status: {$validated['conference_status']}");
 
+        if ($validated['conference_status'] === 'Conferida' && $invoice->status === 'emitida' && $invoice->type === 'saida') {
+            $this->invoiceService->concludeInvoice($invoice);
+            return redirect()->route('invoices.show', $invoice)
+                              ->with('success', 'Conferência da nota fiscal atualizada com sucesso e estoque baixado!');
+        }
+
         return redirect()->route('invoices.show', $invoice)
                          ->with('success', 'Conferência da nota fiscal atualizada com sucesso!');
     }
