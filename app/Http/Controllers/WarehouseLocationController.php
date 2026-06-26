@@ -34,33 +34,33 @@ class WarehouseLocationController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'aisle' => 'required|string|max:10',
-            'column' => 'required|string|max:10',
-            'level' => 'required|string|max:10',
-            'width' => 'nullable|numeric|min:0',
-            'height' => 'nullable|numeric|min:0',
-            'depth' => 'nullable|numeric|min:0',
+            'aisle'      => 'required|string|max:10',
+            'column'     => 'required|string|max:10',
+            'level'      => 'required|string|max:10',
+            'width'      => 'nullable|numeric|min:1|max:100',
+            'height'     => 'nullable|numeric|min:1|max:100',
+            'depth'      => 'nullable|numeric|min:1|max:100',
             'max_weight' => 'nullable|numeric|min:0',
         ]);
 
         $fullCode = strtoupper($request->aisle . '-' . $request->column . '-' . $request->level);
 
-        // Check for duplicates
         if (WarehouseLocation::where('full_code', $fullCode)->exists()) {
             return back()->with('error', "A localização {$fullCode} já existe.");
         }
 
+        // Cubo fixo 10×10×10 como padrão se não informado
         WarehouseLocation::create([
-            'aisle' => strtoupper($request->aisle),
-            'column' => strtoupper($request->column),
-            'level' => strtoupper($request->level),
-            'full_code' => $fullCode,
-            'is_occupied' => false,
+            'aisle'        => strtoupper($request->aisle),
+            'column'       => strtoupper($request->column),
+            'level'        => strtoupper($request->level),
+            'full_code'    => $fullCode,
+            'is_occupied'  => false,
             'allow_shared' => true,
-            'width' => $request->width,
-            'height' => $request->height,
-            'depth' => $request->depth,
-            'max_weight' => $request->max_weight,
+            'width'        => $request->width  ?? WarehouseLocation::CUBE_SIZE,
+            'height'       => $request->height ?? WarehouseLocation::CUBE_SIZE,
+            'depth'        => $request->depth  ?? WarehouseLocation::CUBE_SIZE,
+            'max_weight'   => $request->max_weight,
         ]);
 
         return redirect()->route('locations.index')->with('success', 'Localização criada com sucesso!');
@@ -69,31 +69,45 @@ class WarehouseLocationController extends Controller
     public function update(Request $request, WarehouseLocation $location)
     {
         $request->validate([
-            'aisle' => 'required|string|max:10',
-            'column' => 'required|string|max:10',
-            'level' => 'required|string|max:10',
-            'width' => 'nullable|numeric|min:0',
-            'height' => 'nullable|numeric|min:0',
-            'depth' => 'nullable|numeric|min:0',
+            'aisle'      => 'required|string|max:10',
+            'column'     => 'required|string|max:10',
+            'level'      => 'required|string|max:10',
+            'width'      => 'nullable|numeric|min:1|max:100',
+            'height'     => 'nullable|numeric|min:1|max:100',
+            'depth'      => 'nullable|numeric|min:1|max:100',
             'max_weight' => 'nullable|numeric|min:0',
         ]);
 
         $fullCode = strtoupper($request->aisle . '-' . $request->column . '-' . $request->level);
 
-        // Check for duplicates
         if (WarehouseLocation::where('full_code', $fullCode)->where('id', '!=', $location->id)->exists()) {
             return back()->with('error', "A localização {$fullCode} já existe.");
         }
 
+        $newW = $request->width  ?? WarehouseLocation::CUBE_SIZE;
+        $newH = $request->height ?? WarehouseLocation::CUBE_SIZE;
+        $newD = $request->depth  ?? WarehouseLocation::CUBE_SIZE;
+        $newVol = $newW * $newH * $newD;
+
+        // Valida que a redução de dimensões não invalida produtos existentes
+        $usedVol = $location->usedVolume();
+        if ($usedVol > $newVol) {
+            $usedFmt = number_format($usedVol, 2);
+            $newFmt  = number_format($newVol, 2);
+            return back()->with('error',
+                "Não é possível reduzir as dimensões: volume ocupado ({$usedFmt} u³) excede o novo volume ({$newFmt} u³)."
+            );
+        }
+
         $location->update([
-            'aisle' => strtoupper($request->aisle),
-            'column' => strtoupper($request->column),
-            'level' => strtoupper($request->level),
+            'aisle'     => strtoupper($request->aisle),
+            'column'    => strtoupper($request->column),
+            'level'     => strtoupper($request->level),
             'full_code' => $fullCode,
-            'width' => $request->width,
-            'height' => $request->height,
-            'depth' => $request->depth,
-            'max_weight' => $request->max_weight,
+            'width'     => $newW,
+            'height'    => $newH,
+            'depth'     => $newD,
+            'max_weight'=> $request->max_weight,
         ]);
 
         return redirect()->route('locations.index')->with('success', 'Localização atualizada com sucesso!');
@@ -116,39 +130,44 @@ class WarehouseLocationController extends Controller
     public function generate(Request $request)
     {
         $request->validate([
-            'prefix' => 'required|string|max:5',
-            'aisles_count' => 'required|integer|min:1|max:50',
+            'prefix'        => 'required|string|max:5',
+            'aisles_count'  => 'required|integer|min:1|max:50',
             'columns_count' => 'required|integer|min:1|max:50',
-            'levels_count' => 'required|integer|min:1|max:10',
-            'width' => 'nullable|numeric|min:0',
-            'height' => 'nullable|numeric|min:0',
-            'depth' => 'nullable|numeric|min:0',
-            'max_weight' => 'nullable|numeric|min:0',
+            'levels_count'  => 'required|integer|min:1|max:10',
+            'width'         => 'nullable|numeric|min:1|max:100',
+            'height'        => 'nullable|numeric|min:1|max:100',
+            'depth'         => 'nullable|numeric|min:1|max:100',
+            'max_weight'    => 'nullable|numeric|min:0',
         ]);
 
         $prefix = strtoupper($request->prefix);
-        $count = 0;
+        $count  = 0;
+
+        // Cubo padrão 10×10×10 se não informado
+        $w = $request->width  ?? WarehouseLocation::CUBE_SIZE;
+        $h = $request->height ?? WarehouseLocation::CUBE_SIZE;
+        $d = $request->depth  ?? WarehouseLocation::CUBE_SIZE;
 
         for ($a = 1; $a <= $request->aisles_count; $a++) {
             $aisle = $prefix . str_pad($a, 2, '0', STR_PAD_LEFT);
             for ($c = 1; $c <= $request->columns_count; $c++) {
                 $column = str_pad($c, 2, '0', STR_PAD_LEFT);
                 for ($l = 1; $l <= $request->levels_count; $l++) {
-                    $level = 'N' . $l;
+                    $level    = 'N' . $l;
                     $fullCode = "{$aisle}-{$column}-{$level}";
 
                     WarehouseLocation::firstOrCreate(
                         ['full_code' => $fullCode],
                         [
-                            'aisle' => $aisle,
-                            'column' => $column,
-                            'level' => $level,
-                            'is_occupied' => false,
+                            'aisle'        => $aisle,
+                            'column'       => $column,
+                            'level'        => $level,
+                            'is_occupied'  => false,
                             'allow_shared' => true,
-                            'width' => $request->width,
-                            'height' => $request->height,
-                            'depth' => $request->depth,
-                            'max_weight' => $request->max_weight,
+                            'width'        => $w,
+                            'height'       => $h,
+                            'depth'        => $d,
+                            'max_weight'   => $request->max_weight,
                         ]
                     );
                     $count++;
@@ -156,6 +175,7 @@ class WarehouseLocationController extends Controller
             }
         }
 
-        return redirect()->route('locations.index')->with('success', "{$count} localizações geradas/verificadas com sucesso.");
+        return redirect()->route('locations.index')
+            ->with('success', "{$count} localizações geradas/verificadas com sucesso.");
     }
 }

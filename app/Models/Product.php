@@ -73,28 +73,34 @@ class Product extends Model
     ];
 
     protected $casts = [
-        'cost_price' => 'decimal:2',
-        'unit_price' => 'decimal:2',
+        'cost_price'    => 'decimal:2',
+        'unit_price'    => 'decimal:2',
         'selling_price' => 'decimal:2',
-        'quantity' => 'integer',
-        'max_stock' => 'integer',
+        'quantity'      => 'integer',
+        'max_stock'     => 'integer',
         'reorder_level' => 'integer',
-        'iss_rate' => 'decimal:2',
-        'pis_rate' => 'decimal:2',
-        'cofins_rate' => 'decimal:2',
-        'csll_rate' => 'decimal:2',
-        'irpj_rate' => 'decimal:2',
-        'cpp_rate' => 'decimal:2',
-        'ipi_rate' => 'decimal:2',
-        'icms_rate' => 'decimal:2',
-        'icms_orig' => 'integer',
-        'icms_st_rate' => 'decimal:2',
-        'icms_st_mva' => 'decimal:2',
-        'ibs_rate' => 'decimal:2',
-        'cbs_rate' => 'decimal:2',
-        'is_rate' => 'decimal:2',
-        'icms_red_bc' => 'decimal:2',
-        'icms_mod_bc' => 'integer',
+        // Dimensões físicas do produto
+        'width'         => 'decimal:2',
+        'height'        => 'decimal:2',
+        'depth'         => 'decimal:2',
+        'weight'        => 'decimal:2',
+        // Campos fiscais
+        'iss_rate'      => 'decimal:2',
+        'pis_rate'      => 'decimal:2',
+        'cofins_rate'   => 'decimal:2',
+        'csll_rate'     => 'decimal:2',
+        'irpj_rate'     => 'decimal:2',
+        'cpp_rate'      => 'decimal:2',
+        'ipi_rate'      => 'decimal:2',
+        'icms_rate'     => 'decimal:2',
+        'icms_orig'     => 'integer',
+        'icms_st_rate'  => 'decimal:2',
+        'icms_st_mva'   => 'decimal:2',
+        'ibs_rate'      => 'decimal:2',
+        'cbs_rate'      => 'decimal:2',
+        'is_rate'       => 'decimal:2',
+        'icms_red_bc'   => 'decimal:2',
+        'icms_mod_bc'   => 'integer',
     ];
 
     /**
@@ -198,5 +204,45 @@ class Product extends Model
         ]);
 
         return true;
+    }
+
+    // ──────────────────────────────────────────────────────────────────────
+    // Volumetria
+    // ──────────────────────────────────────────────────────────────────────
+
+    /**
+     * Volume unitário do produto (largura × altura × profundidade).
+     * Usa 1.0 como fallback caso qualquer dimensão não esteja definida.
+     */
+    public function unitVolume(): float
+    {
+        $w = (float) ($this->width  ?: 1.0);
+        $h = (float) ($this->height ?: 1.0);
+        $d = (float) ($this->depth  ?: 1.0);
+
+        return round($w * $h * $d, 4);
+    }
+
+    /**
+     * Volume total ocupado por uma quantidade específica deste produto.
+     *
+     * @param  int|float  $qty  Quantidade de unidades.
+     */
+    public function totalVolume($qty): float
+    {
+        return round($this->unitVolume() * max(0, (float) $qty), 4);
+    }
+
+    /**
+     * Retorna as dimensões como array formatado para exibição.
+     */
+    public function dimensionsArray(): array
+    {
+        return [
+            'width'       => (float) ($this->width  ?: 1.0),
+            'height'      => (float) ($this->height ?: 1.0),
+            'depth'       => (float) ($this->depth  ?: 1.0),
+            'unit_volume' => $this->unitVolume(),
+        ];
     }
 }

@@ -55,30 +55,75 @@
                                             <span>{{ $item->product->name }} (Já Importado)</span>
                                         </div>
                                     @else
-                                        <!-- Select product to map -->
+                                        <!-- Product link area: hidden input + display field + actions -->
+                                        @php
+                                            $autoMatchedProduct = null;
+                                            foreach($products as $prod) {
+                                                if (
+                                                    stripos($item->description, $prod->name) !== false
+                                                    || (!empty($item->barcode) && $item->barcode === $prod->barcode)
+                                                    || (!empty($item->product_code) && $item->product_code === $prod->sku)
+                                                ) {
+                                                    $autoMatchedProduct = $prod;
+                                                    break;
+                                                }
+                                            }
+                                        @endphp
+
+                                        <!-- Hidden input that holds the selected product_id -->
+                                        <input type="hidden"
+                                               name="items[{{ $item->id }}][product_id]"
+                                               id="product-select-{{ $item->id }}"
+                                               value="{{ $autoMatchedProduct ? $autoMatchedProduct->id : '' }}">
+
+                                        <!-- Display row: readonly field + lupa + + button -->
                                         <div style="display:flex; gap:0.5rem; align-items:center;">
-                                            <select name="items[{{ $item->id }}][product_id]" id="product-select-{{ $item->id }}" required class="form-select bulk-product-select" style="flex:1;" onchange="toggleNewProductFields({{ $item->id }}, this.value)">
-                                                <option value="">-- Selecione o Produto --</option>
-                                                <option value="new" style="font-weight:bold; color:var(--accent);">+ Cadastrar Automaticamente (Novo Produto)</option>
-                                                @foreach($products as $prod)
-                                                    <!-- Auto-match by description or barcode or SKU -->
-                                                    @php
-                                                        $autoMatch = stripos($item->description, $prod->name) !== false 
-                                                            || (!empty($item->barcode) && $item->barcode === $prod->barcode)
-                                                            || (!empty($item->product_code) && $item->product_code === $prod->sku);
-                                                    @endphp
-                                                    <option value="{{ $prod->id }}" {{ $autoMatch ? 'selected' : '' }}>
-                                                        {{ $prod->name }} (Estoque: {{ $prod->quantity }} {{ $prod->unit }})
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            <button type="button" class="btn btn-secondary btn-open-bulk-product-picker" data-item-id="{{ $item->id }}" style="padding:0 0.75rem; height:42px;" title="Buscar produto (lupa)">
+                                            <div id="product-display-{{ $item->id }}"
+                                                 class="form-input bulk-product-display"
+                                                 style="flex:1; cursor:pointer; display:flex; align-items:center; gap:0.5rem; min-height:42px; padding:0 0.75rem; color:{{ $autoMatchedProduct ? 'var(--text-primary)' : 'var(--text-muted)' }}; user-select:none;"
+                                                 data-item-id="{{ $item->id }}"
+                                                 title="Clique na lupa para buscar">
+                                                @if($autoMatchedProduct)
+                                                    <i class="fa-solid fa-circle-check" style="color:var(--green);"></i>
+                                                    <span>{{ $autoMatchedProduct->name }}</span>
+                                                @else
+                                                    <i class="fa-solid fa-link-slash" style="color:var(--text-muted); font-size:0.8rem;"></i>
+                                                    <span style="font-style:italic;">Nenhum produto vinculado — use a lupa</span>
+                                                @endif
+                                            </div>
+
+                                            <!-- Lupa: abre busca de produto -->
+                                            <button type="button"
+                                                    class="btn btn-secondary btn-open-bulk-product-picker"
+                                                    data-item-id="{{ $item->id }}"
+                                                    style="padding:0 0.75rem; height:42px; flex-shrink:0;"
+                                                    title="Buscar e vincular produto existente">
                                                 <i class="fa-solid fa-magnifying-glass"></i>
+                                            </button>
+
+                                            <!-- + Botão: cadastrar novo produto -->
+                                            <button type="button"
+                                                    class="btn btn-new-bulk-product"
+                                                    data-item-id="{{ $item->id }}"
+                                                    style="padding:0 0.75rem; height:42px; flex-shrink:0; background:var(--green); color:#fff; border:none; border-radius:var(--r-md,0.5rem);"
+                                                    title="Cadastrar novo produto para este item">
+                                                <i class="fa-solid fa-plus"></i>
                                             </button>
                                         </div>
 
-                                        <!-- Hidden fields for new product -->
-                                        <div id="new_product_fields_{{ $item->id }}" style="display:none; flex-direction:column; gap:0.5rem; margin-top:0.75rem; padding-top:0.75rem; border-top:1px dashed var(--border);">
+                                        <!-- Expandable panel: cadastrar novo produto -->
+                                        <div id="new_product_fields_{{ $item->id }}"
+                                             style="display:none; flex-direction:column; gap:0.5rem; margin-top:0.75rem; padding:0.75rem; border:1px dashed var(--green); border-radius:var(--r-md,0.5rem); background:var(--green-bg);"> 
+                                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.25rem;">
+                                                <span style="font-size:0.8rem; font-weight:700; color:var(--green); text-transform:uppercase; letter-spacing:0.05em;">
+                                                    <i class="fa-solid fa-plus-circle"></i> Novo Produto
+                                                </span>
+                                                <button type="button" class="btn-cancel-new-product icon-btn" data-item-id="{{ $item->id }}" style="width:24px;height:24px;font-size:0.75rem;" title="Cancelar">
+                                                    <i class="fa-solid fa-xmark"></i>
+                                                </button>
+                                            </div>
+                                            <!-- Trigger: selecting "new" sets the hidden input to "new" -->
+                                            <input type="hidden" name="items[{{ $item->id }}][is_new]" id="is-new-{{ $item->id }}" value="0">
                                             <div>
                                                 <label style="font-size:0.75rem; color:var(--text-muted);">Nome do Produto</label>
                                                 <input type="text" name="items[{{ $item->id }}][new_name]" class="form-input" style="padding:0.5rem; font-size:0.875rem; width:100%;" value="{{ $item->description }}">
@@ -88,18 +133,18 @@
                                                     <label style="font-size:0.75rem; color:var(--text-muted);">Categoria</label>
                                                     <div style="display:flex; gap:0.25rem;">
                                                         <select name="items[{{ $item->id }}][new_category]" class="form-select category-select" style="padding:0.5rem; font-size:0.875rem; width:100%;">
-                                                              <option value="">-- Sem Categoria --</option>
-                                                              @foreach($categories as $cat)
-                                                                  @if($cat->subcategories->count() > 0)
-                                                                      <optgroup label="{{ $cat->name }}">
-                                                                          @foreach($cat->subcategories as $sub)
-                                                                              <option value="{{ $sub->name }}">{{ $sub->name }}</option>
-                                                                          @endforeach
-                                                                      </optgroup>
-                                                                  @else
-                                                                      <option value="{{ $cat->name }}">{{ $cat->name }}</option>
-                                                                  @endif
-                                                              @endforeach
+                                                            <option value="">-- Sem Categoria --</option>
+                                                            @foreach($categories as $cat)
+                                                                @if($cat->subcategories->count() > 0)
+                                                                    <optgroup label="{{ $cat->name }}">
+                                                                        @foreach($cat->subcategories as $sub)
+                                                                            <option value="{{ $sub->name }}">{{ $sub->name }}</option>
+                                                                        @endforeach
+                                                                    </optgroup>
+                                                                @else
+                                                                    <option value="{{ $cat->name }}">{{ $cat->name }}</option>
+                                                                @endif
+                                                            @endforeach
                                                         </select>
                                                         <button type="button" class="btn btn-secondary" data-open-category-modal title="Nova categoria" style="padding:0 0.5rem; height:34px;">
                                                             <i class="fa-solid fa-plus"></i>
@@ -141,13 +186,90 @@
 
 @push('scripts')
 <script>
-function toggleNewProductFields(itemId, val) {
-    const fields = document.getElementById('new_product_fields_' + itemId);
-    if (val === 'new') {
-        fields.style.display = 'flex';
-    } else {
-        fields.style.display = 'none';
-    }
-}
+// ── Bulk Import: produto selecionado via lupa ────────────────────────────────
+// Quando o product_picker seleciona um produto, atualiza o campo do item ativo.
+// O product_picker (partials/product_picker.blade.php) usa window.activeProductSelectTarget
+// para saber qual <input hidden> deve receber o ID; mas aqui também precisamos
+// atualizar o display visual.
+
+(function () {
+    // Sobrescreve o handler de "Selecionar" do product_picker para bulk_import
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.btn-select-product');
+        if (!btn) return;
+
+        // O modal picker já define window.activeProductSelectTarget (o hidden input)
+        const hidden = window.activeProductSelectTarget;
+        if (!hidden || !hidden.id.startsWith('product-select-')) return;
+
+        const itemId = hidden.id.replace('product-select-', '');
+        const prodId   = btn.dataset.id;
+        const prodName = btn.closest('tr')?.querySelector('td:first-child div')?.textContent?.trim() || 'Produto selecionado';
+
+        // Atualiza o hidden input
+        hidden.value = prodId;
+
+        // Atualiza o display visual
+        const display = document.getElementById('product-display-' + itemId);
+        if (display) {
+            display.style.color = 'var(--text-primary)';
+            display.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--green);"></i><span>${prodName}</span>`;
+        }
+
+        // Garante que o painel "novo produto" está fechado e is_new = 0
+        const newPanel = document.getElementById('new_product_fields_' + itemId);
+        if (newPanel) newPanel.style.display = 'none';
+        const isNewInput = document.getElementById('is-new-' + itemId);
+        if (isNewInput) isNewInput.value = '0';
+    });
+
+    // Botão + abre o painel de cadastro
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.btn-new-bulk-product');
+        if (!btn) return;
+        const itemId = btn.dataset.itemId;
+
+        const panel = document.getElementById('new_product_fields_' + itemId);
+        if (!panel) return;
+        panel.style.display = 'flex';
+
+        // Limpa vínculo atual
+        const hidden = document.getElementById('product-select-' + itemId);
+        if (hidden) hidden.value = 'new';
+
+        const isNewInput = document.getElementById('is-new-' + itemId);
+        if (isNewInput) isNewInput.value = '1';
+
+        const display = document.getElementById('product-display-' + itemId);
+        if (display) {
+            display.style.color = 'var(--green)';
+            display.innerHTML = `<i class="fa-solid fa-plus-circle" style="color:var(--green);"></i><span style="color:var(--green); font-weight:600;">Cadastrar novo produto</span>`;
+        }
+
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    // Botão X cancela o cadastro de novo produto
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.btn-cancel-new-product');
+        if (!btn) return;
+        const itemId = btn.dataset.itemId;
+
+        const panel = document.getElementById('new_product_fields_' + itemId);
+        if (panel) panel.style.display = 'none';
+
+        const hidden = document.getElementById('product-select-' + itemId);
+        if (hidden) hidden.value = '';
+
+        const isNewInput = document.getElementById('is-new-' + itemId);
+        if (isNewInput) isNewInput.value = '0';
+
+        const display = document.getElementById('product-display-' + itemId);
+        if (display) {
+            display.style.color = 'var(--text-muted)';
+            display.innerHTML = `<i class="fa-solid fa-link-slash" style="color:var(--text-muted); font-size:0.8rem;"></i><span style="font-style:italic;">Nenhum produto vinculado — use a lupa</span>`;
+        }
+    });
+})();
 </script>
 @endpush

@@ -72,8 +72,8 @@
                         <th>Nível</th>
                         <th>Dimensões (LxAxP)</th>
                         <th>Peso Máx.</th>
-                        <th>Status</th>
-                        <th>Produtos</th>
+                        <th>Ocupação Volumétrica</th>
+                        <th>SKUs</th>
                         <th style="text-align:right;">Ações</th>
                     </tr>
                 </thead>
@@ -101,16 +101,20 @@
                             @endif
                         </td>
                         <td>
-                            @if($loc->is_occupied)
-                                <span class="badge badge-warning">Ocupado</span>
-                            @else
-                                <span class="badge badge-success">Livre</span>
-                            @endif
-                        </td>
-                        <td>
-                            <div class="flex items-center gap-2">
-                                <span style="font-weight:600;">{{ $loc->products_count }}</span>
-                                <span class="text-xs text-muted">SKUs</span>
+                            @php
+                                $usedVol  = $loc->usedVolume();
+                                $totalVol = $loc->totalVolume();
+                                $pct      = $loc->occupancyPercent();
+                                $barColor = $pct >= 90 ? 'var(--red)' : ($pct >= 70 ? 'var(--yellow,#FBBF24)' : 'var(--green)');
+                            @endphp
+                            <div style="min-width:140px;">
+                                <div style="display:flex; justify-content:space-between; font-size:0.72rem; margin-bottom:3px;">
+                                    <span style="color:var(--text-muted);">{{ number_format($usedVol, 1) }} / {{ number_format($totalVol, 0) }} u³</span>
+                                    <span style="font-weight:800; color:{{ $pct >= 90 ? 'var(--red)' : 'var(--text-secondary)' }};">{{ $pct }}%</span>
+                                </div>
+                                <div style="height:6px; background:var(--bg-hover); border-radius:99px; overflow:hidden;">
+                                    <div style="height:100%; width:{{ $pct }}%; background:{{ $barColor }}; border-radius:99px; transition:width 0.3s ease;"></div>
+                                </div>
                             </div>
                         </td>
                         <td>

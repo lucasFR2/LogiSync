@@ -413,16 +413,30 @@
                                 <input type="number" name="weight" step="0.001" value="{{ old('weight', $product->weight) }}" class="form-input">
                             </div>
                             <div class="form-group">
-                                <label class="form-label" style="font-size:0.75rem;">Alt (cm)</label>
-                                <input type="number" name="height" step="0.1" value="{{ old('height', $product->height) }}" class="form-input">
+                                <label class="form-label" style="font-size:0.75rem;">Alt (u)</label>
+                                <input type="number" name="height" id="dim_height" step="0.1" min="0.1" max="10" value="{{ old('height', $product->height) }}" class="form-input dim-input">
                             </div>
                             <div class="form-group">
-                                <label class="form-label" style="font-size:0.75rem;">Larg (cm)</label>
-                                <input type="number" name="width" step="0.1" value="{{ old('width', $product->width) }}" class="form-input">
+                                <label class="form-label" style="font-size:0.75rem;">Larg (u)</label>
+                                <input type="number" name="width" id="dim_width" step="0.1" min="0.1" max="10" value="{{ old('width', $product->width) }}" class="form-input dim-input">
                             </div>
                             <div class="form-group">
-                                <label class="form-label" style="font-size:0.75rem;">Prof (cm)</label>
-                                <input type="number" name="depth" step="0.1" value="{{ old('depth', $product->depth) }}" class="form-input">
+                                <label class="form-label" style="font-size:0.75rem;">Comp (u)</label>
+                                <input type="number" name="depth" id="dim_depth" step="0.1" min="0.1" max="10" value="{{ old('depth', $product->depth) }}" class="form-input dim-input">
+                            </div>
+                        </div>
+                        {{-- Volume Calc Card --}}
+                        <div id="vol-calc-card" style="margin-top:0.75rem; padding:0.75rem 1rem; border-radius:var(--r-md); background:var(--blue-bg); border:1px solid rgba(59,130,246,0.3); display:flex; align-items:center; gap:1rem;">
+                            <i class="fa-solid fa-cube" style="color:var(--blue); font-size:1.1rem;"></i>
+                            <div style="flex:1;">
+                                <div style="font-size:0.7rem; color:var(--blue); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">Volume Unitário</div>
+                                <div style="font-size:1.1rem; font-weight:800; font-family:'Outfit'; color:var(--text-primary);">
+                                    <span id="unit-vol-display">1,00</span> u³
+                                </div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">Posição 10×10×10</div>
+                                <div style="font-size:0.8rem; font-weight:700; color:var(--green);">Capacidade: 1.000 u³</div>
                             </div>
                         </div>
                     </div>
@@ -558,6 +572,22 @@
         });
 
         calculate();
+
+        // Calculador de Volume Dimensional em tempo real
+        const dimInputs = document.querySelectorAll('.dim-input');
+        const unitVolDisplay = document.getElementById('unit-vol-display');
+
+        function calcVolume() {
+            const w = parseFloat(document.getElementById('dim_width')?.value)  || 1;
+            const h = parseFloat(document.getElementById('dim_height')?.value) || 1;
+            const d = parseFloat(document.getElementById('dim_depth')?.value)  || 1;
+            const vol = (w * h * d).toFixed(4);
+            if (unitVolDisplay) {
+                unitVolDisplay.textContent = parseFloat(vol).toLocaleString('pt-BR', { maximumFractionDigits: 4 });
+            }
+        }
+        dimInputs.forEach(i => i.addEventListener('input', calcVolume));
+        calcVolume();
     });
 </script>
 @endpush

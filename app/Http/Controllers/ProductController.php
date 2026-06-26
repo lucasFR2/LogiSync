@@ -276,43 +276,49 @@ class ProductController extends Controller implements HasMiddleware
                         }
                         $sku = 'SKU-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
+                        // Gera dimensões aleatórias realistas (1.0 a 5.0 unidades)
+                        $randDim = fn() => round(mt_rand(10, 50) / 10, 1);
+
                         $product = Product::create([
-                            'name' => $data['new_name'] ?? $xmlItem->description,
-                            'sku' => $sku,
-                            'barcode' => $data['new_barcode'] ?? $xmlItem->barcode,
-                            'description' => 'Produto importado via NF-e ' . $manifestation->number,
-                            'unit_price' => $xmlItem->unit_price,
-                            'purchase_price' => $xmlItem->unit_price,
-                            'cost_price' => $xmlItem->unit_price,
-                            'quantity' => 0, // will be incremented
+                            'name'          => $data['new_name'] ?? $xmlItem->description,
+                            'sku'           => $sku,
+                            'barcode'       => $data['new_barcode'] ?? $xmlItem->barcode,
+                            'description'   => 'Produto importado via NF-e ' . $manifestation->number,
+                            'unit_price'    => $xmlItem->unit_price,
+                            'purchase_price'=> $xmlItem->unit_price,
+                            'cost_price'    => $xmlItem->unit_price,
+                            'quantity'      => 0,
                             'reorder_level' => 10,
-                            'unit' => $xmlItem->unit,
-                            'category' => $data['new_category'] ?? 'Importado Automático',
-                            'supplier_id' => $manifestation->supplier_id,
-                            'status' => 'ativo',
-                            
-                            // Taxes fields mapped from XML
-                            'ncm'                => $xmlItem->ncm,
-                            'cfop_default'       => $xmlItem->cfop,
-                            'cest'               => $xmlItem->cest,
-                            'iss_rate'           => $xmlItem->iss_rate,
-                            'pis_rate'           => $xmlItem->pis_rate,
-                            'cofins_rate'        => $xmlItem->cofins_rate,
-                            'csll_rate'          => $xmlItem->csll_rate,
-                            'irpj_rate'          => $xmlItem->irpj_rate,
-                            'cpp_rate'           => $xmlItem->cpp_rate,
-                            'ipi_rate'           => $xmlItem->ipi_rate,
-                            'icms_rate'          => $xmlItem->icms_rate,
-                            'icms_cst'           => $xmlItem->icms_cst,
-                            'icms_orig'          => $xmlItem->icms_orig,
-                            'icms_st_rate'       => $xmlItem->icms_st_rate,
-                            'icms_st_mva'        => $xmlItem->icms_st_mva,
-                            'icms_st_cst'        => $xmlItem->icms_st_cst,
-                            'ibs_rate'           => $xmlItem->ibs_rate,
-                            'cbs_rate'           => $xmlItem->cbs_rate,
-                            'is_rate'            => $xmlItem->is_rate,
-                            'icms_red_bc'        => $xmlItem->icms_red_bc,
-                            'icms_mod_bc'        => $xmlItem->icms_mod_bc,
+                            'unit'          => $xmlItem->unit,
+                            'category'      => $data['new_category'] ?? 'Importado Automático',
+                            'supplier_id'   => $manifestation->supplier_id,
+                            'status'        => 'ativo',
+                            // Dimensões geradas automaticamente
+                            'width'         => $randDim(),
+                            'height'        => $randDim(),
+                            'depth'         => $randDim(),
+                            // Campos fiscais do XML
+                            'ncm'           => $xmlItem->ncm,
+                            'cfop_default'  => $xmlItem->cfop,
+                            'cest'          => $xmlItem->cest,
+                            'iss_rate'      => $xmlItem->iss_rate,
+                            'pis_rate'      => $xmlItem->pis_rate,
+                            'cofins_rate'   => $xmlItem->cofins_rate,
+                            'csll_rate'     => $xmlItem->csll_rate,
+                            'irpj_rate'     => $xmlItem->irpj_rate,
+                            'cpp_rate'      => $xmlItem->cpp_rate,
+                            'ipi_rate'      => $xmlItem->ipi_rate,
+                            'icms_rate'     => $xmlItem->icms_rate,
+                            'icms_cst'      => $xmlItem->icms_cst,
+                            'icms_orig'     => $xmlItem->icms_orig,
+                            'icms_st_rate'  => $xmlItem->icms_st_rate,
+                            'icms_st_mva'   => $xmlItem->icms_st_mva,
+                            'icms_st_cst'   => $xmlItem->icms_st_cst,
+                            'ibs_rate'      => $xmlItem->ibs_rate,
+                            'cbs_rate'      => $xmlItem->cbs_rate,
+                            'is_rate'       => $xmlItem->is_rate,
+                            'icms_red_bc'   => $xmlItem->icms_red_bc,
+                            'icms_mod_bc'   => $xmlItem->icms_mod_bc,
                         ]);
                     } else {
                         $product = Product::findOrFail($data['product_id']);
@@ -352,19 +358,27 @@ class ProductController extends Controller implements HasMiddleware
                     $originalQty = (float) $xmlItem->quantity;
                     $conferenceStatus = abs($qty - $originalQty) < 0.001 ? 'confirmada' : 'divergente';
 
+                    // Valida espaço físico antes de criar o registro (sem localização via NF-e, passa sem bloquear)
+                    if ($product->warehouse_location_id) {
+                        $location = \App\Models\WarehouseLocation::with('products')->find($product->warehouse_location_id);
+                        if ($location) {
+                            $location->canFitProduct($product, $qty);
+                        }
+                    }
+
                     Inventory::create([
-                        'product_id'         => $product->id,
-                        'quantity'           => $originalQty,
-                        'checked_quantity'   => $qty,
-                        'remaining_quantity' => $qty,
-                        'notes'              => 'Entrada via NF-e ' . $manifestation->number,
-                        'supplier_id'        => $manifestation->supplier_id,
-                        'user_id'            => auth()->id(),
-                        'type'               => 'entrada',
-                        'status'             => 'confirmada',
-                        'conference_status'  => $conferenceStatus,
-                        'conference_notes'   => abs($qty - $originalQty) < 0.001 
-                            ? 'Importado via XML sem divergências.' 
+                        'product_id'        => $product->id,
+                        'quantity'          => $originalQty,
+                        'checked_quantity'  => $qty,
+                        'remaining_quantity'=> $qty,
+                        'notes'             => 'Entrada via NF-e ' . $manifestation->number,
+                        'supplier_id'       => $manifestation->supplier_id,
+                        'user_id'           => auth()->id(),
+                        'type'              => 'entrada',
+                        'status'            => 'confirmada',
+                        'conference_status' => $conferenceStatus,
+                        'conference_notes'  => abs($qty - $originalQty) < 0.001
+                            ? 'Importado via XML sem divergências.'
                             : "Importado via XML com divergência (XML: {$originalQty}, Recebido: {$qty}).",
                     ]);
 
@@ -408,6 +422,11 @@ class ProductController extends Controller implements HasMiddleware
             'status'             => 'required|in:ativo,inativo,descontinuado',
             'warehouse_location_id' => 'nullable|exists:warehouse_locations,id',
             'supplier_id'        => 'nullable|exists:suppliers,id',
+            // Dimensões físicas do produto
+            'width'              => 'nullable|numeric|min:0.01|max:10',
+            'height'             => 'nullable|numeric|min:0.01|max:10',
+            'depth'              => 'nullable|numeric|min:0.01|max:10',
+            'weight'             => 'nullable|numeric|min:0',
             // Validação Fiscal
             'ncm'                => 'nullable|string|max:15',
             'cfop_default'       => 'nullable|string|max:10',
@@ -487,6 +506,11 @@ class ProductController extends Controller implements HasMiddleware
             'unit_price' => 'required|numeric|min:0',
             'quantity'   => 'required|integer|min:0',
             'status'     => 'required|in:ativo,inativo,descontinuado',
+            // Dimensões físicas do produto
+            'width'      => 'nullable|numeric|min:0.01|max:10',
+            'height'     => 'nullable|numeric|min:0.01|max:10',
+            'depth'      => 'nullable|numeric|min:0.01|max:10',
+            'weight'     => 'nullable|numeric|min:0',
             // Validação Fiscal
             'ncm'                => 'nullable|string|max:15',
             'cfop_default'       => 'nullable|string|max:10',
