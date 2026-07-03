@@ -97,14 +97,36 @@
 @push('styles')
 <style>
     /* Grid layout: header | body (toolbar + scroll) | footer — altura fixa para scroll confiável */
+    .location-picker-root.modal-backdrop {
+        position: fixed !important;
+        top: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        z-index: 95 !important;
+        padding: 0 !important;
+        background: var(--bg-base) !important;
+        display: none;
+        align-items: stretch !important;
+        justify-content: stretch !important;
+    }
+    @media (min-width: 769px) {
+        .location-picker-root.modal-backdrop {
+            left: var(--sidebar-w) !important;
+        }
+    }
     .location-picker-root.modal-backdrop > .location-picker-dialog {
         display: grid !important;
         grid-template-rows: auto minmax(0, 1fr) auto !important;
         flex-direction: unset !important;
-        width: 100%;
-        max-width: 720px;
-        height: min(86dvh, 760px) !important;
-        max-height: min(86dvh, 760px) !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
         overflow: hidden !important;
     }
     .location-picker-root .modal-header {
@@ -318,6 +340,9 @@
 (function() {
     const modal        = document.getElementById('location-picker-modal');
     if (!modal) return;
+
+    // Move modal to body to avoid parent stacking context issues
+    document.body.appendChild(modal);
 
     const displayInp   = document.getElementById('warehouse_location_display');
     const idInput      = document.getElementById('warehouse_location_id');

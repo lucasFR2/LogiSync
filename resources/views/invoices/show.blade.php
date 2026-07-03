@@ -105,6 +105,12 @@
                     <i class="fa-solid fa-file-pdf mr-2"></i> Visualizar DANFE
                 </a>
             @endif
+ 
+            @if($invoice->status === 'concluída')
+                <a href="{{ route('invoices.romaneio', $invoice) }}" target="_blank" class="btn btn-primary" style="background: var(--blue); border-color: var(--blue); box-shadow: 0 8px 16px -4px var(--blue-bg);">
+                    <i class="fa-solid fa-print mr-2"></i> Imprimir Romaneio
+                </a>
+            @endif
 
             @if($invoice->status === 'emitida' && $invoice->type === 'saida' && auth()->user()->hasPermission('notas_fiscais.editar'))
                 <form action="{{ route('invoices.conclude', $invoice) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja concluir esta nota? Isso dará baixa no estoque dos produtos.')">
@@ -169,7 +175,7 @@
                 <!-- CNPJ e IE -->
                 <td style="width: 25%;" colspan="2">
                     <span class="box-title">CNPJ / IE DO EMITENTE</span>
-                    <span class="box-value">{{ $invoice->issuer_cnpj }}</span>
+                    <span class="box-value">{{ $invoice->formatted_issuer_cnpj }}</span>
                     <span class="box-value" style="font-size: 0.8rem; font-weight: normal; margin-top: 2px; color: var(--text-secondary);">IE: 123.456.789.110</span>
                 </td>
             </tr>
@@ -228,7 +234,7 @@
                 <!-- CNPJ / CPF -->
                 <td style="width: 15%;">
                     <span class="box-title">CNPJ / CPF</span>
-                    <span class="box-value">{{ $invoice->recipient_document ?: '-' }}</span>
+                    <span class="box-value">{{ $invoice->formatted_recipient_document ?: '-' }}</span>
                 </td>
                 <!-- Data da Emissão -->
                 <td style="width: 15%;">
@@ -441,7 +447,7 @@
                 </td>
                 <td style="width: 20%;">
                     <span class="box-title">CNPJ / CPF</span>
-                    <span class="box-value">{{ $invoice->issuer_cnpj }}</span>
+                    <span class="box-value">{{ $invoice->formatted_issuer_cnpj }}</span>
                 </td>
             </tr>
         </table>
@@ -741,6 +747,12 @@
             row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
         }
     }
+ 
+    @if(session('open_romaneio'))
+        window.addEventListener('DOMContentLoaded', () => {
+            window.open("{{ route('invoices.romaneio', $invoice) }}", "_blank");
+        });
+    @endif
 </script>
 @endpush
 @endsection

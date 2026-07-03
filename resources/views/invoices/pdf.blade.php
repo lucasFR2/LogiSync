@@ -172,7 +172,7 @@
             {{-- CNPJ/IE --}}
             <td colspan="2" style="width:30%;">
                 <span class="box-title">CNPJ / IE DO EMITENTE</span>
-                <span class="box-value">{{ $invoice->issuer_cnpj }}</span>
+                <span class="box-value">{{ $invoice->formatted_issuer_cnpj }}</span>
                 <span style="font-size:6px; display:block; margin-top:1px; color:#475569;">IE: 123.456.789.110</span>
             </td>
         </tr>
@@ -226,7 +226,7 @@
             </td>
             <td style="width:15%;">
                 <span class="box-title">CNPJ / CPF</span>
-                <span class="box-value">{{ $invoice->recipient_document ?: '—' }}</span>
+                <span class="box-value">{{ $invoice->formatted_recipient_document ?: '—' }}</span>
             </td>
             <td style="width:15%;">
                 <span class="box-title">DATA DA EMISSÃO</span>
@@ -418,7 +418,7 @@
             </td>
             <td style="width:20%;">
                 <span class="box-title">CNPJ / CPF</span>
-                <span class="box-value">{{ $invoice->issuer_cnpj }}</span>
+                <span class="box-value">{{ $invoice->formatted_issuer_cnpj }}</span>
             </td>
         </tr>
     </table>

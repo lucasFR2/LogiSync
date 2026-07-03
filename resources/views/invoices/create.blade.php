@@ -141,7 +141,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">CPF / CNPJ <span style="color:var(--red);">*</span></label>
-                            <input type="text" name="recipient_document" id="recipient_document" value="{{ $invoice->recipient_document ?? '' }}" required class="form-control" placeholder="00.000.000/0001-00" style="height: 48px;">
+                            <input type="text" name="recipient_document" id="recipient_document" value="{{ $invoice->recipient_document ?? '' }}" required data-mask="cpf_cnpj" class="form-control" placeholder="00.000.000/0001-00" style="height: 48px;">
                         </div>
                         <div class="form-group">
                             <label class="form-label">E-mail para Faturamento</label>
@@ -1298,7 +1298,11 @@ function fillCustomerData(sel) {
     if (!opt || !opt.value) return;
     
     document.getElementById('recipient_name').value = opt.dataset.name || '';
-    document.getElementById('recipient_document').value = opt.dataset.document || '';
+    
+    const docEl = document.getElementById('recipient_document');
+    docEl.value = opt.dataset.document || '';
+    if (docEl.mask) docEl.mask.updateValue();
+    
     document.getElementById('recipient_email').value = opt.dataset.email || '';
     document.getElementById('recipient_phone').value = opt.dataset.phone || '';
     document.getElementById('recipient_address').value = opt.dataset.address || '';
@@ -1326,7 +1330,13 @@ function fillCarrierData(sel) {
 function fillCarrierFieldsManually({ name, cnpj, stateReg, street, number, city, state, plate, uf }) {
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
     set('carrier_name',     name);
-    set('carrier_cnpj',     cnpj);
+    
+    const cnpjEl = document.getElementById('carrier_cnpj');
+    if (cnpjEl) {
+        cnpjEl.value = cnpj || '';
+        if (cnpjEl.mask) cnpjEl.mask.updateValue();
+    }
+    
     set('carrier_state_reg', stateReg);
     set('carrier_address',  street ? (number ? street + ', ' + number : street) : '');
     set('carrier_city',     city);
