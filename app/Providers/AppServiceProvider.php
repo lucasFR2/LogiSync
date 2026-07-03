@@ -95,6 +95,11 @@ class AppServiceProvider extends ServiceProvider
             return $user->hasPermission('clientes.gerenciar');
         });
 
+        // ========== TRANSPORTADORAS ==========
+        Gate::define('transportadoras.gerenciar', function ($user) {
+            return $user->hasPermission('transportadoras.gerenciar');
+        });
+
         // ========== NOTAS FISCAIS ==========
         Gate::define('notas_fiscais.visualizar', function ($user) {
             return $user->hasPermission('notas_fiscais.visualizar');

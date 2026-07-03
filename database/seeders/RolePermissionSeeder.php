@@ -17,7 +17,7 @@ class RolePermissionSeeder extends Seeder
                 'produtos.visualizar', 'produtos.cadastrar', 'produtos.editar', 'produtos.excluir',
                 'estoque.visualizar', 'estoque.entradas', 'estoque.saidas', 'categorias.gerenciar',
                 'localizacao.visualizar', 'localizacao.editar',
-                'fornecedores.gerenciar', 'clientes.gerenciar',
+                'fornecedores.gerenciar', 'clientes.gerenciar', 'transportadoras.gerenciar',
                 'notas_fiscais.visualizar', 'notas_fiscais.emitir', 'notas_fiscais.editar',
                 'manifestacoes.gerenciar',
                 'logs.visualizar'

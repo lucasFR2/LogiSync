@@ -273,3 +273,6 @@
 })();
 </script>
 @endpush
+})();
+</script>
+@endpush

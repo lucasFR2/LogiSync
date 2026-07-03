@@ -594,3 +594,185 @@
     });
 </script>
 @endpush
+                
+                if(mrgCustoBadge) mrgCustoBadge.innerText = newMarginP.toFixed(2).replace('.', ',') + '%';
+                if(mrgVendaBadge) {
+                    const marginVenda = ((salePrice - realCost) / salePrice) * 100;
+                    mrgVendaBadge.innerText = marginVenda.toFixed(2).replace('.', ',') + '%';
+                }
+            }
+        });
+
+        calculate();
+
+        // ── WMS 3-Layer Validation ──────────────────────────────────────────
+        const dimInputs    = document.querySelectorAll('.dim-input');
+        const unitVolDisplay = document.getElementById('unit-vol-display');
+        const qtyInput     = document.querySelector('input[name="quantity"]');
+        const weightInput  = document.querySelector('input[name="weight"]');
+
+        // Localização seleccionada com dados completos
+        let loc = { id: '', w: 10, h: 10, d: 10, maxWeight: null };
+
+        function setLayer(id, state, msg, pct) {
+            // state: 'idle' | 'ok' | 'fail' | 'warn'
+            const el   = document.getElementById('layer-' + id);
+            const icon = document.getElementById('layer-' + id + '-icon');
+            const msgEl= document.getElementById('layer-' + id + '-msg');
+            const pctEl= document.getElementById('layer-' + id + '-pct');
+            const barEl= document.getElementById('layer-' + id + '-bar');
+            if (!el) return;
+            el.className = 'wms-layer wms-' + state;
+            if (icon) {
+                const iconMap = { idle:'<i class="fa-solid fa-ruler-combined"></i>', ok:'<i class="fa-solid fa-check"></i>', fail:'<i class="fa-solid fa-ban"></i>', warn:'<i class="fa-solid fa-triangle-exclamation"></i>' };
+                icon.innerHTML = iconMap[state] || iconMap.idle;
+            }
+            if (msgEl && msg !== undefined) msgEl.textContent = msg;
+            if (pctEl && pct !== undefined) pctEl.textContent = pct + '%';
+            if (barEl && pct !== undefined) {
+                const color = pct >= 100 ? 'var(--red)' : (pct >= 75 ? 'var(--orange)' : (id === 'weight' ? 'var(--blue)' : 'var(--green)'));
+                barEl.style.width = Math.min(pct, 100) + '%';
+                barEl.style.background = color;
+            }
+        }
+
+        function runValidation() {
+            const pw = parseFloat(document.getElementById('dim_width')?.value)  || 1;
+            const ph = parseFloat(document.getElementById('dim_height')?.value) || 1;
+            const pd = parseFloat(document.getElementById('dim_depth')?.value)  || 1;
+            const qty = parseFloat(qtyInput?.value) || 0;
+            const pWeight = parseFloat(weightInput?.value) || 0;
+
+            // Unit volume
+            const unitVol = pw * ph * pd;
+            if (unitVolDisplay) {
+                unitVolDisplay.textContent = unitVol.toLocaleString('pt-BR', { maximumFractionDigits: 4 });
+            }
+
+            // Update header labels
+            const capLabel = document.getElementById('loc-capacity-label');
+            const capVal   = document.getElementById('loc-capacity-val');
+            if (capLabel) capLabel.textContent = `Posição ${loc.w.toFixed(1)}×${loc.h.toFixed(1)}×${loc.d.toFixed(1)}`;
+            if (capVal) {
+                const locVol = loc.w * loc.h * loc.d;
+                capVal.textContent = `Capacidade: ${locVol.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} u³`;
+                capVal.style.color = 'var(--green)';
+            }
+
+            if (!loc.id) {
+                // No location selected — show idle state
+                setLayer('dim',    'idle', 'Selecione um endereço para verificar.');
+                setLayer('vol',    'idle', 'Proporção do endereço ocupada por este produto.', 0);
+                setLayer('weight', 'idle', '—', 0);
+                return;
+            }
+
+            // ── Layer 1: Dimensional fit (optimal rotation) ─────────────────
+            const prodDims = [pw, ph, pd].sort((a, b) => b - a);  // desc
+            const locDims  = [loc.w, loc.h, loc.d].sort((a, b) => b - a);
+            let dimFail = false, failIdx = -1;
+            for (let i = 0; i < 3; i++) {
+                if (prodDims[i] > locDims[i]) { dimFail = true; failIdx = i; break; }
+            }
+            if (dimFail) {
+                setLayer('dim', 'fail',
+                    `Produto (${prodDims.map(v=>v.toFixed(1)).join('×')} u) não cabe em nenhuma orientação. ` +
+                    `Dimensão ${prodDims[failIdx].toFixed(1)} u excede ${locDims[failIdx].toFixed(1)} u da posição.`
+                );
+            } else {
+                setLayer('dim', 'ok',
+                    `Produto (${prodDims.map(v=>v.toFixed(1)).join('×')} u) cabe na posição (${locDims.map(v=>v.toFixed(1)).join('×')} u).`
+                );
+            }
+
+            // ── Layer 2: Volume ─────────────────────────────────────────────
+            const locVol   = loc.w * loc.h * loc.d;
+            const totalVol = unitVol * qty;
+            const volPct   = locVol > 0 ? Math.round((totalVol / locVol) * 100) : 0;
+            if (volPct > 100) {
+                setLayer('vol', 'fail',
+                    `Excede capacidade: ${totalVol.toFixed(2)} u³ necessário, apenas ${locVol.toFixed(2)} u³ disponível.`,
+                    volPct
+                );
+                if (capVal) capVal.style.color = 'var(--red)';
+            } else if (volPct >= 75) {
+                setLayer('vol', 'warn',
+                    `Atenção: ${volPct}% da capacidade será utilizada (${totalVol.toFixed(2)} de ${locVol.toFixed(2)} u³).`,
+                    volPct
+                );
+            } else {
+                setLayer('vol', 'ok',
+                    `${volPct}% da capacidade (${totalVol.toFixed(2)} u³ de ${locVol.toFixed(2)} u³).`,
+                    volPct
+                );
+            }
+
+            // ── Layer 3: Weight ─────────────────────────────────────────────
+            const weightLayer = document.getElementById('layer-weight');
+            if (loc.maxWeight && loc.maxWeight > 0) {
+                if (weightLayer) weightLayer.style.display = 'flex';
+                const totalWeight = pWeight * qty;
+                const weightPct   = Math.round((totalWeight / loc.maxWeight) * 100);
+                if (weightPct > 100) {
+                    setLayer('weight', 'fail',
+                        `Excede limite: ${totalWeight.toFixed(2)} kg necessário, máximo é ${loc.maxWeight.toFixed(2)} kg.`,
+                        weightPct
+                    );
+                } else if (weightPct >= 75) {
+                    setLayer('weight', 'warn',
+                        `${weightPct}% da carga máxima (${totalWeight.toFixed(2)} de ${loc.maxWeight.toFixed(2)} kg).`,
+                        weightPct
+                    );
+                } else {
+                    setLayer('weight', 'ok',
+                        `${totalWeight.toFixed(2)} kg de ${loc.maxWeight.toFixed(2)} kg (${weightPct}%).`,
+                        weightPct
+                    );
+                }
+            } else {
+                if (weightLayer) weightLayer.style.display = 'none';
+            }
+        }
+
+        dimInputs.forEach(i => i.addEventListener('input', runValidation));
+        if (qtyInput)    qtyInput.addEventListener('input', runValidation);
+        if (weightInput) weightInput.addEventListener('input', runValidation);
+
+        document.addEventListener('locationSelected', function(e) {
+            loc.id        = e.detail.id;
+            loc.w         = parseFloat(e.detail.width)      || 10;
+            loc.h         = parseFloat(e.detail.height)     || 10;
+            loc.d         = parseFloat(e.detail.depth)      || 10;
+            loc.maxWeight = e.detail.max_weight ? parseFloat(e.detail.max_weight) : null;
+            runValidation();
+        });
+
+        document.addEventListener('locationCleared', function() {
+            loc = { id: '', w: 10, h: 10, d: 10, maxWeight: null };
+            runValidation();
+        });
+
+        // Block submit if any layer is failing
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (!loc.id) return; // sem localização → sem restrição client-side
+                const failLayers = ['dim', 'vol', 'weight'].filter(id => {
+                    const el = document.getElementById('layer-' + id);
+                    return el && el.classList.contains('wms-fail');
+                });
+                if (failLayers.length > 0) {
+                    e.preventDefault();
+                    const msgs = failLayers.map(id => {
+                        const msgEl = document.getElementById('layer-' + id + '-msg');
+                        return msgEl ? msgEl.textContent : id;
+                    });
+                    alert('Não é possível salvar:\n\n• ' + msgs.join('\n• '));
+                }
+            });
+        }
+
+        runValidation();
+    });
+</script>
+@endpush

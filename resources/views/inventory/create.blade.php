@@ -272,3 +272,52 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
+
+        // --- Volumetric check ---
+        const opt = sel.options[sel.selectedIndex];
+        const warningAlert = document.getElementById('qty-warning-alert');
+        if (opt && opt.value && warningAlert) {
+            const w = parseFloat(opt.dataset.width) || 1.0;
+            const h = parseFloat(opt.dataset.height) || 1.0;
+            const d = parseFloat(opt.dataset.depth) || 1.0;
+            
+            const usedVol = parseFloat(opt.dataset.locationUsedVol) || 0;
+            const totalVol = parseFloat(opt.dataset.locationTotalVol) || 0;
+            
+            const unitVol = w * h * d;
+            const requiredAddedVol = unitVol * checkedQty;
+            const availableVol = Math.max(0, totalVol - usedVol);
+            
+            if (totalVol > 0 && requiredAddedVol > availableVol) {
+                const textSpan = document.getElementById('qty-warning-text');
+                if (textSpan) {
+                    textSpan.textContent = `Atenção: A localização do produto (${opt.dataset.location}) não tem espaço suficiente para os novos itens! Disponível: ${availableVol.toFixed(1)} u³, Adicional requerido: ${requiredAddedVol.toFixed(1)} u³.`;
+                }
+                warningAlert.style.display = 'flex';
+            } else {
+                warningAlert.style.display = 'none';
+            }
+        }
+    }
+
+    if (qtyInput && checkedQtyInput && statusBadge) {
+        qtyInput.addEventListener('input', updateConferenceStatus);
+        checkedQtyInput.addEventListener('input', updateConferenceStatus);
+    }
+    
+    // Also bind change event on select to trigger warning check
+    sel.addEventListener('change', updateConferenceStatus);
+
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const warningAlert = document.getElementById('qty-warning-alert');
+            if (warningAlert && warningAlert.style.display === 'flex') {
+                e.preventDefault();
+                alert('Não é possível salvar: A quantidade informada excede o espaço físico disponível no endereço!');
+            }
+        });
+    }
+});
+</script>
+@endpush
