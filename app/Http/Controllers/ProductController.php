@@ -600,7 +600,7 @@ class ProductController extends Controller implements HasMiddleware
         }
 
         $locations = $query->orderBy('full_code')
-            ->limit(50)
+            ->limit(1000)
             ->get()
             ->map(function ($loc) {
                 $occupant = $loc->products->first();
@@ -612,6 +612,10 @@ class ProductController extends Controller implements HasMiddleware
                     'level'         => $loc->level,
                     'is_occupied'   => $loc->is_occupied,
                     'occupant_name' => $occupant?->name,
+                    'width'         => $loc->width,
+                    'height'        => $loc->height,
+                    'depth'         => $loc->depth,
+                    'max_weight'    => $loc->max_weight,
                 ];
             });
 

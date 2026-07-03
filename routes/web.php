@@ -95,6 +95,7 @@ Route::middleware('auth')->group(function () {
         Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
         Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
         Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+        Route::get('invoices/{invoice}/romaneio', [InvoiceController::class, 'romaneio'])->name('invoices.romaneio');
         Route::post('invoices/{invoice}/confer', [InvoiceController::class, 'confer'])->name('invoices.confer');
         Route::get('invoices/{invoice}/confer-workflow', [InvoiceController::class, 'conferWorkflow'])->name('invoices.confer-workflow');
         Route::post('invoices/{invoice}/confer-save', [InvoiceController::class, 'conferSave'])->name('invoices.confer-save');

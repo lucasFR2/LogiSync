@@ -201,6 +201,21 @@ class InvoiceController extends Controller
 
         return $pdf->download($filename);
     }
+ 
+    /**
+     * Gerar PDF do romaneio de entrega (stream)
+     */
+    public function romaneio(Invoice $invoice)
+    {
+        $invoice->load(['items.product.location', 'user:id,name', 'carrier', 'conferredBy:id,name']);
+ 
+        $pdf = Pdf::loadView('invoices.romaneio_pdf', compact('invoice'))
+                  ->setPaper('a4', 'portrait');
+ 
+        $filename = 'ROMANEIO-NF-' . $invoice->number . '.pdf';
+ 
+        return $pdf->stream($filename);
+    }
 
     /**
      * Realiza a conferência da nota fiscal
@@ -280,7 +295,8 @@ class InvoiceController extends Controller
         }
 
         return redirect()->route('invoices.show', $invoice)
-                          ->with('success', "Conferência finalizada com status: {$status}" . ($status === 'Conferida' ? " e estoque baixado!" : ""));
+                          ->with('success', "Conferência finalizada com status: {$status}" . ($status === 'Conferida' ? " e estoque baixado!" : ""))
+                          ->with('open_romaneio', $status === 'Conferida' ? true : null);
     }
 
     /**
@@ -306,7 +322,8 @@ class InvoiceController extends Controller
             Logger::log('conclude_invoice', "O faturamento da NF #{$invoice->number} foi concluído manualmente.");
 
             return redirect()->route('invoices.show', $invoice)
-                             ->with('success', 'Nota fiscal concluída e estoque baixado com sucesso!');
+                             ->with('success', 'Nota fiscal concluída e estoque baixado com sucesso!')
+                             ->with('open_romaneio', true);
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erro ao concluir nota: ' . $e->getMessage());
         }

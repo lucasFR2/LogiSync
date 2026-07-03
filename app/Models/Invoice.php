@@ -138,4 +138,31 @@ class Invoice extends Model
             default           => $this->payment_method,
         };
     }
+ 
+    private function formatCnpjCpf($value)
+    {
+        $value = preg_replace('/[^0-9]/', '', $value);
+        if (strlen($value) === 14) {
+            return vsprintf('%s%s.%s%s%s.%s%s%s/%s%s%s%s-%s%s', str_split($value));
+        }
+        if (strlen($value) === 11) {
+            return vsprintf('%s%s%s.%s%s%s.%s%s%s-%s%s', str_split($value));
+        }
+        return $value;
+    }
+ 
+    public function getFormattedIssuerCnpjAttribute(): string
+    {
+        return $this->formatCnpjCpf($this->issuer_cnpj);
+    }
+ 
+    public function getFormattedRecipientDocumentAttribute(): string
+    {
+        return $this->formatCnpjCpf($this->recipient_document);
+    }
+ 
+    public function getFormattedCarrierCnpjAttribute(): string
+    {
+        return $this->formatCnpjCpf($this->carrier_cnpj);
+    }
 }
