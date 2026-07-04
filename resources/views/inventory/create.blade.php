@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     sel.addEventListener('change', function() {
-        const opt = this.options[this.selectedIndex];
+        const opt = this.querySelector(`option[value="${this.value}"]`) || this.options[this.selectedIndex];
         if (!opt || !opt.value) { card.style.display = 'none'; return; }
 
         displayInp.value = opt.dataset.name || opt.text;
@@ -269,11 +269,8 @@ document.addEventListener('DOMContentLoaded', function() {
         qtyInput.addEventListener('input', updateConferenceStatus);
         checkedQtyInput.addEventListener('input', updateConferenceStatus);
     }
-});
-</script>
-@endpush
 
-        // --- Volumetric check ---
+    // --- Volumetric check ---
         const opt = sel.options[sel.selectedIndex];
         const warningAlert = document.getElementById('qty-warning-alert');
         if (opt && opt.value && warningAlert) {

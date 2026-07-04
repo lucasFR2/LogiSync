@@ -151,9 +151,32 @@ class ProductController extends Controller implements HasMiddleware
             'conference_notes' => 'nullable|string|max:1000',
         ]);
 
-        DB::transaction(function() use ($validated) {
-            $product = Product::findOrFail($validated['product_id']);
-            
+        // ── Validação volumétrica da localização (server-side) ───────────────
+        $product = Product::with('location')->findOrFail($validated['product_id']);
+        $checkedQty = (int) $validated['checked_quantity'];
+
+        if ($product->location && $checkedQty > 0) {
+            $location       = $product->location;
+            $requiredVolume = $product->unitVolume() * $checkedQty;
+            // exclude current product from used volume since its quantity will grow
+            $available      = $location->availableVolume($product->id);
+
+            if ($requiredVolume > $available) {
+                $totalVol = number_format($location->totalVolume(), 2);
+                $usedVol  = number_format($location->usedVolume($product->id), 2);
+                $reqVol   = number_format($requiredVolume, 2);
+                $avail    = number_format($available, 2);
+
+                throw ValidationException::withMessages([
+                    'quantity' => "Espaço insuficiente na posição {$location->full_code}. " .
+                                  "Capacidade total: {$totalVol} u³ | Já ocupado: {$usedVol} u³ | " .
+                                  "Disponível: {$avail} u³ | Necessário para {$checkedQty} un: {$reqVol} u³.",
+                ]);
+            }
+        }
+        // ────────────────────────────────────────────────────────────────────
+
+        DB::transaction(function() use ($validated, $product) {
             // Forçamos a conversão para Carbon e garantimos que a hora seja preservada
             // Se vier nulo, usa o agora. Se vier string, converte.
             try {

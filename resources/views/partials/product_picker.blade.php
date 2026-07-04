@@ -262,6 +262,33 @@
             if (window.activeProductSelectTarget) {
                 window.activeProductSelectTarget.value = id;
                 window.activeProductSelectTarget.dispatchEvent(new Event('change'));
+                
+                // Robust fallback for the main inventory create/edit screen
+                if (window.activeProductSelectTarget.id === 'productSelectHidden') {
+                    const displayInp = document.getElementById('productSelect_display');
+                    const inputVal = document.getElementById('productSelect');
+                    const opt = window.activeProductSelectTarget.querySelector(`option[value="${id}"]`);
+                    if (opt && displayInp && inputVal) {
+                        displayInp.value = opt.dataset.name || opt.text;
+                        inputVal.value = id;
+                        
+                        const card = document.getElementById('productInfoCard');
+                        if (card) {
+                            const piStock = document.getElementById('pi_stock');
+                            const piPrice = document.getElementById('pi_price');
+                            const piCategory = document.getElementById('pi_category');
+                            const piSupplier = document.getElementById('pi_supplier');
+                            const piLocation = document.getElementById('pi_location');
+                            
+                            if (piStock) piStock.textContent = (opt.dataset.stock || '0') + ' ' + (opt.dataset.unit || 'un');
+                            if (piPrice) piPrice.textContent = 'R$ ' + (opt.dataset.price || '0,00');
+                            if (piCategory) piCategory.textContent = opt.dataset.category || '—';
+                            if (piSupplier) piSupplier.textContent = opt.dataset.supplier || '—';
+                            if (piLocation) piLocation.textContent = opt.dataset.location || '—';
+                            card.style.display = 'block';
+                        }
+                    }
+                }
             }
             closeModal();
         }
