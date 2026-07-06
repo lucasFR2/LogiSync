@@ -42,8 +42,38 @@ class InventoryService
         return DB::transaction(function () use ($product, $quantity, $data) {
             $checkedQty = (int) ($data['checked_quantity'] ?? $quantity);
 
-            // Valida espaço físico na posição do produto (se houver posição vinculada)
-            $this->validateLocationSpace($product, $checkedQty);
+            // ── Mudança de localização solicitada ────────────────────────────
+            $newLocId = isset($data['warehouse_location_id']) && $data['warehouse_location_id'] !== ''
+                ? (int) $data['warehouse_location_id']
+                : null;
+
+            $oldLocId = $product->warehouse_location_id;
+
+            if ($newLocId && $newLocId !== $oldLocId) {
+                // Valida espaço físico na nova localização
+                $newLocation = WarehouseLocation::with('products')->findOrFail($newLocId);
+                $this->validateSpecificLocation($newLocation, $product, $checkedQty);
+
+                // Migra o produto para a nova localização
+                $product->update(['warehouse_location_id' => $newLocId]);
+                $product->refresh();
+
+                // Marca nova localização como ocupada
+                WarehouseLocation::where('id', $newLocId)->update(['is_occupied' => true]);
+
+                // Libera localização anterior se nenhum outro produto a usa
+                if ($oldLocId) {
+                    $stillOccupied = Product::where('warehouse_location_id', $oldLocId)
+                        ->where('id', '!=', $product->id)
+                        ->exists();
+                    if (!$stillOccupied) {
+                        WarehouseLocation::where('id', $oldLocId)->update(['is_occupied' => false]);
+                    }
+                }
+            } else {
+                // Localização original: valida espaço normalmente
+                $this->validateLocationSpace($product, $checkedQty);
+            }
 
             $entryDate = null;
             if (!empty($data['entry_date'])) {

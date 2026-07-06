@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Supplier;
+use App\Models\WarehouseLocation;
 use Illuminate\Http\Request;
 use App\Models\Inventory;
 use App\Models\IncomingInvoice;
@@ -128,57 +129,102 @@ class ProductController extends Controller implements HasMiddleware
     public function createInventory()
     {
         // Fetch products with all necessary fields for the UI attributes
-        $products = Product::select('id', 'name', 'supplier_id', 'quantity', 'unit', 'unit_price', 'category', 'warehouse_location', 'barcode')
-            ->with('supplier:id,name')
+        $products = Product::select('id', 'name', 'supplier_id', 'quantity', 'unit', 'unit_price', 'category', 'warehouse_location', 'warehouse_location_id', 'barcode', 'width', 'height', 'depth')
+            ->with('supplier:id,name', 'location:id,full_code,width,height,depth')
             ->orderBy('name')
             ->get();
-            
+
         $suppliers = Supplier::select('id', 'name')->orderBy('name')->get();
-        return view('inventory.create', compact('products', 'suppliers'));
+
+        $locations = WarehouseLocation::select('id', 'full_code', 'width', 'height', 'depth', 'is_occupied')
+            ->with('products:id,warehouse_location_id,width,height,depth,quantity')
+            ->orderBy('full_code')
+            ->get();
+
+        return view('inventory.create', compact('products', 'suppliers', 'locations'));
     }
 
     public function storeInventory(Request $request)
     {
         $validated = $request->validate([
-            'product_id'       => 'required|exists:products,id',
-            'quantity'         => 'required|integer|min:1',
-            'checked_quantity' => 'required|integer|min:0',
-            'notes'            => 'nullable|string|max:500',
-            'entry_date'       => 'nullable|date',
-            'lot_number'       => 'nullable|string|max:100',
-            'expiry_date'      => 'nullable|date',
-            'supplier_id'      => 'nullable|exists:suppliers,id',
-            'conference_notes' => 'nullable|string|max:1000',
+            'product_id'            => 'required|exists:products,id',
+            'quantity'              => 'required|integer|min:1',
+            'checked_quantity'      => 'required|integer|min:0',
+            'notes'                 => 'nullable|string|max:500',
+            'entry_date'            => 'nullable|date',
+            'lot_number'            => 'nullable|string|max:100',
+            'expiry_date'           => 'nullable|date',
+            'supplier_id'           => 'nullable|exists:suppliers,id',
+            'conference_notes'      => 'nullable|string|max:1000',
+            'warehouse_location_id' => 'nullable|exists:warehouse_locations,id',
         ]);
 
-        // ── Validação volumétrica da localização (server-side) ───────────────
-        $product = Product::with('location')->findOrFail($validated['product_id']);
-        $checkedQty = (int) $validated['checked_quantity'];
+        // ── Localização de entrada ─────────────────────────────────────────────
+        $newLocId = !empty($validated['warehouse_location_id'])
+            ? (int) $validated['warehouse_location_id']
+            : null;
 
-        if ($product->location && $checkedQty > 0) {
-            $location       = $product->location;
+        $product     = Product::with('location')->findOrFail($validated['product_id']);
+        $checkedQty  = (int) $validated['checked_quantity'];
+        $oldLocId    = $product->warehouse_location_id;
+
+        if ($newLocId && $newLocId !== $oldLocId) {
+            // Valida espaço na nova localização
+            $newLocation    = WarehouseLocation::with('products')->findOrFail($newLocId);
             $requiredVolume = $product->unitVolume() * $checkedQty;
-            // exclude current product from used volume since its quantity will grow
-            $available      = $location->availableVolume($product->id);
+            $available      = $newLocation->availableVolume($product->id);
 
             if ($requiredVolume > $available) {
-                $totalVol = number_format($location->totalVolume(), 2);
-                $usedVol  = number_format($location->usedVolume($product->id), 2);
-                $reqVol   = number_format($requiredVolume, 2);
+                $totalVol = number_format($newLocation->totalVolume(), 2);
                 $avail    = number_format($available, 2);
-
+                $reqVol   = number_format($requiredVolume, 2);
                 throw ValidationException::withMessages([
-                    'quantity' => "Espaço insuficiente na posição {$location->full_code}. " .
-                                  "Capacidade total: {$totalVol} u³ | Já ocupado: {$usedVol} u³ | " .
-                                  "Disponível: {$avail} u³ | Necessário para {$checkedQty} un: {$reqVol} u³.",
+                    'warehouse_location_id' => "Espaço insuficiente na posição {$newLocation->full_code}. " .
+                                              "Capacidade: {$totalVol} u³ | Disponível: {$avail} u³ | Necessário: {$reqVol} u³.",
                 ]);
             }
-        }
-        // ────────────────────────────────────────────────────────────────────
+        } else {
+            // Localização original — validação volumétrica original
+            if ($product->location && $checkedQty > 0) {
+                $location       = $product->location;
+                $requiredVolume = $product->unitVolume() * $checkedQty;
+                $available      = $location->availableVolume($product->id);
 
-        DB::transaction(function() use ($validated, $product) {
-            // Forçamos a conversão para Carbon e garantimos que a hora seja preservada
-            // Se vier nulo, usa o agora. Se vier string, converte.
+                if ($requiredVolume > $available) {
+                    $totalVol = number_format($location->totalVolume(), 2);
+                    $usedVol  = number_format($location->usedVolume($product->id), 2);
+                    $reqVol   = number_format($requiredVolume, 2);
+                    $avail    = number_format($available, 2);
+
+                    throw ValidationException::withMessages([
+                        'quantity' => "Espaço insuficiente na posição {$location->full_code}. " .
+                                      "Capacidade total: {$totalVol} u³ | Já ocupado: {$usedVol} u³ | " .
+                                      "Disponível: {$avail} u³ | Necessário para {$checkedQty} un: {$reqVol} u³.",
+                    ]);
+                }
+            }
+        }
+        // ──────────────────────────────────────────────────────────────────────────────
+
+        DB::transaction(function() use ($validated, $product, $newLocId, $oldLocId, $checkedQty) {
+            // Migrar localização se necessário
+            if ($newLocId && $newLocId !== $oldLocId) {
+                $product->update(['warehouse_location_id' => $newLocId]);
+                $product->refresh();
+
+                WarehouseLocation::where('id', $newLocId)->update(['is_occupied' => true]);
+
+                if ($oldLocId) {
+                    $stillOccupied = Product::where('warehouse_location_id', $oldLocId)
+                        ->where('id', '!=', $product->id)
+                        ->exists();
+                    if (!$stillOccupied) {
+                        WarehouseLocation::where('id', $oldLocId)->update(['is_occupied' => false]);
+                    }
+                }
+            }
+
+            // Data de entrada
             try {
                 $entryDate = $validated['entry_date'] ? \Carbon\Carbon::parse($validated['entry_date']) : now();
             } catch (\Exception $e) {
@@ -192,10 +238,11 @@ class ProductController extends Controller implements HasMiddleware
                 'user_id'            => auth()->id(),
                 'type'               => 'entrada',
                 'status'             => 'confirmada',
-                'remaining_quantity' => $validated['checked_quantity'],
+                'remaining_quantity' => $checkedQty,
                 'conference_status'  => $conferenceStatus,
             ]));
-            $product->increment('quantity', $validated['checked_quantity']);
+
+            $product->increment('quantity', $checkedQty);
         });
 
         return redirect()->route('inventory.index')->with('success', 'Entrada de estoque registrada com sucesso!');

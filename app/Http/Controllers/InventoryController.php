@@ -1,6 +1,8 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\WarehouseLocation;
+
 use App\Models\Inventory;
 use App\Models\Product;
 use App\Services\InventoryService;
@@ -44,7 +46,13 @@ class InventoryController extends Controller
             ->get();
         $suppliers = \App\Models\Supplier::select('id', 'name')->orderBy('name')->get();
 
-        return view('inventory.create', compact('products', 'suppliers'));
+        // Carrega todas as localizações com dados de ocupação para o seletor
+        $locations = WarehouseLocation::select('id', 'full_code', 'aisle', 'column', 'level', 'width', 'height', 'depth', 'is_occupied')
+            ->with('products:id,warehouse_location_id,width,height,depth,quantity')
+            ->orderBy('full_code')
+            ->get();
+
+        return view('inventory.create', compact('products', 'suppliers', 'locations'));
     }
 
     /**
@@ -54,15 +62,16 @@ class InventoryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'product_id'       => 'required|exists:products,id',
-            'quantity'         => 'required|integer|min:1|max:9999999',
-            'checked_quantity' => 'required|integer|min:0|max:9999999',
-            'supplier_id'      => 'nullable|exists:suppliers,id',
-            'lot_number'       => 'nullable|string|max:100',
-            'expiry_date'      => 'nullable|date',
-            'notes'            => 'nullable|string|max:500',
-            'conference_notes' => 'nullable|string|max:1000',
-            'entry_date'       => 'nullable|date',
+            'product_id'            => 'required|exists:products,id',
+            'quantity'              => 'required|integer|min:1|max:9999999',
+            'checked_quantity'      => 'required|integer|min:0|max:9999999',
+            'supplier_id'           => 'nullable|exists:suppliers,id',
+            'lot_number'            => 'nullable|string|max:100',
+            'expiry_date'           => 'nullable|date',
+            'notes'                 => 'nullable|string|max:500',
+            'conference_notes'      => 'nullable|string|max:1000',
+            'entry_date'            => 'nullable|date',
+            'warehouse_location_id' => 'nullable|exists:warehouse_locations,id',
         ]);
 
         $product = Product::with('location')->findOrFail($validated['product_id']);
@@ -70,8 +79,13 @@ class InventoryController extends Controller
         try {
             $inventory = $this->inventoryService->registerEntry($product, $validated['quantity'], $validated);
 
+            $newLocId = $validated['warehouse_location_id'] ?? null;
+            $locLabel = $newLocId && $newLocId != $product->warehouse_location_id
+                ? ' → localização alterada para ID #' . $newLocId
+                : '';
+
             $logMsg = "O usuário registrou uma entrada de {$validated['quantity']} unidades "
-                . "(conferidas: {$validated['checked_quantity']}) para o produto: {$product->name}";
+                . "(conferidas: {$validated['checked_quantity']}) para o produto: {$product->name}{$locLabel}";
 
             if (($inventory->conference_status ?? '') === 'divergente') {
                 $logMsg .= ' [DIVERGENTE]';

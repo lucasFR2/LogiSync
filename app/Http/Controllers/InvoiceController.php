@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Product;
 use App\Models\Supplier;
+use App\Models\WarehouseLocation;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -57,15 +58,19 @@ class InvoiceController extends Controller
     public function create()
     {
         $number    = Invoice::nextNumber();
-        $products  = Product::orderBy('name')->get();
+        $products  = Product::with('location')->orderBy('name')->get();
         $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
         $customers = Customer::orderBy('name')->get(['id', 'name', 'document', 'email', 'phone', 'address', 'city', 'state', 'zip_code']);
-
         $carriers  = \App\Models\Carrier::orderBy('name')->get(['id','name','cnpj','state_registration','street','number','city','state','vehicle_plate','vehicle_uf']);
 
-        $invoice = null; // Garante que a variável existe na view
+        $locations = WarehouseLocation::select('id', 'full_code', 'width', 'height', 'depth', 'is_occupied')
+            ->with('products:id,warehouse_location_id,width,height,depth,quantity')
+            ->orderBy('full_code')
+            ->get();
 
-        return view('invoices.create', compact('number', 'products', 'suppliers', 'customers', 'carriers', 'invoice'));
+        $invoice = null;
+
+        return view('invoices.create', compact('number', 'products', 'suppliers', 'customers', 'carriers', 'invoice', 'locations'));
     }
 
     /**
@@ -122,13 +127,17 @@ class InvoiceController extends Controller
         }
 
         $invoice->load('items.product', 'supplier');
-        $products  = Product::orderBy('name')->get();
+        $products  = Product::with('location')->orderBy('name')->get();
         $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
         $customers = Customer::orderBy('name')->get(['id', 'name', 'document', 'email', 'phone', 'address', 'city', 'state', 'zip_code']);
-
         $carriers  = \App\Models\Carrier::orderBy('name')->get(['id','name','cnpj','state_registration','street','number','city','state','vehicle_plate','vehicle_uf']);
 
-        return view('invoices.create', compact('invoice', 'products', 'suppliers', 'customers', 'carriers'));
+        $locations = WarehouseLocation::select('id', 'full_code', 'width', 'height', 'depth', 'is_occupied')
+            ->with('products:id,warehouse_location_id,width,height,depth,quantity')
+            ->orderBy('full_code')
+            ->get();
+
+        return view('invoices.create', compact('invoice', 'products', 'suppliers', 'customers', 'carriers', 'locations'));
     }
 
     /**

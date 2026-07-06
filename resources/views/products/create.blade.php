@@ -591,9 +591,6 @@
         }
         dimInputs.forEach(i => i.addEventListener('input', calcVolume));
         calcVolume();
-    });
-</script>
-@endpush
                 
                 if(mrgCustoBadge) mrgCustoBadge.innerText = newMarginP.toFixed(2).replace('.', ',') + '%';
                 if(mrgVendaBadge) {

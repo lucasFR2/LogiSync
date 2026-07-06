@@ -61,7 +61,8 @@
                                     data-price="{{ number_format($p->unit_price, 2, ',', '.') }}"
                                     data-category="{{ $p->category ?? '—' }}"
                                     data-supplier="{{ $p->supplier?->name ?? '—' }}"
-                                    data-location="{{ $p->location?->full_code ?? $p->warehouse_location ?? '—' }}">
+                                    data-location="{{ $p->location?->full_code ?? $p->warehouse_location ?? '—' }}"
+                                    data-location-id="{{ $p->warehouse_location_id ?? '' }}">
                                     {{ $p->name }} ({{ $p->barcode ?? 'Sem Código' }})
                                 </option>
                             @endforeach
@@ -183,6 +184,29 @@
                 </div>
             </div>
 
+            {{-- SECTION 4: Localização de Armazenamento --}}
+            <div class="card anim-entrance" style="animation-delay:0.15s;" id="location-card">
+                <div class="card-header">
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        <div style="width:10px; height:24px; background:var(--blue); border-radius:4px;"></div>
+                        <h3 style="margin:0;">4. Localização de Armazenamento</h3>
+                    </div>
+                </div>
+                <div class="card-body" style="display:flex; flex-direction:column; gap:1.25rem;">
+                    <div class="form-group" style="margin:0;">
+                        <label class="form-label">Localização do Produto para Entrada</label>
+                        <div style="display:flex; gap:0.5rem;">
+                            <input type="hidden" name="warehouse_location_id" id="warehouse_location_id" value="">
+                             <input type="text" id="warehouse_location_display" readonly class="form-input" style="flex:1; background:var(--bg-hover); cursor:pointer;" placeholder="Clique para alterar a localização do produto (Localização atual: Nenhuma)">
+                            <button type="button" class="btn btn-secondary" id="btn-open-location-picker" style="padding:0 0.85rem;" title="Buscar localização">
+                                <i class="fa-solid fa-map-location-dot"></i>
+                            </button>
+                        </div>
+                        <small style="color:var(--text-muted);">Por padrão, a entrada irá para a localização atual do produto. Clique para selecionar outra posição livre.</small>
+                    </div>
+                </div>
+            </div>
+
             {{-- Actions --}}
             <div style="display:flex; gap:1rem; justify-content:flex-end; padding-top:0.5rem;">
                 <a href="{{ route('inventory.index') }}" class="btn btn-secondary">Cancelar</a>
@@ -197,6 +221,7 @@
 
 @include('partials.supplier_quick_create')
 @include('partials.product_picker')
+@include('partials.location_picker')
 @endsection
 
 @push('scripts')
@@ -219,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     sel.addEventListener('change', function() {
         const opt = this.querySelector(`option[value="${this.value}"]`) || this.options[this.selectedIndex];
-        if (!opt || !opt.value) { card.style.display = 'none'; return; }
+        if (!opt || !opt.value) { card.style.display = 'none'; resetLocationUI(); return; }
 
         displayInp.value = opt.dataset.name || opt.text;
         inputVal.value = opt.value;
@@ -230,6 +255,18 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('pi_supplier').textContent = opt.dataset.supplier || '—';
         document.getElementById('pi_location').textContent = opt.dataset.location || '—';
         card.style.display = 'block';
+
+        // Pré-seleciona a localização original do produto no modal/input
+        const defaultLocId = opt.dataset.locationId || '';
+        const defaultLocCode = opt.dataset.location || '';
+        
+        const locHiddenInput = document.getElementById('warehouse_location_id');
+        const locDisplayInput = document.getElementById('warehouse_location_display');
+        
+        if (locHiddenInput) locHiddenInput.value = defaultLocId;
+        if (locDisplayInput) {
+            locDisplayInput.value = defaultLocCode;
+        }
     });
 
     // Trigger on page load if old value present
@@ -270,41 +307,6 @@ document.addEventListener('DOMContentLoaded', function() {
         checkedQtyInput.addEventListener('input', updateConferenceStatus);
     }
 
-    // --- Volumetric check ---
-        const opt = sel.options[sel.selectedIndex];
-        const warningAlert = document.getElementById('qty-warning-alert');
-        if (opt && opt.value && warningAlert) {
-            const w = parseFloat(opt.dataset.width) || 1.0;
-            const h = parseFloat(opt.dataset.height) || 1.0;
-            const d = parseFloat(opt.dataset.depth) || 1.0;
-            
-            const usedVol = parseFloat(opt.dataset.locationUsedVol) || 0;
-            const totalVol = parseFloat(opt.dataset.locationTotalVol) || 0;
-            
-            const unitVol = w * h * d;
-            const requiredAddedVol = unitVol * checkedQty;
-            const availableVol = Math.max(0, totalVol - usedVol);
-            
-            if (totalVol > 0 && requiredAddedVol > availableVol) {
-                const textSpan = document.getElementById('qty-warning-text');
-                if (textSpan) {
-                    textSpan.textContent = `Atenção: A localização do produto (${opt.dataset.location}) não tem espaço suficiente para os novos itens! Disponível: ${availableVol.toFixed(1)} u³, Adicional requerido: ${requiredAddedVol.toFixed(1)} u³.`;
-                }
-                warningAlert.style.display = 'flex';
-            } else {
-                warningAlert.style.display = 'none';
-            }
-        }
-    }
-
-    if (qtyInput && checkedQtyInput && statusBadge) {
-        qtyInput.addEventListener('input', updateConferenceStatus);
-        checkedQtyInput.addEventListener('input', updateConferenceStatus);
-    }
-    
-    // Also bind change event on select to trigger warning check
-    sel.addEventListener('change', updateConferenceStatus);
-
     const form = document.querySelector('form');
     if (form) {
         form.addEventListener('submit', function(e) {
@@ -315,6 +317,42 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Event listener para quando o modal de localização atualizar o valor
+    document.addEventListener('locationSelected', function(e) {
+        const locHiddenInput = document.getElementById('warehouse_location_id');
+        const locDisplayInput = document.getElementById('warehouse_location_display');
+        if (locHiddenInput) locHiddenInput.value = e.detail.id;
+        if (locDisplayInput) locDisplayInput.value = e.detail.full_code;
+    });
+
+    document.addEventListener('locationCleared', function() {
+        resetLocationUI();
+    });
 });
+
+// ── Lógica de Localização de Armazenamento ─────────────────────────────
+function resetLocationUI() {
+    const locHiddenInput = document.getElementById('warehouse_location_id');
+    const locDisplayInput = document.getElementById('warehouse_location_display');
+    
+    // Volta para o padrão do produto selecionado
+    const sel = document.getElementById('productSelectHidden');
+    const opt = sel?.options[sel.selectedIndex];
+    
+    if (opt && opt.value) {
+        const defaultLocCode = opt.dataset.location || '';
+        if (locHiddenInput) locHiddenInput.value = opt.dataset.locationId || '';
+        if (locDisplayInput) {
+            locDisplayInput.value = defaultLocCode;
+        }
+    } else {
+        if (locHiddenInput) locHiddenInput.value = '';
+        if (locDisplayInput) {
+            locDisplayInput.value = '';
+        }
+    }
+}
 </script>
 @endpush
+

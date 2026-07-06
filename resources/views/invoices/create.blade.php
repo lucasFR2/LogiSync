@@ -51,11 +51,11 @@
 
 @section('content')
 <div class="w-full">
-    <form method="POST" action="{{ isset($invoice) ? route('invoices.update', $invoice) : route('invoices.store') }}" id="invoice-form" class="anim-entrance">
+    <form method="POST" action="{{ isset($invoice) ? route('invoices.update', $invoice) : route('invoices.store') }}" id="invoice-form" class="anim-entrance w-full">
         @csrf
         @if(isset($invoice)) @method('PUT') @endif
         
-        <div class="flex flex-col gap-6 lg:gap-10 pb-36">
+        <div style="display:flex; flex-direction:column; gap:1.5rem; width:100%;" class="pb-36">
 
             {{-- Card Unificado: Dados Gerais e Destinatário --}}
             <div class="card shadow-md">
@@ -513,8 +513,33 @@
                     
                     data-ibs_rate="{{ $p->ibs_rate }}"
                     data-cbs_rate="{{ $p->cbs_rate }}"
-                    data-is_rate="{{ $p->is_rate }}">
+                    data-is_rate="{{ $p->is_rate }}"
+                    data-location_id="{{ $p->warehouse_location_id ?? '' }}"
+                    data-location="{{ $p->location?->full_code ?? '' }}">
                 {{ $p->name }} [Est: {{ $p->quantity }}]
+            </option>
+        @endforeach
+    </select>
+</template>
+
+{{-- Location Select Template --}}
+<template id="location-select-template">
+    <select class="location-select form-control" style="font-size: 0.85rem; height: 36px; padding: 0 0.5rem; font-family: monospace;">
+        <option value="">— Localização padrão do produto —</option>
+        @foreach($locations ?? [] as $loc)
+            @php
+                $usedVol  = $loc->usedVolume();
+                $totalVol = $loc->totalVolume();
+                $pct      = $totalVol > 0 ? min(100, round($usedVol / $totalVol * 100)) : 0;
+                $isFull   = $pct >= 100;
+                $statusLabel = $isFull ? 'Cheio' : ($pct > 0 ? "Parcial ({$pct}%)" : 'Livre');
+            @endphp
+            <option value="{{ $loc->id }}"
+                data-pct="{{ $pct }}"
+                data-used-vol="{{ $usedVol }}"
+                data-total-vol="{{ $totalVol }}"
+                {{ $isFull ? 'disabled' : '' }}>
+                {{ $loc->full_code }} &mdash; {{ $statusLabel }}
             </option>
         @endforeach
     </select>
@@ -1200,10 +1225,37 @@ function addItem(data = {}) {
                     </div>
                 </div>
             </div>
+
+            {{-- Section 3: Localização de Armazenamento (somente NF de entrada) --}}
+            <div class="item-location-row" style="border-top: 1px solid var(--border); padding-top: 1.25rem; display: none; width: 100%;">
+                <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+                    <i class="fa-solid fa-warehouse" style="color:var(--blue); font-size:0.85rem;"></i>
+                    <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted);">Localização de Armazenamento</span>
+                </div>
+                <div class="form-group" style="margin:0; width: 100%;">
+                    <label class="form-label text-xs">Localização de Entrada</label>
+                    <div style="display:flex; gap:0.5rem; width: 100%;">
+                        <input type="hidden" name="items[${i}][warehouse_location_id]" class="location-id-input" id="item-location-id-${i}" value="">
+                        <input type="text" id="item-location-display-${i}" readonly class="form-input location-display-input" style="flex: 1; background:var(--bg-hover); cursor:pointer; font-size: 0.85rem; height: 44px;" placeholder="Clique para alterar a localização (Localização atual: Nenhuma)" onclick="openItemLocationPicker(${i})">
+                        <button type="button" class="btn btn-secondary" style="padding:0 1rem; height: 44px;" title="Buscar localização" onclick="openItemLocationPicker(${i})">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                        </button>
+                    </div>
+                    <small style="color:var(--text-muted);">Deixe vazio para usar a localização padrão do produto.</small>
+                </div>
+            </div>
+
         </div>
     `;
 
     container.appendChild(card);
+
+    // Show/hide location row based on current NF type
+    const typeSelect = document.querySelector('select[name="type"]');
+    const locRow = card.querySelector('.item-location-row');
+    if (typeSelect && locRow) {
+        locRow.style.display = typeSelect.value === 'entrada' ? 'block' : 'none';
+    }
 
     // Bind product select
     const sel = card.querySelector('select');
@@ -1230,6 +1282,18 @@ function addItem(data = {}) {
     }
 
     calcTotals(Object.keys(data).length > 0);
+
+    // Update location row visibility for all cards whenever type changes
+    const typeSelectEl = document.querySelector('select[name="type"]');
+    if (typeSelectEl && !typeSelectEl._locationListenerAdded) {
+        typeSelectEl._locationListenerAdded = true;
+        typeSelectEl.addEventListener('change', function () {
+            const isEntrada = this.value === 'entrada';
+            document.querySelectorAll('.item-location-row').forEach(row => {
+                row.style.display = isEntrada ? 'block' : 'none';
+            });
+        });
+    }
 }
 
 function fillProductData(sel) {
@@ -1289,6 +1353,17 @@ function fillProductData(sel) {
     card.querySelector('.ibs-rate-input').value = getVal('ibs_rate', 0.1);
     card.querySelector('.cbs-rate-input').value = getVal('cbs_rate', 0.9);
     card.querySelector('.is-rate-input').value = getVal('is_rate', 0);
+
+    // Auto-fill location select for this item
+    const locIdInput = document.getElementById(`item-location-id-${index}`);
+    const locDisplayInput = document.getElementById(`item-location-display-${index}`);
+    const defaultLocId = opt.getAttribute('data-location_id') || '';
+    const defaultLocCode = opt.getAttribute('data-location') || '';
+    
+    if (locIdInput) locIdInput.value = defaultLocId;
+    if (locDisplayInput) {
+        locDisplayInput.value = defaultLocCode;
+    }
 
     calcTotals();
 }
@@ -1356,6 +1431,51 @@ function invoiceMaskPlate(input) {
     if (v.length > 3) v = v.substring(0, 3) + '-' + v.substring(3, 7);
     input.value = v;
 }
+
+// Variável para rastrear qual item da NF-e está sendo editado no modal de localização
+let activeLocRowIndex = null;
+
+function openItemLocationPicker(index) {
+    activeLocRowIndex = index;
+    const currentLocId = document.getElementById(`item-location-id-${index}`)?.value || '';
+    const currentLocCode = document.getElementById(`item-location-display-${index}`)?.value || '';
+
+    // Define as variáveis globais que o location_picker.blade.php espera para sincronizar a barra e o grid
+    if (window.locationPickerState) {
+        window.locationPickerState.idInput = document.getElementById(`item-location-id-${index}`);
+        window.locationPickerState.displayInp = document.getElementById(`item-location-display-${index}`);
+    }
+
+    // Dispara o evento de clique simulado no elemento que o script do partial_picker ouve para abrir o modal
+    const pickerBtn = document.getElementById('btn-open-location-picker');
+    if (pickerBtn) pickerBtn.click();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('locationSelected', function(e) {
+        if (activeLocRowIndex !== null) {
+            const locIdInput = document.getElementById(`item-location-id-${activeLocRowIndex}`);
+            const locDisplayInput = document.getElementById(`item-location-display-${activeLocRowIndex}`);
+            if (locIdInput) locIdInput.value = e.detail.id;
+            if (locDisplayInput) {
+                locDisplayInput.value = e.detail.full_code;
+            }
+            activeLocRowIndex = null; // reseta
+        }
+    });
+
+    document.addEventListener('locationCleared', function() {
+        if (activeLocRowIndex !== null) {
+            const locIdInput = document.getElementById(`item-location-id-${activeLocRowIndex}`);
+            const locDisplayInput = document.getElementById(`item-location-display-${activeLocRowIndex}`);
+            if (locIdInput) locIdInput.value = '';
+            if (locDisplayInput) {
+                locDisplayInput.value = '';
+            }
+            activeLocRowIndex = null;
+        }
+    });
+});
 
 // Initialize
 @if(isset($invoice))
@@ -1464,4 +1584,7 @@ setTimeout(() => {
 @include('partials.customer_picker')
 @include('partials.carrier_quick_create')
 @include('partials.carrier_picker')
+@include('partials.location_picker')
+{{-- Botão oculto apenas para satisfazer o clique do listener padrão do location_picker --}}
+<button type="button" id="btn-open-location-picker" style="display:none;"></button>
 @endsection

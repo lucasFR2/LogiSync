@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\Inventory;
+use App\Models\WarehouseLocation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -110,8 +111,13 @@ class InvoiceService
                 ];
 
                 if ($isEmitting && !empty($item['product_id'])) {
+                    // Saídas são baixadas somente em concludeInvoice (após conferência).
+                    // Entradas e devoluções são processadas imediatamente na emissão.
                     if ($data['type'] !== 'saida') {
-                        $this->handleStockMovement($item['product_id'], $qty, $data['type'], $invoiceNumber);
+                        $locId = !empty($item['warehouse_location_id'])
+                            ? (int) $item['warehouse_location_id']
+                            : null;
+                        $this->handleStockMovement($item['product_id'], $qty, $data['type'], $invoiceNumber, $locId);
                     }
                 }
             }
@@ -148,6 +154,9 @@ class InvoiceService
 
             $invoice->items()->createMany($itemsData);
 
+            // Se a NF de saída já estava conferida (ex: conferência feita enquanto era rascunho),
+            // conclui imediatamente ao emitir. O lock pessimista dentro de concludeInvoice
+            // garante que não haverá dupla baixa mesmo se for chamado novamente.
             $freshInvoice = $invoice->fresh();
             if ($isEmitting && $freshInvoice && $freshInvoice->type === 'saida' && $freshInvoice->conference_status === 'Conferida') {
                 $this->concludeInvoice($invoice);
@@ -159,44 +168,80 @@ class InvoiceService
 
     public function concludeInvoice(Invoice $invoice)
     {
+        // Verificação rápida antes de abrir transação (otimização)
         if ($invoice->status === 'concluída') {
             return $invoice;
         }
 
         return DB::transaction(function () use ($invoice) {
-            $invoice->update(['status' => 'concluída']);
+            // Double-check com lock pessimista para evitar dupla baixa em requisições
+            // concorrentes ou chamadas múltiplas dentro da mesma sessão.
+            $locked = Invoice::where('id', $invoice->id)
+                ->lockForUpdate()
+                ->first();
 
-            foreach ($invoice->items as $item) {
-                if ($invoice->type === 'saida' && !empty($item->product_id)) {
-                    // Allocate stock using WMS FIFO logic
+            if (!$locked || $locked->status === 'concluída') {
+                return $invoice;
+            }
+
+            $locked->update(['status' => 'concluída']);
+            // Recarrega os itens a partir da instância travada
+            $locked->load('items');
+
+            foreach ($locked->items as $item) {
+                if ($locked->type === 'saida' && !empty($item->product_id)) {
+                    // Baixa de estoque via FIFO (garante estoque suficiente antes de deduzir)
                     FIFOStockService::allocateFIFOStock(
                         Product::findOrFail($item->product_id),
-                        $item->quantity,
-                        $invoice->number,
+                        (int) $item->quantity,
+                        $locked->number,
                         Auth::id()
                     );
                 }
             }
 
+            // Atualiza a instância original em memória para refletir o novo status
+            $invoice->status = 'concluída';
+
             return $invoice;
         });
     }
 
-    protected function handleStockMovement($productId, $qty, $type, $reference = '')
+    protected function handleStockMovement($productId, $qty, $type, $reference = '', ?int $warehouseLocationId = null)
     {
         $product = Product::findOrFail($productId);
-        
+
         if ($type === 'saida') {
-            // Allocate stock using WMS FIFO logic
-            FIFOStockService::allocateFIFOStock($product, $qty, $reference, Auth::id());
+            // Baixa de estoque via FIFO. Cast explícito para int evita imprecisão de float.
+            FIFOStockService::allocateFIFOStock($product, (int) $qty, $reference, Auth::id());
         } else {
-            // Standard incoming invoice / return
-            $product->increment('quantity', $qty);
-            
+            // Entrada padrão (NF de entrada ou devolução)
+
+            // ── Migração de localização (se solicitada) ─────────────────────────
+            if ($warehouseLocationId && $warehouseLocationId !== $product->warehouse_location_id) {
+                $oldLocId = $product->warehouse_location_id;
+
+                $product->update(['warehouse_location_id' => $warehouseLocationId]);
+                $product->refresh();
+
+                WarehouseLocation::where('id', $warehouseLocationId)->update(['is_occupied' => true]);
+
+                if ($oldLocId) {
+                    $stillOccupied = Product::where('warehouse_location_id', $oldLocId)
+                        ->where('id', '!=', $product->id)
+                        ->exists();
+                    if (!$stillOccupied) {
+                        WarehouseLocation::where('id', $oldLocId)->update(['is_occupied' => false]);
+                    }
+                }
+            }
+
+            $product->increment('quantity', (int) $qty);
+
             Inventory::create([
                 'product_id'         => $product->id,
-                'quantity'           => $qty,
-                'remaining_quantity' => $qty, // Positive adjustment starts with full qty
+                'quantity'           => (int) $qty,
+                'remaining_quantity' => (int) $qty,
                 'type'               => 'entrada',
                 'status'             => 'confirmada',
                 'reference'          => $reference,
