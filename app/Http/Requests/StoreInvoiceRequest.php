@@ -32,6 +32,7 @@ class StoreInvoiceRequest extends FormRequest
             'supplier_id'        => 'nullable|exists:suppliers,id',
             'items'              => 'required|array|min:1',
             'items.*.product_id'  => 'nullable|exists:products,id',
+            'items.*.warehouse_location_id' => 'nullable|exists:warehouse_locations,id',
             'items.*.description' => 'required|string',
             'items.*.quantity'    => 'required|numeric|min:0.001',
             'items.*.unit_price'  => 'required|numeric|min:0',
@@ -122,5 +123,28 @@ class StoreInvoiceRequest extends FormRequest
             'items.*.ii_desp'      => 'nullable|numeric|min:0',
             'items.*.ii_iof'       => 'nullable|numeric|min:0',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            if ($this->input('type') === 'saida' && $this->input('action') === 'emit') {
+                $items = $this->input('items', []);
+                foreach ($items as $index => $item) {
+                    if (!empty($item['product_id'])) {
+                        $product = \App\Models\Product::find($item['product_id']);
+                        if ($product) {
+                            $requestedQty = (float) ($item['quantity'] ?? 0);
+                            if ($requestedQty > $product->quantity) {
+                                $validator->errors()->add(
+                                    "items.{$index}.quantity",
+                                    "Estoque insuficiente para o produto '{$product->name}'. Disponível: {$product->quantity}, Solicitado: {$requestedQty}."
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 }

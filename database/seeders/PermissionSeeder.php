@@ -41,6 +41,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'usuarios.gerenciar', 'label' => 'Gerenciar Funcionários', 'group' => 'Administrativo'],
             ['name' => 'cargos.gerenciar',   'label' => 'Gerenciar Cargos',       'group' => 'Administrativo'],
             ['name' => 'logs.visualizar',    'label' => 'Visualizar Logs',        'group' => 'Administrativo'],
+            ['name' => 'relatorios.visualizar', 'label' => 'Visualizar Relatórios', 'group' => 'Administrativo'],
         ];
 
         foreach ($permissions as $p) {

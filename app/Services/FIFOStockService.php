@@ -81,6 +81,7 @@ class FIFOStockService
                     'product_id'         => $productObj->id,
                     'quantity'           => $allocatedFromThisEntry,
                     'remaining_quantity' => 0, // Saída não tem saldo disponível
+                    'unit_price'         => $entry->unit_price,
                     'type'               => 'saida',
                     'status'             => 'confirmada',
                     'reference'          => $reference,

@@ -140,7 +140,11 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Número do Lote</label>
-                            <input type="text" name="lot_number" value="{{ old('lot_number') }}" class="form-input" placeholder="Ex: L-2024-001">
+                            <div style="display:flex; align-items:center; border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden; background:var(--bg-hover);">
+                                <span style="padding:0.75rem 1rem; font-weight:700; color:var(--text-muted); border-right:1px solid var(--border); background:var(--bg-base); font-family:monospace;">L-{{ date('Y') }}-</span>
+                                <input type="text" name="lot_suffix" value="{{ old('lot_suffix', $nextSuffix) }}" maxlength="3" class="form-input" style="border:none; border-radius:0; flex:1; font-family:monospace; font-weight:700; font-size:1.1rem; letter-spacing:0.1em; background:transparent;" placeholder="001">
+                            </div>
+                            <small style="color:var(--text-muted);">Preencha com os últimos 3 caracteres identificadores do lote.</small>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Data de Validade</label>

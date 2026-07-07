@@ -16,6 +16,7 @@
         ['route' => 'logs.index',          'icon' => 'fa-list-check',              'label' => 'Logs do Sistema',       'permission' => 'logs.visualizar'],
         ['route' => 'roles.index',         'icon' => 'fa-id-card-clip',            'label' => 'Cargos e Funções',      'permission' => 'cargos.gerenciar'],
         ['route' => 'locations.index',     'icon' => 'fa-map-location-dot',        'label' => 'Localizações',          'permission' => 'localizacao.visualizar'],
+        ['route' => 'reports.index',        'icon' => 'fa-chart-line',              'label' => 'Relatórios',            'permission' => 'relatorios.visualizar'],
     ];
 
     $navItems = array_filter($allNavItems, function($item) use ($user) {

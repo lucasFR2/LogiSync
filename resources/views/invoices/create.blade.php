@@ -51,6 +51,20 @@
 
 @section('content')
 <div class="w-full">
+    @if($errors->any())
+        <div class="alert alert-error" style="margin-bottom:1.5rem; display:flex; gap:0.75rem; align-items:flex-start; padding:1rem; background:rgba(239, 68, 68, 0.1); border:1px solid rgb(239, 68, 68); border-radius:8px; color:rgb(220, 38, 38);">
+            <i class="fa-solid fa-triangle-exclamation" style="margin-top:3px; font-size:1.1rem;"></i>
+            <div>
+                <div style="font-weight:700; margin-bottom:0.25rem;">Verifique os erros abaixo:</div>
+                <ul style="margin:0; padding-left:1.25rem; font-size:0.9rem;">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    @endif
+
     <form method="POST" action="{{ isset($invoice) ? route('invoices.update', $invoice) : route('invoices.store') }}" id="invoice-form" class="anim-entrance w-full">
         @csrf
         @if(isset($invoice)) @method('PUT') @endif
@@ -109,7 +123,7 @@
                         
                         <div class="form-group">
                             <label class="form-label">Tipo de Operação</label>
-                            <select name="type" required class="form-control" style="font-weight: 600; height: 48px;">
+                            <select name="type" required class="form-control" style="font-weight: 600; height: 48px;" onchange="updatePriceLabels()">
                                 <option value="saida" {{ (isset($invoice) && $invoice->type === 'saida') ? 'selected' : '' }}>↑ Saída (Venda/Remessa)</option>
                                 <option value="entrada" {{ (isset($invoice) && $invoice->type === 'entrada') ? 'selected' : '' }}>↓ Entrada (Compra/Devolução)</option>
                             </select>
@@ -549,6 +563,16 @@
 <script>
 let itemIndex = 0;
 
+function updatePriceLabels() {
+    const typeSelect = document.querySelector('select[name="type"]');
+    if (!typeSelect) return;
+    const type = typeSelect.value;
+    const labelText = type === 'saida' ? 'Preço de Venda (R$)' : 'Custo Unitário (R$)';
+    document.querySelectorAll('.price-label').forEach(label => {
+        label.textContent = labelText;
+    });
+}
+
 function fmtBR(val) {
     return 'R$ ' + parseFloat(val || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
@@ -882,7 +906,7 @@ function addItem(data = {}) {
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="form-group">
-                    <label class="form-label text-xs">Preço Unitário (R$)</label>
+                    <label class="form-label text-xs price-label">Custo Unitário (R$)</label>
                     <input type="number" name="items[${i}][unit_price]" step="0.01" required class="price-input form-input form-control text-right" value="${data.unit_price || 0}" oninput="calcTotals()">
                 </div>
                 <div class="form-group">
@@ -1282,6 +1306,7 @@ function addItem(data = {}) {
     }
 
     calcTotals(Object.keys(data).length > 0);
+    updatePriceLabels();
 
     // Update location row visibility for all cards whenever type changes
     const typeSelectEl = document.querySelector('select[name="type"]');
@@ -1292,8 +1317,17 @@ function addItem(data = {}) {
             document.querySelectorAll('.item-location-row').forEach(row => {
                 row.style.display = isEntrada ? 'block' : 'none';
             });
+            updatePriceLabels();
         });
     }
+}
+
+function updatePriceLabels() {
+    const type = document.querySelector('select[name="type"]')?.value;
+    const labelText = (type === 'entrada') ? 'Custo Unitário (R$)' : 'Preço de Venda (R$)';
+    document.querySelectorAll('.price-label').forEach(el => {
+        el.textContent = labelText;
+    });
 }
 
 function fillProductData(sel) {
@@ -1441,10 +1475,9 @@ function openItemLocationPicker(index) {
     const currentLocCode = document.getElementById(`item-location-display-${index}`)?.value || '';
 
     // Define as variáveis globais que o location_picker.blade.php espera para sincronizar a barra e o grid
-    if (window.locationPickerState) {
-        window.locationPickerState.idInput = document.getElementById(`item-location-id-${index}`);
-        window.locationPickerState.displayInp = document.getElementById(`item-location-display-${index}`);
-    }
+    window.locationPickerState = window.locationPickerState || {};
+    window.locationPickerState.idInput = document.getElementById(`item-location-id-${index}`);
+    window.locationPickerState.displayInp = document.getElementById(`item-location-display-${index}`);
 
     // Dispara o evento de clique simulado no elemento que o script do partial_picker ouve para abrir o modal
     const pickerBtn = document.getElementById('btn-open-location-picker');

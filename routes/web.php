@@ -126,6 +126,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('logs.index');
     });
 
+    // ============ RELATÓRIOS ============
+    Route::middleware('permission:relatorios.visualizar')->group(function () {
+        Route::get('/reports', [App\Http\Controllers\ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/generate', [App\Http\Controllers\ReportController::class, 'generate'])->name('reports.generate');
+    });
+
     // ============ ADMINISTRAÇÃO ============
     Route::middleware('permission:cargos.gerenciar')->group(function () {
         Route::resource('roles', App\Http\Controllers\RoleController::class)->except(['show']);

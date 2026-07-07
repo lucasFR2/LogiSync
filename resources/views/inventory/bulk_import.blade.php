@@ -31,8 +31,9 @@
                             <th style="width:50px;">#</th>
                             <th style="width:30%;">Descrição no XML (Fornecedor)</th>
                             <th style="width:10%;">Qtd. XML</th>
-                            <th style="width:40%;">Produto Correspondente no LogiSync <span style="color:var(--red);">*</span></th>
-                            <th style="width:15%;">Qtd. Entrada <span style="color:var(--red);">*</span></th>
+                            <th style="width:35%;">Produto Correspondente no LogiSync <span style="color:var(--red);">*</span></th>
+                            <th style="width:15%;">Custo Unit. (R$) <span style="color:var(--red);">*</span></th>
+                            <th style="width:10%;">Qtd. Entrada <span style="color:var(--red);">*</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -157,6 +158,14 @@
                                                 </div>
                                             </div>
                                         </div>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($item->product_id)
+                                        <span style="font-weight:600;">R$ {{ number_format($item->unit_price, 2, ',', '.') }}</span>
+                                        <input type="hidden" name="items[{{ $item->id }}][cost_price]" value="{{ $item->unit_price }}">
+                                    @else
+                                        <input type="number" name="items[{{ $item->id }}][cost_price]" required min="0" step="0.01" value="{{ number_format($item->unit_price, 2, '.', '') }}" class="form-input text-right">
                                     @endif
                                 </td>
                                 <td>

@@ -300,7 +300,7 @@
                                 </td>
                                 <td>
                                     <span class="badge" style="background:var(--bg-hover);color:var(--text-primary);">
-                                        <i class="fa-solid fa-location-dot" style="margin-right:0.25rem;"></i>{{ $product->location?->full_code ?? ($product->warehouse_location ?? '—') }}
+                                        <i class="fa-solid fa-location-dot" style="margin-right:0.25rem;"></i>{{ $batch->location?->full_code ?? ($product->location?->full_code ?? ($product->warehouse_location ?? '—')) }}
                                     </span>
                                 </td>
                                 <td style="text-align:center;font-size:0.85rem;color:var(--text-secondary);">

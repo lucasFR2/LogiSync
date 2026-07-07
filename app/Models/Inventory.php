@@ -9,8 +9,10 @@ class Inventory extends Model
 {
     protected $fillable = [
         'product_id',
+        'warehouse_location_id',
         'quantity',
         'remaining_quantity',
+        'unit_price',
         'type',
         'reference',
         'notes',
@@ -29,6 +31,7 @@ class Inventory extends Model
         'quantity' => 'integer',
         'remaining_quantity' => 'integer',
         'checked_quantity' => 'integer',
+        'unit_price' => 'decimal:4',
         'entry_date' => 'datetime',
         'expiry_date' => 'date',
         'created_at' => 'datetime',
@@ -70,6 +73,14 @@ class Inventory extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    /**
+     * Relationship: Uma entrada pertence a uma localização física
+     */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(WarehouseLocation::class, 'warehouse_location_id');
     }
 
     /**

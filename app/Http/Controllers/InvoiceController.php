@@ -236,6 +236,27 @@ class InvoiceController extends Controller
             'conference_notes'  => 'nullable|string|max:1000',
         ]);
 
+        if ($validated['conference_status'] === 'Conferida' && $invoice->status === 'emitida' && $invoice->type === 'saida') {
+            try {
+                DB::transaction(function () use ($invoice, $validated) {
+                    $invoice->update([
+                        'conference_status' => $validated['conference_status'],
+                        'conference_notes'  => $validated['conference_notes'],
+                        'conferred_by'      => Auth::id(),
+                        'conferred_at'      => now(),
+                    ]);
+                    $this->invoiceService->concludeInvoice($invoice);
+                });
+
+                Logger::log('confer_invoice', "O usuário realizou a conferência da NF #{$invoice->number} com status: {$validated['conference_status']}");
+
+                return redirect()->route('invoices.show', $invoice)
+                                  ->with('success', 'Conferência da nota fiscal atualizada com sucesso e estoque baixado!');
+            } catch (\Exception $e) {
+                return redirect()->back()->withInput()->with('error', 'Erro ao concluir nota: ' . $e->getMessage());
+            }
+        }
+
         $invoice->update([
             'conference_status' => $validated['conference_status'],
             'conference_notes'  => $validated['conference_notes'],
@@ -244,12 +265,6 @@ class InvoiceController extends Controller
         ]);
 
         Logger::log('confer_invoice', "O usuário realizou a conferência da NF #{$invoice->number} com status: {$validated['conference_status']}");
-
-        if ($validated['conference_status'] === 'Conferida' && $invoice->status === 'emitida' && $invoice->type === 'saida') {
-            $this->invoiceService->concludeInvoice($invoice);
-            return redirect()->route('invoices.show', $invoice)
-                              ->with('success', 'Conferência da nota fiscal atualizada com sucesso e estoque baixado!');
-        }
 
         return redirect()->route('invoices.show', $invoice)
                          ->with('success', 'Conferência da nota fiscal atualizada com sucesso!');
@@ -296,18 +311,24 @@ class InvoiceController extends Controller
             ? "Divergências encontradas:\n" . implode("\n", $divergences)
             : 'Conferência realizada sem divergências.';
 
-        $invoice->update([
-            'conference_status' => $status,
-            'conference_notes'  => $notes,
-            'conferred_by'      => Auth::id(),
-            'conferred_at'      => now(),
-        ]);
+        try {
+            DB::transaction(function () use ($invoice, $status, $notes) {
+                $invoice->update([
+                    'conference_status' => $status,
+                    'conference_notes'  => $notes,
+                    'conferred_by'      => Auth::id(),
+                    'conferred_at'      => now(),
+                ]);
+
+                if ($status === 'Conferida' && $invoice->status === 'emitida' && $invoice->type === 'saida') {
+                    $this->invoiceService->concludeInvoice($invoice);
+                }
+            });
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', 'Erro ao finalizar conferência: ' . $e->getMessage());
+        }
 
         Logger::log('confer_invoice_workflow', "O usuário realizou a conferência interativa da NF #{$invoice->number} com status: {$status}");
-
-        if ($status === 'Conferida' && $invoice->status === 'emitida' && $invoice->type === 'saida') {
-            $this->invoiceService->concludeInvoice($invoice);
-        }
 
         return redirect()->route('invoices.show', $invoice)
                           ->with('success', "Conferência finalizada com status: {$status}" . ($status === 'Conferida' ? " e estoque baixado!" : ""))

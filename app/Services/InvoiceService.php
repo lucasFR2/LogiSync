@@ -113,11 +113,16 @@ class InvoiceService
                 if ($isEmitting && !empty($item['product_id'])) {
                     // Saídas são baixadas somente em concludeInvoice (após conferência).
                     // Entradas e devoluções são processadas imediatamente na emissão.
-                    if ($data['type'] !== 'saida') {
+                    if ($data['type'] === 'saida') {
+                        Product::where('id', $item['product_id'])->update([
+                            'unit_price'    => $price,
+                            'selling_price' => $price,
+                        ]);
+                    } else {
                         $locId = !empty($item['warehouse_location_id'])
                             ? (int) $item['warehouse_location_id']
                             : null;
-                        $this->handleStockMovement($item['product_id'], $qty, $data['type'], $invoiceNumber, $locId);
+                        $this->handleStockMovement($item['product_id'], $qty, $data['type'], $invoiceNumber, $locId, $price);
                     }
                 }
             }
@@ -207,7 +212,7 @@ class InvoiceService
         });
     }
 
-    protected function handleStockMovement($productId, $qty, $type, $reference = '', ?int $warehouseLocationId = null)
+    protected function handleStockMovement($productId, $qty, $type, $reference = '', ?int $warehouseLocationId = null, ?float $unitPrice = null)
     {
         $product = Product::findOrFail($productId);
 
@@ -236,17 +241,33 @@ class InvoiceService
                 }
             }
 
+            $oldQty = $product->quantity;
+            $oldCost = (float) $product->cost_price;
+            $newQty = (int) $qty;
+            $newCost = ($unitPrice !== null && $unitPrice > 0) ? $unitPrice : $oldCost;
+
+            $averageCost = $oldQty > 0
+                ? (($oldQty * $oldCost) + ($newQty * $newCost)) / ($oldQty + $newQty)
+                : $newCost;
+
             $product->increment('quantity', (int) $qty);
 
+            $product->update([
+                'cost_price'     => $averageCost,
+                'purchase_price' => $averageCost,
+            ]);
+
             Inventory::create([
-                'product_id'         => $product->id,
-                'quantity'           => (int) $qty,
-                'remaining_quantity' => (int) $qty,
-                'type'               => 'entrada',
-                'status'             => 'confirmada',
-                'reference'          => $reference,
-                'notes'              => 'Entrada automática via NF ' . $reference,
-                'user_id'            => Auth::id(),
+                'product_id'            => $product->id,
+                'warehouse_location_id' => $warehouseLocationId ?: $product->warehouse_location_id,
+                'quantity'              => (int) $qty,
+                'remaining_quantity'    => (int) $qty,
+                'unit_price'            => $newCost,
+                'type'                  => 'entrada',
+                'status'                => 'confirmada',
+                'reference'             => $reference,
+                'notes'                 => 'Entrada automática via NF ' . $reference,
+                'user_id'               => Auth::id(),
             ]);
         }
     }

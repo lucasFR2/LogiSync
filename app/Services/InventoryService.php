@@ -87,20 +87,21 @@ class InventoryService
             $conferenceStatus = $checkedQty == $quantity ? 'confirmada' : 'divergente';
 
             $inventory = Inventory::create([
-                'product_id'         => $product->id,
-                'quantity'           => $quantity,
-                'checked_quantity'   => $checkedQty,
-                'remaining_quantity' => $checkedQty,
-                'type'               => 'entrada',
-                'status'             => 'confirmada',
-                'supplier_id'        => $data['supplier_id'] ?? null,
-                'lot_number'         => $data['lot_number'] ?? null,
-                'expiry_date'        => $data['expiry_date'] ?? null,
-                'notes'              => $data['notes'] ?? null,
-                'conference_status'  => $conferenceStatus,
-                'conference_notes'   => $data['conference_notes'] ?? null,
-                'user_id'            => $data['user_id'] ?? Auth::id(),
-                'entry_date'         => $entryDate,
+                'product_id'            => $product->id,
+                'warehouse_location_id' => $newLocId ?: $product->warehouse_location_id,
+                'quantity'              => $quantity,
+                'checked_quantity'      => $checkedQty,
+                'remaining_quantity'    => $checkedQty,
+                'type'                  => 'entrada',
+                'status'                => 'confirmada',
+                'supplier_id'           => $data['supplier_id'] ?? null,
+                'lot_number'            => $data['lot_number'] ?? null,
+                'expiry_date'           => $data['expiry_date'] ?? null,
+                'notes'                 => $data['notes'] ?? null,
+                'conference_status'     => $conferenceStatus,
+                'conference_notes'      => $data['conference_notes'] ?? null,
+                'user_id'               => $data['user_id'] ?? Auth::id(),
+                'entry_date'            => $entryDate,
             ]);
 
             // Increment product stock

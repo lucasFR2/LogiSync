@@ -363,7 +363,8 @@
     let pendingCode = displayInp?.value || '';
 
     function syncSelectedBar() {
-        const code = displayInp?.value?.trim();
+        const currentDisplayInp = window.locationPickerState?.displayInp || displayInp;
+        const code = currentDisplayInp?.value?.trim();
         if (!selBar || !selCode) return;
         if (code && code !== 'Não alocado' && code !== 'Não definido') {
             selCode.textContent = code;
@@ -377,8 +378,12 @@
         modal.style.display = 'flex';
         requestAnimationFrame(() => modal.classList.add('open'));
         document.body.style.overflow = 'hidden';
-        pendingId   = idInput?.value || '';
-        pendingCode = displayInp?.value || '';
+        
+        const currentIdInp = window.locationPickerState?.idInput || idInput;
+        const currentDisplayInp = window.locationPickerState?.displayInp || displayInp;
+        
+        pendingId   = currentIdInp?.value || '';
+        pendingCode = currentDisplayInp?.value || '';
         syncSelectedBar();
         fetchLocations();
     }
@@ -392,6 +397,16 @@
     function applySelection(id, code) {
         if (idInput) idInput.value = id;
         if (displayInp) displayInp.value = code;
+
+        if (window.locationPickerState) {
+            if (window.locationPickerState.idInput) window.locationPickerState.idInput.value = id;
+            if (window.locationPickerState.displayInp) window.locationPickerState.displayInp.value = code;
+        }
+
+        document.dispatchEvent(new CustomEvent('locationSelected', {
+            detail: { id: id, full_code: code }
+        }));
+
         pendingId = String(id);
         pendingCode = code;
         syncSelectedBar();
@@ -401,6 +416,14 @@
     function clearSelection() {
         if (idInput) idInput.value = '';
         if (displayInp) displayInp.value = '';
+
+        if (window.locationPickerState) {
+            if (window.locationPickerState.idInput) window.locationPickerState.idInput.value = '';
+            if (window.locationPickerState.displayInp) window.locationPickerState.displayInp.value = '';
+        }
+
+        document.dispatchEvent(new CustomEvent('locationCleared'));
+
         pendingId = '';
         pendingCode = '';
         if (selBar) selBar.style.display = 'none';

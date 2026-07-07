@@ -141,22 +141,44 @@ class ProductController extends Controller implements HasMiddleware
             ->orderBy('full_code')
             ->get();
 
-        return view('inventory.create', compact('products', 'suppliers', 'locations'));
+        // Calculate next lot suffix
+        $year = date('Y');
+        $prefix = "L-{$year}-";
+        $latestInventory = Inventory::where('lot_number', 'like', "{$prefix}%")
+            ->latest('id')
+            ->first();
+
+        $nextSuffix = '001';
+        if ($latestInventory && preg_match('/-(\d{3})$/', $latestInventory->lot_number, $matches)) {
+            $nextSuffix = str_pad(intval($matches[1]) + 1, 3, '0', STR_PAD_LEFT);
+        }
+
+        return view('inventory.create', compact('products', 'suppliers', 'locations', 'nextSuffix'));
     }
 
     public function storeInventory(Request $request)
     {
+        $year = date('Y');
+        $suffix = str_pad($request->input('lot_suffix') ?? '001', 3, '0', STR_PAD_LEFT);
+        $lotNumber = "L-{$year}-{$suffix}";
+
+        $request->merge(['lot_number' => $lotNumber]);
+
         $validated = $request->validate([
             'product_id'            => 'required|exists:products,id',
             'quantity'              => 'required|integer|min:1',
             'checked_quantity'      => 'required|integer|min:0',
             'notes'                 => 'nullable|string|max:500',
             'entry_date'            => 'nullable|date',
-            'lot_number'            => 'nullable|string|max:100',
+            'lot_suffix'            => 'required|string|size:3',
+            'lot_number'            => 'required|string|unique:inventories,lot_number',
             'expiry_date'           => 'nullable|date',
             'supplier_id'           => 'nullable|exists:suppliers,id',
             'conference_notes'      => 'nullable|string|max:1000',
             'warehouse_location_id' => 'nullable|exists:warehouse_locations,id',
+        ], [
+            'lot_number.unique' => 'Este número de lote já existe no sistema.',
+            'lot_suffix.size' => 'O preenchimento do lote deve ter exatamente 3 caracteres.',
         ]);
 
         // ── Localização de entrada ─────────────────────────────────────────────
@@ -281,6 +303,7 @@ class ProductController extends Controller implements HasMiddleware
             'items' => 'required|array',
             'items.*.product_id' => 'required|string', // Can be numeric ID or 'new'
             'items.*.quantity' => 'required|numeric|min:0',
+            'items.*.cost_price' => 'nullable|numeric|min:0',
         ]);
 
         $items = $request->input('items', []);
@@ -329,14 +352,15 @@ class ProductController extends Controller implements HasMiddleware
         try {
             DB::transaction(function () use ($request, $manifestation) {
                 foreach ($request->items as $itemId => $data) {
-                    $qty = (float) $data['quantity'];
-                    
                     $xmlItem = $manifestation->items()->find($itemId);
                     if (!$xmlItem) {
                         throw ValidationException::withMessages([
                             "items.$itemId" => ['Item da NF-e inválido.'],
                         ]);
                     }
+
+                    $qty = (float) $data['quantity'];
+                    $costPrice = isset($data['cost_price']) && $data['cost_price'] !== '' ? (float) $data['cost_price'] : (float) $xmlItem->unit_price;
                     
                     if ($data['product_id'] === 'new') {
                         $lastProduct = Product::where('sku', 'like', 'SKU-%')->latest('id')->first();
@@ -354,9 +378,9 @@ class ProductController extends Controller implements HasMiddleware
                             'sku'           => $sku,
                             'barcode'       => $data['new_barcode'] ?? $xmlItem->barcode,
                             'description'   => 'Produto importado via NF-e ' . $manifestation->number,
-                            'unit_price'    => $xmlItem->unit_price,
-                            'purchase_price'=> $xmlItem->unit_price,
-                            'cost_price'    => $xmlItem->unit_price,
+                            'unit_price'    => $costPrice,
+                            'purchase_price'=> $costPrice,
+                            'cost_price'    => $costPrice,
                             'quantity'      => 0,
                             'reorder_level' => 10,
                             'unit'          => $xmlItem->unit,
@@ -392,6 +416,15 @@ class ProductController extends Controller implements HasMiddleware
                         ]);
                     } else {
                         $product = Product::findOrFail($data['product_id']);
+                        $oldQty = $product->quantity;
+                        $oldCost = (float) $product->cost_price;
+                        $newQty = $qty;
+                        $newCost = $costPrice;
+                        
+                        $averageCost = $oldQty > 0
+                            ? (($oldQty * $oldCost) + ($newQty * $newCost)) / ($oldQty + $newQty)
+                            : $newCost;
+
                         $product->update([
                             'ncm'                => $xmlItem->ncm,
                             'cfop_default'       => $xmlItem->cfop,
@@ -415,9 +448,9 @@ class ProductController extends Controller implements HasMiddleware
                             'icms_red_bc'        => $xmlItem->icms_red_bc,
                             'icms_mod_bc'        => $xmlItem->icms_mod_bc,
                             // Also update pricing and cost
-                            'purchase_price'     => $xmlItem->unit_price,
-                            'cost_price'         => $xmlItem->unit_price,
-                            'unit_price'         => $xmlItem->unit_price,
+                            'purchase_price'     => $averageCost,
+                            'cost_price'         => $averageCost,
+                            'unit_price'         => $averageCost,
                         ]);
                         // If barcode is empty but XML has barcode, update it
                         if (empty($product->barcode) && !empty($xmlItem->barcode)) {
@@ -437,17 +470,19 @@ class ProductController extends Controller implements HasMiddleware
                     }
 
                     Inventory::create([
-                        'product_id'        => $product->id,
-                        'quantity'          => $originalQty,
-                        'checked_quantity'  => $qty,
-                        'remaining_quantity'=> $qty,
-                        'notes'             => 'Entrada via NF-e ' . $manifestation->number,
-                        'supplier_id'       => $manifestation->supplier_id,
-                        'user_id'           => auth()->id(),
-                        'type'              => 'entrada',
-                        'status'            => 'confirmada',
-                        'conference_status' => $conferenceStatus,
-                        'conference_notes'  => abs($qty - $originalQty) < 0.001
+                        'product_id'            => $product->id,
+                        'warehouse_location_id' => $product->warehouse_location_id,
+                        'quantity'              => $originalQty,
+                        'checked_quantity'      => $qty,
+                        'remaining_quantity'    => $qty,
+                        'unit_price'            => $costPrice,
+                        'notes'                 => 'Entrada via NF-e ' . $manifestation->number,
+                        'supplier_id'           => $manifestation->supplier_id,
+                        'user_id'               => auth()->id(),
+                        'type'                  => 'entrada',
+                        'status'                => 'confirmada',
+                        'conference_status'     => $conferenceStatus,
+                        'conference_notes'      => abs($qty - $originalQty) < 0.001
                             ? 'Importado via XML sem divergências.'
                             : "Importado via XML com divergência (XML: {$originalQty}, Recebido: {$qty}).",
                     ]);
@@ -547,6 +582,7 @@ class ProductController extends Controller implements HasMiddleware
         $inventories = $product->inventories()->with('user:id,name')->latest()->paginate(10);
         
         $fifoBatches = $product->inventories()
+            ->with('location')
             ->where('type', 'entrada')
             ->where('status', 'confirmada')
             ->where('remaining_quantity', '>', 0)
